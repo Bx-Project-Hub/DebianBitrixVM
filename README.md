@@ -35,6 +35,45 @@
 
 > **Важно про MySQL.** Для Debian 13 (trixie) Oracle публикует только ветку **8.4 LTS** — пакетов `mysql-8.0` для trixie нет. Окружение настраивает `mysql_native_password` для совместимости Bitrix и резервного копирования.
 
+## Внешние зависимости и каталог `vendor`
+
+Всё, что раньше скачивалось с чужих сайтов, лежит в самом репозитории — установка
+не зависит от их доступности:
+
+| Файл в `vendor/` | Что это |
+|---|---|
+| `deb/libnginx-mod-http-zip_*.deb` | модуль nginx для gzip (нет в Debian) |
+| `deb/libnginx-mod-http-zstd_*.deb` | модуль nginx для zstd (нет в Debian) |
+| `files/push-server-0.4.0.tgz` | push&pull-сервер Bitrix |
+| `files/bitrix-php-configs-debian.zip` | конфиги Nginx/Apache/PHP из документации Bitrix |
+| `files/bitrixsetup.php`, `files/restore.php` | скрипты установки портала |
+| `scripts/netdata-kickstart.sh` | установщик Netdata |
+| `keys/*` | ключи репозиториев (deb.sury.org, MySQL, Percona) и `percona-release_latest` |
+
+Порядок работы:
+
+1. Установщик кладёт каталог `vendor` в `/root/vendor` и проверяет контрольные суммы
+   (`vendor/CHECKSUMS.sha256`).
+2. Скрипты и роли берут файл из `/root/vendor` (функция `vendor_get` в меню, модули
+   `copy`/`apt` в Ansible). Сеть используется только если локальной копии нет.
+3. Nginx-модули ставятся из локальных `.deb`, сторонний APT-репозиторий не подключается
+   (а ранее добавленный — удаляется).
+
+Обновить вложенные файлы и пересчитать суммы:
+
+```bash
+tools/vendor-fetch.sh          # скачать актуальные версии и обновить CHECKSUMS.sha256
+tools/vendor-fetch.sh --check  # только проверить целостность
+```
+
+**Что остаётся внешним и почему:** репозитории Debian, deb.sury.org (PHP),
+MySQL/Percona (СУБД) и Netdata — это источники пакетов и обновлений безопасности.
+Их нельзя «вложить» в проект: копии устареют в первый же день, а установка потеряет
+обновления. Вендорятся только те артефакты, которых нет в Debian, — они не меняются
+без изменения версии и потому безопасны как локальная копия.
+
+---
+
 ## Выбор СУБД: MySQL или Percona Server
 
 При установке можно выбрать Oracle MySQL или **Percona Server for MySQL 8.4 LTS**. Оба варианта используют одинаковые сервис (`mysql.service`), каталог конфигурации (`/etc/mysql/conf.d/99-bitrix.cnf`) и режим авторизации (`mysql_native_password`), поэтому Bitrix работает одинаково.
@@ -237,6 +276,7 @@ BS_POSTGRES_USER="bitrix"
 | Сервисы | все 7 — **active** |
 | Ansible | `ok=52 failed=0` |
 | PostgreSQL | 17.11: установка и удаление из меню — `ok=26` / `ok=12`, `failed=0` |
+| Вендорные файлы | nginx zip/zstd из локальных `.deb` без стороннего репозитория; сайт создан с `bitrixsetup.php`/`restore.php` из `vendor` (SHA256 совпадает) |
 | Сайт `full` | `example.ru` → `200` |
 | Сайт `link` | `shop.example.ru` → `500` |
 | Меню | сайты, PHP, SMTP — ОК |

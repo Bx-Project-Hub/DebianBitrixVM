@@ -131,6 +131,17 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 
 Пресет вибирається за першим відповідним порогом; примусово — `BS_POSTGRES_PRESET` у `config.sh`.
 
+## Вкладені залежності (`vendor/`)
+
+Усе, що раніше завантажувалося з чужих сайтів, лежить у репозиторії — `vendor/`: модулі
+nginx gzip/zstd (яких немає в Debian), push&pull-сервер, конфіги Bitrix для PHP/Nginx/Apache,
+скрипти встановлення Bitrix, скрипт встановлення Netdata та ключі репозиторіїв. Інсталятор
+копіює `vendor` у `/root/vendor`, перевіряє `vendor/CHECKSUMS.sha256` і бере файли звідти;
+мережа використовується лише за відсутності локальної копії. Оновлення —
+`tools/vendor-fetch.sh`, перевірка — `tools/vendor-fetch.sh --check`. Репозиторії Debian,
+deb.sury.org, MySQL/Percona та Netdata навмисно залишаються зовнішніми: це джерела пакетів
+і оновлень безпеки, вкладені копії застаріли б одразу.
+
 ---
 
 # **Оновлення меню**

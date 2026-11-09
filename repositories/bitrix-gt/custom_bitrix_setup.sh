@@ -20,6 +20,33 @@ set -x
 # Без интерактивных вопросов debconf/apt (установка идёт в неинтерактивном режиме)
 export DEBIAN_FRONTEND="noninteractive"
 
+###################################################################
+# Вендорные файлы проекта
+#
+# Все внешние артефакты (push-server, конфиги PHP от Bitrix, скрипты установки,
+# ключи репозиториев) лежат в каталоге vendor проекта и проверяются по SHA256.
+# Локальная копия имеет приоритет; если её нет (устаревшая установка) — файл
+# скачивается из репозитория проекта, а не с чужого сайта.
+###################################################################
+BS_VENDOR_DIR="${BS_VENDOR_DIR:-/root/vendor}"
+BS_VENDOR_RAW_BASE="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/vendor"
+
+vendor_get() {  # vendor_get <путь внутри vendor> <куда положить; "-" = stdout>
+    local rel="$1" dest="$2" src
+    src="${BS_VENDOR_DIR}/${rel}"
+    if [ -f "$src" ]; then
+        if [ "$dest" = "-" ]; then cat "$src"; else cp -f "$src" "$dest"; fi
+        echo "vendor: ${rel} (локальная копия)"
+        return 0
+    fi
+    echo "vendor: ${rel} (локальной копии нет, скачиваем из репозитория проекта)"
+    if [ "$dest" = "-" ]; then
+        curl -fsSL "${BS_VENDOR_RAW_BASE}/${rel}"
+    else
+        curl -fsSL -o "$dest" "${BS_VENDOR_RAW_BASE}/${rel}"
+    fi
+}
+
 LOG_PIPE=/tmp/log.pipe
 
 if [[ -p "$LOG_PIPE" ]]; then
@@ -135,10 +162,8 @@ function installMySQLRepository {
     apt-get install -y curl ca-certificates lsb-release gnupg2 || InstallationFailed
 
     # Ключи Oracle: держим оба (2023 — действующий, 2025 — новый)
-    curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 \
-        -o /etc/apt/trusted.gpg.d/RPM-GPG-KEY-mysql-2023.asc || InstallationFailed
-    curl -fsSL https://repo.mysql.com/RPM-GPG-KEY-mysql-2025 \
-        -o /etc/apt/trusted.gpg.d/RPM-GPG-KEY-mysql-2025.asc || true
+    vendor_get keys/RPM-GPG-KEY-mysql-2023 /etc/apt/trusted.gpg.d/RPM-GPG-KEY-mysql-2023.asc || InstallationFailed
+    vendor_get keys/RPM-GPG-KEY-mysql-2025 /etc/apt/trusted.gpg.d/RPM-GPG-KEY-mysql-2025.asc || true
 
     # Компонент выбирается по кодовому имени Debian (mysql-8.4-lts для trixie)
     echo "deb [arch=amd64] https://repo.mysql.com/apt/debian/ ${OS_CODENAME} ${MYSQL_COMPONENT}" > /etc/apt/sources.list.d/mysql.list
@@ -525,7 +550,7 @@ function installPerconaRepository {
 
     # percona-release содержит актуальный ключ /usr/share/keyrings/percona-keyring.gpg
     local pc_deb="/tmp/percona-release_latest.deb"
-    curl -fsSL -o "$pc_deb" https://repo.percona.com/apt/percona-release_latest.generic_all.deb || InstallationFailed
+    vendor_get keys/percona-release_latest.generic_all.deb "$pc_deb" || InstallationFailed
     dpkg -i "$pc_deb" || apt-get install -f -y || InstallationFailed
     rm -f "$pc_deb"
 
@@ -608,7 +633,7 @@ installPkg(){
 
     # Теперь репозиторий sury для PHP (для Debian 13 — trixie)
     echo "deb [signed-by=/etc/apt/trusted.gpg.d/sury.gpg] https://packages.sury.org/php/ ${OS_CODENAME} main" | tee /etc/apt/sources.list.d/sury-php.list
-    curl -fsSL -o /etc/apt/trusted.gpg.d/sury.gpg https://packages.sury.org/php/apt.gpg
+    vendor_get keys/sury-php.gpg /etc/apt/trusted.gpg.d/sury.gpg
     apt-get update -y
 
     export DEBIAN_FRONTEND="noninteractive"
@@ -779,7 +804,7 @@ dplPush(){
     cd /opt || exit 1
 
     rm -rf /opt/node_modules
-    wget -q "https://repo.bitrix.info/vm/push-server-${PUSH_SERVER_VERSION}.tgz" || {
+    vendor_get "files/push-server-${PUSH_SERVER_VERSION}.tgz" "push-server-${PUSH_SERVER_VERSION}.tgz" || {
         echo "Ошибка: не удалось скачать push-server-${PUSH_SERVER_VERSION}.tgz" >&2
         return 1
     }
@@ -911,7 +936,7 @@ deployConfig() {
     tmp_dir="$(mktemp -d)"
     cd "$tmp_dir" || exit 1
 
-    wget -q 'https://dev.1c-bitrix.ru/docs/chm_files/debian.zip'
+    vendor_get files/bitrix-php-configs-debian.zip debian.zip
     # unzip может вернуть 1 из-за предупреждения об обратных слэшах в архиве — это не ошибка
     unzip -o debian.zip >/dev/null 2>&1 || true
     rm -f debian.zip
@@ -947,8 +972,8 @@ deployConfig() {
 ###################################################################
 deployInstaller() {
     cd /var/www/html/bx-site || exit 1
-    wget -q 'https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php' || echo "Предупреждение: не удалось скачать bitrixsetup.php"
-    wget -q 'https://www.1c-bitrix.ru/download/scripts/restore.php' || echo "Предупреждение: не удалось скачать restore.php"
+    vendor_get files/bitrixsetup.php bitrixsetup.php || echo "Предупреждение: не удалось получить bitrixsetup.php"
+    vendor_get files/restore.php restore.php || echo "Предупреждение: не удалось получить restore.php"
 
     mkdir -p bitrix/php_interface
     dbconn > bitrix/php_interface/dbconn.php

@@ -169,7 +169,7 @@ function action_change_php_version() {
     # Конфигурация Bitrix (php.d из debian.zip) для выбранной версии PHP
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    if wget -q -O "${tmp_dir}/debian.zip" "${BS_DOWNLOAD_BITRIX_CONFIGS}" \
+    if vendor_get "${BS_VENDOR_BITRIX_CONFIGS:-files/bitrix-php-configs-debian.zip}" "${tmp_dir}/debian.zip" \
        && unzip -o -q "${tmp_dir}/debian.zip" -d "${tmp_dir}" 2>/dev/null; then
         if [ -d "${tmp_dir}/debian/php.d" ]; then
             rsync -a --force "${tmp_dir}/debian/php.d/" "${path_php}/mods-available/"

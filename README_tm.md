@@ -131,6 +131,17 @@ Awtomatik döredilýär: `bitrix` bazasy (`LC_CTYPE='C.UTF-8' TEMPLATE template0
 
 Preset ilkinji laýyk çäge görä saýlanýar; mejbury — `config.sh`-daky `BS_POSTGRES_PRESET`.
 
+## Içine alnan baglylyklar (`vendor/`)
+
+Öňler daşarky saýtlardan ýüklenýän zatlaryň ählisi repozitoriýada — `vendor/`: nginx gzip/zstd
+modullary (Debian-da ýok), push&pull serweri, Bitrix-iň PHP/Nginx/Apache konfigurasiýalary,
+Bitrix gurnama skriptleri, Netdata gurnama skripti we repozitoriýa açarlary. Gurnaýjy `vendor`
+katalogy `/root/vendor`-a göçürýär, `vendor/CHECKSUMS.sha256` barlaýar we faýllary şol ýerden
+alýar; tor diňe ýerli nusga ýok bolanda ulanylýar. Täzelemek — `tools/vendor-fetch.sh`,
+barlamak — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percona we Netdata
+repozitoriýalary bilgeşleýin daşarky galýar: olar paket we howpsuzlyk täzelenmeleriniň çeşmesi,
+içine alnan nusgalar derrew könelerdi.
+
 ---
 
 # **Menýuny täzeläň**

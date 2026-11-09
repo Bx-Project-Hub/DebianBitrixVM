@@ -1,10 +1,22 @@
 ---
 # tasks file for install_or_delete_netdata
 - block:
-    - name: Installing Netdata
+    - name: Checking bundled Netdata kickstart script
+      stat:
+        path: "{{ vendor_dir | default('/root/vendor') }}/scripts/netdata-kickstart.sh"
+      register: netdata_kickstart
+
+    - name: Installing Netdata (bundled kickstart)
+      shell: cp -f "{{ netdata_kickstart.stat.path }}" /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --stable-channel --disable-telemetry
+      args:
+        creates: /usr/sbin/netdata
+      when: netdata_kickstart.stat.exists
+
+    - name: Installing Netdata (remote kickstart)
       shell: wget -q -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --stable-channel --disable-telemetry
       args:
         creates: /usr/sbin/netdata
+      when: not netdata_kickstart.stat.exists
 
     - name: Copying nginx directory to /etc/{{ service_nginx_name }}
       copy:

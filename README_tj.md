@@ -131,6 +131,17 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 
 Пресет аз рӯи аввалин ҳадди мувофиқ интихоб мешавад; маҷбурӣ — `BS_POSTGRES_PRESET` дар `config.sh`.
 
+## Вобастагиҳои дохилшуда (`vendor/`)
+
+Ҳама чизе, ки қаблан аз сайтҳои бегона боргирӣ мешуд, дар репозиторий — `vendor/`: модулҳои
+nginx gzip/zstd (дар Debian нестанд), сервери push&pull, конфигуратсияҳои Bitrix барои
+PHP/Nginx/Apache, скриптҳои насби Bitrix, скрипти насби Netdata ва калидҳои репозиториҳо.
+Насбкунанда ҷузвдони `vendor`-ро ба `/root/vendor` нусхабардорӣ мекунад, `vendor/CHECKSUMS.sha256`-ро
+месанҷад ва файлҳоро аз ҳамон ҷо мегирад; шабака танҳо дар сурати набудани нусхаи маҳаллӣ
+истифода мешавад. Навсозӣ — `tools/vendor-fetch.sh`, санҷиш — `tools/vendor-fetch.sh --check`.
+Репозиториҳои Debian, deb.sury.org, MySQL/Percona ва Netdata қасдан берунӣ мемонанд: онҳо
+сарчашмаи бастаҳо ва навсозиҳои амниятанд, нусхаҳои дохилшуда фавран кӯҳна мешаванд.
+
 ---
 
 # **Навсозии меню**

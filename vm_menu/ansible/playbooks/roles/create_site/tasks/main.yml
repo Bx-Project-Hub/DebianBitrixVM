@@ -63,16 +63,35 @@
         urls: "{{ download_bitrix_install_files_new_site.split(',') }}"
       no_log: true
 
-    - name: Downloading Bitrix scripts
+    - name: Checking bundled Bitrix install scripts
+      stat:
+        path: "{{ vendor_dir | default('/root/vendor') }}/files/{{ item | basename }}"
+      loop: "{{ urls }}"
+      register: bitrix_scripts_bundled
+
+    # Основной путь: файлы из vendor проекта — без обращения к 1c-bitrix.ru
+    - name: Copying bundled Bitrix install scripts
+      copy:
+        src: "{{ item.stat.path }}"
+        dest: "{{ path_sites }}/{{ domain }}/"
+        owner: "{{ user_server_sites }}"
+        group: "{{ group_user_server_sites }}"
+        mode: "{{ permissions_sites_files }}"
+      loop: "{{ bitrix_scripts_bundled.results }}"
+      when: item.stat.exists
+
+    # Резервный путь: если вендорных копий нет (старая установка) — качаем по URL
+    - name: Downloading Bitrix scripts (no bundled copy)
       get_url:
-        url: "{{ item }}"
+        url: "{{ item.item }}"
         dest: "{{ path_sites }}/{{ domain }}"
         owner: "{{ user_server_sites }}"
         group: "{{ group_user_server_sites }}"
         mode: "{{ permissions_sites_files }}"
         timeout: "{{ timeout_download_bitrix_install_files_new_site }}"
+      loop: "{{ bitrix_scripts_bundled.results }}"
+      when: not item.stat.exists
       ignore_errors: yes
-      with_items: "{{ urls }}"
 
     - name: Creating of downloaded file names array
       set_fact:
@@ -100,6 +119,7 @@
         state: present
         encoding: "{{ db_character_set_server }}"
         collation: "{{ db_collation_server }}"
+        login_unix_socket: "{{ mysql_socket }}"
 
     - name: Creating database user
       mysql_user:
@@ -107,6 +127,7 @@
         password: "{{ db_password }}"
         priv: "{{ db_name }}.*:ALL"
         state: present
+        login_unix_socket: "{{ mysql_socket }}"
 
     - name: Creating directory bitrix/php_interface
       file:

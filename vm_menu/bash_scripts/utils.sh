@@ -347,6 +347,23 @@ function get_uptime_short() {
     fi
 }
 
+# Получить вендорный файл: приоритет у локальной копии в BS_VENDOR_DIR,
+# иначе — из репозитория проекта (BS_VENDOR_RAW_BASE), а не с чужого сайта.
+function vendor_get() {  # vendor_get <путь внутри vendor> <куда; "-" = stdout>
+    local rel="$1" dest="$2"
+    local src="${BS_VENDOR_DIR:-/root/vendor}/${rel}"
+    if [ -f "$src" ]; then
+        if [ "$dest" = "-" ]; then cat "$src"; else cp -f "$src" "$dest"; fi
+        return 0
+    fi
+    local url="${BS_VENDOR_RAW_BASE:-}/$rel"
+    if [ "$dest" = "-" ]; then
+        curl -fsSL "$url"
+    else
+        curl -fsSL -o "$dest" "$url"
+    fi
+}
+
 # Дополнить строку справа пробелами до ширины в СИМВОЛАХ.
 # Нужно потому, что bash printf '%-Ns' считает БАЙТЫ: для кириллицы (2 байта
 # на букву) ширина «съедается» и колонки разъезжаются. ${#text} считает символы.

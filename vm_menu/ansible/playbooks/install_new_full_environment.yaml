@@ -138,26 +138,57 @@
         mode: "{{ permissions_sites_files }}"
 
     ############## NGINX ##############
-    - name: Add nginx modules repo key
+    # Модули zip/zstd для nginx есть только в стороннем репозитории, поэтому
+    # .deb-пакеты лежат в проекте (vendor/deb) — установка не зависит от него.
+    - name: Checking bundled nginx module packages
+      stat:
+        path: "{{ vendor_dir | default('/root/vendor') }}/deb/{{ item }}"
+      loop:
+        - libnginx-mod-http-zip_1.3.0-2.gbp4aa963c~trixie_amd64.deb
+        - libnginx-mod-http-zstd_0.1.1-2.gbp057a7d3~trixie_amd64.deb
+      register: nginx_module_debs
+
+    - name: Installing nginx modules from bundled packages
+      apt:
+        deb: "{{ item.stat.path }}"
+      loop: "{{ nginx_module_debs.results }}"
+      when: item.stat.exists
+
+    # Резервный путь для старых установок, где vendor/deb отсутствует.
+    - name: Add nginx modules repo key (no bundled packages)
       get_url:
         url: https://yogsottot.github.io/ppa/yogsottot.asc
         dest: /etc/apt/keyrings/yogsottot.asc
         mode: "0644"
         owner: root
         group: root
+      when: nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
 
-    - name: Add nginx modules repo.
+    - name: Add nginx modules repo (no bundled packages)
       apt_repository:
         repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/yogsottot.asc] https://yogsottot.github.io/ppa/debian {{ ansible_distribution_release }} main"
         state: present
+      when: nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
 
-    - name: Update apt caches after repo is added.
+    - name: Installing nginx modules from the external repo (no bundled packages)
       apt:
         name:
           - libnginx-mod-http-zip
           - libnginx-mod-http-zstd
         state: present
         update_cache: yes
+      when: nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
+
+    # Чистим ранее добавленный сторонний репозиторий, если пакеты взяты из vendor
+    - name: Removing external nginx modules repository
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/yogsottot_github_io_ppa_debian.list
+        - /etc/apt/sources.list.d/yogsottot.list
+        - /etc/apt/keyrings/yogsottot.asc
+      when: nginx_module_debs.results | selectattr('stat.exists') | list | length == nginx_module_debs.results | length
 
     - name: Copying nginx_files directory to /etc/{{ service_nginx_name }}
       copy:

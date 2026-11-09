@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.5.1"
+BS_VERSION_MENU="2.6.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -87,11 +87,17 @@ BS_PHP_INSTALL_TEMPLATE=(
   "phpVER#0.0-igbinary"
 )
 BS_DOWNLOAD_BITRIX_CONFIGS="https://dev.1c-bitrix.ru/docs/chm_files/debian.zip"
+# Локальная копия в vendor (приоритетнее URL)
+BS_VENDOR_BITRIX_CONFIGS="files/bitrix-php-configs-debian.zip"
 BS_PATH_PHP="/etc/php"
 BS_PATH_PHP_LOG="/var/log/php"
 
 # Ansible settings
-BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS="-i localhost, -c local -e ansible_python_interpreter=/usr/bin/python3"
+# Вендорные файлы: локальные копии внешних артефактов (см. vendor/ и tools/vendor-fetch.sh)
+BS_VENDOR_DIR="/root/vendor"
+BS_VENDOR_RAW_BASE="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/vendor"
+
+BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS="-i localhost, -c local -e ansible_python_interpreter=/usr/bin/python3 -e vendor_dir=${BS_VENDOR_DIR}"
 BS_PATH_ANSIBLE_PLAYBOOKS="../ansible/playbooks"
 
 # Ansible playbooks

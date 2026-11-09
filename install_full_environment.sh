@@ -112,7 +112,6 @@ generate_password() {
 export -f generate_password
 
 BRANCH="master"
-SETUP_BITRIX_DEBIAN_URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/$BRANCH/repositories/bitrix-gt/custom_bitrix_setup.sh"
 REPO_URL="https://github.com/Bx-Project-Hub/DebianBitrixVM.git"
 
 # Передаются из внешнего скрипта
@@ -140,14 +139,48 @@ bash -c 'echo "LC_ALL=\"ru_RU.UTF-8\"" >> /etc/environment'
 source /etc/default/locale
 export LC_ALL="ru_RU.UTF-8"
 
+# Доставляем на сервер скрипты установки, меню и вендорные файлы ДО запуска
+# custom_bitrix_setup.sh: тогда установка берёт push-server, конфиги PHP,
+# скрипты Bitrix и ключи репозиториев из локального каталога /root/vendor,
+# а не с чужих сайтов.
+VENDOR_DIR_MENU="/root/vendor"
+
+if [[ -n "$LOCAL_SOURCE" && -d "$LOCAL_SOURCE/vm_menu" ]]; then
+    echo "Локальный исходник: $LOCAL_SOURCE"
+    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU" "$VENDOR_DIR_MENU"
+    rsync -a --delete "$LOCAL_SOURCE/vm_menu/" "$DEST_DIR_MENU/$DIR_NAME_MENU/"
+    [[ -d "$LOCAL_SOURCE/vendor" ]] && rsync -a --delete "$LOCAL_SOURCE/vendor/" "$VENDOR_DIR_MENU/"
+    SETUP_SCRIPT="$LOCAL_SOURCE/repositories/bitrix-gt/custom_bitrix_setup.sh"
+else
+    echo "Клонируем репозиторий проекта: $REPO_URL"
+    rm -rf "$DEST_DIR_MENU/DebianBitrixVM"
+    git clone --branch=$BRANCH --depth 1 --filter=blob:none --sparse $REPO_URL "$DEST_DIR_MENU/DebianBitrixVM"
+    cd "$DEST_DIR_MENU/DebianBitrixVM"
+    git sparse-checkout set "$DIR_NAME_MENU" "vendor" "repositories/bitrix-gt"
+    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU" "$VENDOR_DIR_MENU"
+    mv -f "$DIR_NAME_MENU" "$DEST_DIR_MENU"
+    mv -f "vendor" "$VENDOR_DIR_MENU"
+    SETUP_SCRIPT="$DEST_DIR_MENU/DebianBitrixVM/repositories/bitrix-gt/custom_bitrix_setup.sh"
+fi
+
+# Проверяем целостность вендорных файлов (если контрольные суммы есть)
+if [[ -f "$VENDOR_DIR_MENU/CHECKSUMS.sha256" ]]; then
+    echo "Проверка вендорных файлов (SHA256)..."
+    ( cd "$VENDOR_DIR_MENU" && sha256sum -c CHECKSUMS.sha256 --quiet ) \
+        || { echo "Ошибка: контрольные суммы вендорных файлов не совпадают." >&2; exit 1; }
+fi
+
 # Запускаем скрипт установки окружения Bitrix (custom_bitrix_setup.sh).
 # Он создаёт и выполняет /root/run.sh, а сгенерированные пароли сохраняет
 # в /root/.bitrix_env.
-if [[ -n "$LOCAL_SOURCE" && -f "$LOCAL_SOURCE/repositories/bitrix-gt/custom_bitrix_setup.sh" ]]; then
-    DB_ENGINE="$DB_ENGINE" bash "$LOCAL_SOURCE/repositories/bitrix-gt/custom_bitrix_setup.sh"
+if [[ -f "$SETUP_SCRIPT" ]]; then
+    DB_ENGINE="$DB_ENGINE" BS_VENDOR_DIR="$VENDOR_DIR_MENU" bash "$SETUP_SCRIPT"
 else
-    DB_ENGINE="$DB_ENGINE" bash -c "$(curl -sL $SETUP_BITRIX_DEBIAN_URL)"
+    echo "Ошибка: не найден custom_bitrix_setup.sh ($SETUP_SCRIPT)" >&2
+    exit 1
 fi
+
+rm -rf "$DEST_DIR_MENU/DebianBitrixVM"
 
 if [[ ! -f /root/.bitrix_env ]]; then
     echo "Ошибка: /root/.bitrix_env не создан — установка окружения Bitrix не завершилась." >&2
@@ -176,24 +209,6 @@ if ! mysql --defaults-file=/root/.my.cnf -e "SELECT 1" >/dev/null 2>&1; then
 fi
 
 site_user_password=$(generate_password 24)
-
-# Устанавливаем меню vm_menu
-if [[ -n "$LOCAL_SOURCE" && -d "$LOCAL_SOURCE/vm_menu" ]]; then
-    echo "Копируем меню из локального исходника: $LOCAL_SOURCE/vm_menu"
-    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU"
-    rsync -a --delete "$LOCAL_SOURCE/vm_menu/" "$DEST_DIR_MENU/$DIR_NAME_MENU/"
-else
-    # Клонируем репозиторий с меню vm_menu
-    rm -rf "$DEST_DIR_MENU/DebianBitrixVM"
-    git clone --branch=$BRANCH --depth 1 --filter=blob:none --sparse $REPO_URL "$DEST_DIR_MENU/DebianBitrixVM"
-    cd "$DEST_DIR_MENU/DebianBitrixVM"
-    git sparse-checkout set $DIR_NAME_MENU
-
-    # Переносим vm_menu в /root и чистим репозиторий
-    rm -rf $DEST_DIR_MENU/$DIR_NAME_MENU
-    mv -f $DIR_NAME_MENU $DEST_DIR_MENU
-    rm -rf "$DEST_DIR_MENU/DebianBitrixVM"
-fi
 
 cd $DEST_DIR_MENU
 

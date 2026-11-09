@@ -1,3 +1,7 @@
 ---
 # defaults file for create_site
 
+# Сокет MySQL: подключение модулей mysql_* идёт через него, а не по TCP.
+# При skip_name_resolve=ON (наша конфигурация) TCP-подключение от 127.0.0.1
+# не сопоставляется с root@localhost и модуль падает с ошибкой 1130.
+mysql_socket: /var/run/mysqld/mysqld.sock

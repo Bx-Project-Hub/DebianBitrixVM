@@ -131,6 +131,17 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 
 Пресет бірінші сәйкес шек бойынша таңдалады; мәжбүрлеп — `config.sh` ішіндегі `BS_POSTGRES_PRESET`.
 
+## Кірістірілген тәуелділіктер (`vendor/`)
+
+Бұрын бөгде сайттардан жүктелетін барлық нәрсе репозиторийде — `vendor/`: nginx gzip/zstd
+модульдері (Debian-да жоқ), push&pull сервері, Bitrix-тің PHP/Nginx/Apache конфигурациялары,
+Bitrix орнату скрипттері, Netdata орнату скрипті және репозиторий кілттері. Орнатушы `vendor`
+каталогын `/root/vendor` ішіне көшіреді, `vendor/CHECKSUMS.sha256` тексереді және файлдарды
+сол жерден алады; желі тек жергілікті көшірме болмағанда қолданылады. Жаңарту —
+`tools/vendor-fetch.sh`, тексеру — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org,
+MySQL/Percona және Netdata репозиторийлері әдейі сыртқы күйінде қалады: олар пакеттер мен
+қауіпсіздік жаңартуларының көзі, кірістірілген көшірмелер бірден ескіреді.
+
 ---
 
 # **Мәзірді жаңарту**

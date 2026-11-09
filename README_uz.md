@@ -131,6 +131,17 @@ Avtomatik yaratiladi: `bitrix` bazasi (`LC_CTYPE='C.UTF-8' TEMPLATE template0`),
 
 Preset birinchi mos chegaraga qarab tanlanadi; majburan — `config.sh` dagi `BS_POSTGRES_PRESET`.
 
+## Ichiga olingan bog‘liqliklar (`vendor/`)
+
+Ilgari begona saytlardan yuklanadigan hamma narsa repozitoriyda — `vendor/`: nginx gzip/zstd
+modullari (Debian-da yo‘q), push&pull serveri, Bitrix-ning PHP/Nginx/Apache konfiguratsiyalari,
+Bitrix o‘rnatish skriptlari, Netdata o‘rnatish skripti va repozitoriy kalitlari. O‘rnatuvchi
+`vendor` jildini `/root/vendor` ga ko‘chiradi, `vendor/CHECKSUMS.sha256` ni tekshiradi va
+fayllarni o‘sha yerdan oladi; tarmoq faqat mahalliy nusxa bo‘lmaganda ishlatiladi. Yangilash —
+`tools/vendor-fetch.sh`, tekshirish — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org,
+MySQL/Percona va Netdata repozitoriylari ataylab tashqi bo‘lib qoladi: ular paket va xavfsizlik
+yangilanishlari manbai, ichiga olingan nusxalar darhol eskirardi.
+
 ---
 
 # **Menyuni yangilash**
