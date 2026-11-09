@@ -1,6 +1,9 @@
 #!/bin/bash
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+source "$dir/i18n.sh"
+[[ -n "${BS_MENU_LANG_CURRENT:-}" ]] || i18n_init
+
 action_create_site(){
   pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_CREATE_SITE}")
 
@@ -102,22 +105,22 @@ function action_update_menu() {
 
     if (( update_rc != 0 )); then
         echo ""
-        echo "   Обновление не выполнено (код ${update_rc}). Текущее меню продолжает работать."
+        echo "   $(t upd.failed "${update_rc}")"
         press_any_key_to_return_menu
         return "$update_rc"
     fi
 
     if [[ ! -f "$menu_file" ]]; then
         echo ""
-        echo "   Обновление выполнено, но файл меню не найден: ${menu_file}"
-        echo "   Запустите меню вручную: /root/menu.sh"
+        echo "   $(t upd.no_file "${menu_file}")"
+        echo "   $(t upd.run_manual)"
         press_any_key_to_return_menu
         return 1
     fi
 
     # Не выходим в шелл: перезапускаем меню уже из обновлённой версии.
     echo ""
-    echo "   Перезапуск меню..."
+    echo "   $(t upd.restarting)"
     sleep 1
     exec "$menu_file"
 }
@@ -133,19 +136,19 @@ function action_change_php_version() {
     local path_php="/etc/php/${new_version_php}"
 
     if [[ -z "$new_version_php" ]]; then
-        echo "Ошибка: не указана версия PHP."
+        echo "$(t php.no_version)"
         press_any_key_to_return_menu
         return 1
     fi
 
     if ! ls /etc/apt/sources.list.d/sury-php.list >/dev/null 2>&1; then
-        echo "Ошибка: не подключён репозиторий deb.sury.org (/etc/apt/sources.list.d/sury-php.list)." >&2
-        echo "Установите окружение через install_full_environment.sh." >&2
+        echo "$(t php.no_repo)" >&2
+        echo "$(t php.install_env)" >&2
         press_any_key_to_return_menu
         return 1
     fi
 
-    echo -e "\n   Установка PHP ${new_version_php}...\n"
+    echo -e "\n   $(t php.installing "${new_version_php}")\n"
 
     local install_php="${BS_PHP_INSTALL_TEMPLATE[*]}"
     install_php="${install_php//VER#0.0/${new_version_php}}"
@@ -154,7 +157,7 @@ function action_change_php_version() {
 
     # shellcheck disable=SC2086
     if ! apt-get install -y ${install_php}; then
-        echo -e "\n   Ошибка: не удалось установить PHP ${new_version_php}." >&2
+        echo -e "\n   $(t php.install_failed "${new_version_php}")" >&2
         press_any_key_to_return_menu
         return 1
     fi
@@ -172,7 +175,7 @@ function action_change_php_version() {
             rsync -a --force "${tmp_dir}/debian/php.d/" "${path_php}/mods-available/"
         fi
     else
-        echo "   Предупреждение: не удалось скачать конфигурацию Bitrix (debian.zip)."
+        echo "   $(t php.cant_download_configs)"
     fi
     rm -rf "${tmp_dir}"
 
@@ -188,7 +191,7 @@ function action_change_php_version() {
     done
 
     if ! a2enmod "php${new_version_php}" >/dev/null 2>&1; then
-        echo -e "\n   Ошибка: не удалось включить mod_php ${new_version_php} для Apache." >&2
+        echo -e "\n   $(t php.cant_enable_mod "${new_version_php}")" >&2
         press_any_key_to_return_menu
         return 1
     fi
@@ -204,7 +207,7 @@ function action_change_php_version() {
     systemctl restart "${BS_SERVICE_APACHE_NAME}"
     systemctl restart "${BS_SERVICE_NGINX_NAME}"
 
-    echo -e "\n   Готово. Активная версия PHP: $(php -r 'echo PHP_VERSION;' 2>/dev/null || echo 'не определена')."
+    echo -e "\n   $(t php.done "$(php -r 'echo PHP_VERSION;' 2>/dev/null || t common.undefined)")"
     press_any_key_to_return_menu
 }
 action_get_lets_encrypt_certificate(){
@@ -244,11 +247,11 @@ action_emulate_bitrix_vm(){
   clear;
 
   if [[ -n "${!BS_VAR_NAME_BVM}" ]]; then
-      echo "   Эмуляция BitrixVM отключена (удалена переменная ${BS_VAR_NAME_BVM}).";
+      echo "   $(t emul.off "${BS_VAR_NAME_BVM}")";
       sed -i "/export ${BS_VAR_NAME_BVM}/d" "$BS_VAR_PATH_FILE_BVM"
   else
       echo "export ${BS_VAR_NAME_BVM}=\"${BS_VAR_VALUE_BVM}\"" | tee -a "$BS_VAR_PATH_FILE_BVM" > /dev/null
-      echo "   Эмуляция BitrixVM включена (${BS_VAR_NAME_BVM}=${BS_VAR_VALUE_BVM}).";
+      echo "   $(t emul.on "${BS_VAR_NAME_BVM}" "${BS_VAR_VALUE_BVM}")";
   fi
 
   systemctl restart "$BS_SERVICE_APACHE_NAME"
@@ -285,7 +288,7 @@ action_install_or_delete_sphinx(){
   case "$sphinx_action" in
     install) sphinx_action="INSTALL" ;;
     delete)  sphinx_action="DELETE" ;;
-    *) echo "Ошибка: неизвестное действие для Sphinx: ${sphinx_action}" >&2; return 1 ;;
+    *) echo "$(t action.unknown_sphinx "${sphinx_action}")" >&2; return 1 ;;
   esac
 
   ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
@@ -305,7 +308,7 @@ action_install_or_delete_netdata(){
   case "$netdata_action" in
     install) netdata_action="INSTALL" ;;
     delete)  netdata_action="DELETE" ;;
-    *) echo "Ошибка: неизвестное действие для Netdata: ${netdata_action}" >&2; return 1 ;;
+    *) echo "$(t action.unknown_netdata "${netdata_action}")" >&2; return 1 ;;
   esac
 
   ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
@@ -326,7 +329,7 @@ action_install_or_delete_file_conversion_server(){
   case "$file_conversion_server_action" in
     install) file_conversion_server_action="INSTALL" ;;
     delete)  file_conversion_server_action="DELETE" ;;
-    *) echo "Ошибка: неизвестное действие для сервера конвертации: ${file_conversion_server_action}" >&2; return 1 ;;
+    *) echo "$(t action.unknown_conv "${file_conversion_server_action}")" >&2; return 1 ;;
   esac
 
   ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \

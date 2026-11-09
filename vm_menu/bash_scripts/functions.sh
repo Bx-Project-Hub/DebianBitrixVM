@@ -1,6 +1,9 @@
 #!/bin/bash
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+source "$dir/i18n.sh"
+# Если меню запущено через menu.sh, язык уже выбран там; при прямом запуске — выбираем здесь.
+[[ -n "${BS_MENU_LANG_CURRENT:-}" ]] || i18n_init
 source "$dir/utils.sh"
 source "$dir/actions.sh"
 
@@ -24,9 +27,11 @@ main_menu(){
 
     do_load_menu
 
-    local msg_menu_emulate_bitrix_vm="Включить эмуляцию BitrixVM (переменная ${BS_VAR_NAME_BVM})"
+    local msg_menu_emulate_bitrix_vm
     if [[ -n "${!BS_VAR_NAME_BVM}" ]]; then
-      msg_menu_emulate_bitrix_vm="Выключить эмуляцию BitrixVM (текущая версия: ${!BS_VAR_NAME_BVM})"
+      msg_menu_emulate_bitrix_vm="$(t menu.item_emulate_off "${!BS_VAR_NAME_BVM}")"
+    else
+      msg_menu_emulate_bitrix_vm="$(t menu.item_emulate_on "${BS_VAR_NAME_BVM}")"
     fi
 
     local msg_new_version_menu=""
@@ -34,17 +39,13 @@ main_menu(){
     if [ -f "/tmp/new_version_menu.tmp" ]; then
       local nv
       nv=$(cat /tmp/new_version_menu.tmp)
-      msg_new_version_menu="\e[33m
-          Доступна новая версия меню Debian BitrixVM.
-          Текущая версия: ${BS_VERSION_MENU} → новая: ${nv}
-          Ссылка: \e]8;;${BS_REPOSITORY_URL}\a${BS_REPOSITORY_URL}\e]8;;\a
-          Обновить: команда \"update_menu\" или пункт \"U\" в меню.\n\e[0m"
-      update_menu_action="Доступно обновление меню: введите \"update_menu\" или выберите пункт \"U\".";
+      msg_new_version_menu="$(t menu.new_version "$BS_VERSION_MENU" "$nv" "$BS_REPOSITORY_URL" "$BS_REPOSITORY_URL")"
+      update_menu_action="$(t menu.update_action)"
     fi
 
     echo ""
-    echo -e "   ${C_BOLD}${C_CYAN}Debian BitrixVM ${BS_VERSION_MENU}${C_RESET} ${C_GREY}— управление окружением Bitrix${C_RESET}"
-    echo -e "   ${C_GREY}ОС:${C_RESET} ${OS_DESCRIPTION}   ${C_DIM}|${C_RESET}   ${C_GREY}PHP:${C_RESET} ${C_BOLD}${C_GREEN}${CURRENT_PHP_VERSION:-не определена}${C_RESET}   ${C_DIM}|${C_RESET}   ${C_GREY}MySQL:${C_RESET} ${C_BOLD}${C_GREEN}${CURRENT_MYSQL_VERSION:-не определена}${C_RESET}"
+    echo -e "   ${C_BOLD}${C_CYAN}Debian BitrixVM ${BS_VERSION_MENU}${C_RESET} ${C_GREY}$(t menu.tagline)${C_RESET}"
+    echo -e "   ${C_GREY}$(t menu.label_os)${C_RESET} ${OS_DESCRIPTION}   ${C_DIM}|${C_RESET}   ${C_GREY}PHP:${C_RESET} ${C_BOLD}${C_GREEN}${CURRENT_PHP_VERSION:-$(t common.undefined)}${C_RESET}   ${C_DIM}|${C_RESET}   ${C_GREY}MySQL:${C_RESET} ${C_BOLD}${C_GREEN}${CURRENT_MYSQL_VERSION:-$(t common.undefined)}${C_RESET}"
     if [ "$BS_SHOW_IP_CURRENT_SERVER_IN_MENU" = true ]; then
       echo -e "   ${C_GREY}${CURRENT_SERVER_IP}${C_RESET}"
     fi
@@ -52,42 +53,42 @@ main_menu(){
     echo ""
     render_environment_panel
     echo ""
-    echo -e "   ${C_GREY}Сервисы:${C_RESET} $(service_badge "$BS_SERVICE_NGINX_NAME")  $(service_badge "$BS_SERVICE_APACHE_NAME")  $(service_badge "$BS_MYSQL_SERVICE_NAME")"
+    echo -e "   ${C_GREY}$(t menu.services)${C_RESET} $(service_badge "$BS_SERVICE_NGINX_NAME")  $(service_badge "$BS_SERVICE_APACHE_NAME")  $(service_badge "$BS_MYSQL_SERVICE_NAME")"
     echo -e "             $(service_badge "$BS_REDIS_SERVICE_NAME")  $(service_badge "$BS_PUSH_SERVER_SERVICE_NAME")\n"
     echo -e "${msg_new_version_menu}"
 
-    echo -e "   ${C_BOLD}${C_BLUE}Сайты${C_RESET}"
-    echo -e "     ${C_YELLOW}1)${C_RESET} Список сайтов ${C_GREY}(каталоги, тип, HTTPS, document root)${C_RESET}"
-    echo -e "     ${C_YELLOW}2)${C_RESET} Создать сайт ${C_GREY}(собственное ядро или ссылки на общее ядро)${C_RESET}"
-    echo -e "     ${C_YELLOW}3)${C_RESET} Удалить сайт ${C_GREY}(каталог, конфигурация, база данных)${C_RESET}"
+    echo -e "   ${C_BOLD}${C_BLUE}$(t menu.section_sites)${C_RESET}"
+    echo -e "     ${C_YELLOW}1)${C_RESET} $(t menu.item_sites) ${C_GREY}$(t menu.item_sites_hint)${C_RESET}"
+    echo -e "     ${C_YELLOW}2)${C_RESET} $(t menu.item_add) ${C_GREY}$(t menu.item_add_hint)${C_RESET}"
+    echo -e "     ${C_YELLOW}3)${C_RESET} $(t menu.item_delete) ${C_GREY}$(t menu.item_delete_hint)${C_RESET}"
     echo ""
-    echo -e "   ${C_BOLD}${C_BLUE}Доступ и безопасность${C_RESET}"
-    echo -e "     ${C_YELLOW}4)${C_RESET} Выпустить сертификат Let's Encrypt для сайта"
-    echo -e "     ${C_YELLOW}5)${C_RESET} Включить или выключить редирект HTTP → HTTPS"
+    echo -e "   ${C_BOLD}${C_BLUE}$(t menu.section_access)${C_RESET}"
+    echo -e "     ${C_YELLOW}4)${C_RESET} $(t menu.item_ssl)"
+    echo -e "     ${C_YELLOW}5)${C_RESET} $(t menu.item_redirect)"
     echo ""
-    echo -e "   ${C_BOLD}${C_BLUE}Окружение${C_RESET}"
-    echo -e "     ${C_YELLOW}6)${C_RESET} Сменить версию PHP ${C_GREY}(текущая: ${CURRENT_PHP_VERSION:-не определена})${C_RESET}"
-    echo -e "     ${C_YELLOW}7)${C_RESET} Настроить SMTP для отправки писем"
-    echo -e "     ${C_YELLOW}8)${C_RESET} Установить или удалить дополнения ${C_GREY}(Sphinx, конвертер файлов, Netdata)${C_RESET}"
+    echo -e "   ${C_BOLD}${C_BLUE}$(t menu.section_env)${C_RESET}"
+    echo -e "     ${C_YELLOW}6)${C_RESET} $(t menu.item_php) ${C_GREY}$(t menu.item_php_hint "${CURRENT_PHP_VERSION:-$(t common.undefined)}")${C_RESET}"
+    echo -e "     ${C_YELLOW}7)${C_RESET} $(t menu.item_smtp)"
+    echo -e "     ${C_YELLOW}8)${C_RESET} $(t menu.item_addons) ${C_GREY}$(t menu.item_addons_hint)${C_RESET}"
     echo -e "     ${C_YELLOW}9)${C_RESET} ${msg_menu_emulate_bitrix_vm}"
     echo ""
-    echo -e "   ${C_BOLD}${C_BLUE}Сервер${C_RESET}"
-    echo -e "     ${C_YELLOW}A)${C_RESET} Обновить пакеты системы ${C_GREY}(apt update && apt upgrade)${C_RESET}"
-    echo -e "     ${C_YELLOW}R)${C_RESET} Перезагрузить сервер"
-    echo -e "     ${C_YELLOW}P)${C_RESET} Выключить сервер"
+    echo -e "   ${C_BOLD}${C_BLUE}$(t menu.section_server)${C_RESET}"
+    echo -e "     ${C_YELLOW}A)${C_RESET} $(t menu.item_update_pkgs) ${C_GREY}$(t menu.item_update_pkgs_hint)${C_RESET}"
+    echo -e "     ${C_YELLOW}R)${C_RESET} $(t menu.item_reboot)"
+    echo -e "     ${C_YELLOW}P)${C_RESET} $(t menu.item_poweroff)"
     if [ -f "/tmp/new_version_menu.tmp" ]; then
-      echo -e "     ${C_YELLOW}U)${C_RESET} Обновить меню до новой версии"
+      echo -e "     ${C_YELLOW}U)${C_RESET} $(t menu.item_menu_new)"
     else
-      echo -e "     ${C_YELLOW}U)${C_RESET} Обновить меню ${C_GREY}(переустановить текущую версию)${C_RESET}"
+      echo -e "     ${C_YELLOW}U)${C_RESET} $(t menu.item_menu_current) ${C_GREY}$(t menu.item_menu_current_hint)${C_RESET}"
     fi
     echo ""
-    echo -e "     ${C_YELLOW}H)${C_RESET} Подробная справка по пунктам меню"
-    echo -e "     ${C_YELLOW}0)${C_RESET} Выход"
+    echo -e "     ${C_YELLOW}H)${C_RESET} $(t menu.item_help)"
+    echo -e "     ${C_YELLOW}0)${C_RESET} $(t menu.item_exit)"
     echo -e "\n"
     if [ -n "${update_menu_action}" ]; then
       echo -e "\e[33m   ${update_menu_action}\e[0m"
     fi
-    echo -n "Введите команду: "
+    echo -n "   $(t common.enter_command) "
     read -r command
 
     case "$command" in
@@ -107,7 +108,7 @@ main_menu(){
      "H"|"h"|"?") show_help ;;
      "DELETE_SITE") delete_site ;;
      0|z|q) exit ;;
-     *) echo -e "\n   Ошибка: неизвестная команда \"${command}\". Введите H для справки."; sleep 2 ;;
+     *) echo -e "\n   $(t common.unknown_command "${command}")"; sleep 2 ;;
     esac
     done
 }
@@ -117,13 +118,13 @@ menu_install_extensions(){
     until [[ "$command" == "0" ]]; do
     clear
 
-    echo -e "\n   Дополнительные компоненты\n"
-    echo "     1) Sphinx — полнотекстовый поиск (пакет ${BS_SPHINX_PACKAGE})"
-    echo "     2) Сервер конвертации файлов (LibreOffice + RabbitMQ + transformer)"
-    echo "     3) Netdata — мониторинг ресурсов сервера"
-    echo "     0) Вернуться в главное меню"
+    echo -e "\n   $(t ext.title)\n"
+    echo "     1) $(t ext.sphinx "${BS_SPHINX_PACKAGE}")"
+    echo "     2) $(t ext.converter)"
+    echo "     3) $(t ext.netdata)"
+    echo "     0) $(t common.back_main)"
     echo ""
-    echo -n "   Введите команду: "
+    echo -n "   $(t common.enter_command) "
     read -r command
 
     case "$command" in
@@ -131,7 +132,7 @@ menu_install_extensions(){
      "2") install_file_conversion_server ;;
      "3") install_netdata ;;
      0|z|q) return ;;
-     *) echo "   Ошибка: неизвестная команда."; sleep 2 ;;
+     *) echo "   $(t common.unknown_command_short)"; sleep 2 ;;
     esac
     done
 }
@@ -158,12 +159,12 @@ function is_valid_email() {
 
 # Выбор сайта из списка. Результат — в переменной SELECTED_SITE.
 function choose_site() {
-    local prompt="${1:-Выберите сайт}"
+    local prompt="${1:-$(t sites.choose_default)}"
     local choice i
 
     get_sites_array
     if [[ ${#SITES_LIST[@]} -eq 0 ]]; then
-        echo -e "\n   Сайты не найдены в ${BS_PATH_SITES}."
+        echo -e "\n   $(t sites.none_in "${BS_PATH_SITES}")"
         return 1
     fi
 
@@ -172,11 +173,11 @@ function choose_site() {
         printf '   %2d) %-32s (%s)\n' "$((i + 1))" "${SITES_LIST[$i]}" "$(get_site_type "${SITES_LIST[$i]}")"
     done
     echo ""
-    read -r -p "   ${prompt} (номер, 0 — отмена): " choice
+    read -r -p "   $(t sites.choose_suffix "${prompt}" "$(t common.cancel_hint)"): " choice
 
     [[ -z "$choice" || "$choice" == "0" ]] && return 1
     if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#SITES_LIST[@]} )); then
-        echo "   Ошибка: неверный номер."
+        echo "   $(t sites.invalid_number)"
         return 1
     fi
 
@@ -186,7 +187,7 @@ function choose_site() {
 
 function add_site() {
     clear
-    echo -e "\n   Меню → Создание сайта\n"
+    echo -e "\n   $(t add.title)\n"
 
     local domain="" mode="full" path_site_from_links=""
     local db_name="" db_user="" db_password=""
@@ -195,25 +196,25 @@ function add_site() {
     local mode_choice base
 
     while true; do
-        read -r -p "   Домен сайта (например, example.ru; 0 — отмена): " domain
+        read -r -p "   $(t add.domain_prompt "$(t common.cancel_hint)"): " domain
         [[ "$domain" == "0" ]] && return
         if is_valid_domain "$domain"; then
             break
         fi
-        echo "   Ошибка: некорректный домен. Пример: example.ru"
+        echo "   $(t add.invalid_domain)"
     done
 
     if [ -e "${BS_PATH_SITES}/${domain}" ]; then
-        echo -e "\n   Ошибка: каталог ${BS_PATH_SITES}/${domain} уже существует."
+        echo -e "\n   $(t add.dir_exists "${BS_PATH_SITES}/${domain}")"
         press_any_key_to_return_menu
         return
     fi
 
     echo ""
-    echo "   Режим создания:"
-    echo "     1) full — собственное ядро Bitrix в каталоге сайта (для нового сайта)"
-    echo "     2) link — символические ссылки на ядро существующего сайта (мультисайтовость)"
-    read_by_def "   Выберите режим [1]: " mode_choice "1"
+    echo "   $(t add.mode_title)"
+    echo "     1) $(t add.mode_full)"
+    echo "     2) $(t add.mode_link)"
+    read_by_def "   $(t add.mode_prompt)" mode_choice "1"
 
     case "$mode_choice" in
         2|link) mode="link" ;;
@@ -221,9 +222,9 @@ function add_site() {
     esac
 
     if [[ "$mode" == "link" ]]; then
-        read_by_def "   Путь к сайту-источнику ядра [${BS_PATH_DEFAULT_SITE}]: " path_site_from_links "$BS_PATH_DEFAULT_SITE"
+        read_by_def "   $(t add.source_prompt "${BS_PATH_DEFAULT_SITE}")" path_site_from_links "$BS_PATH_DEFAULT_SITE"
         if [ ! -d "${path_site_from_links}/bitrix" ]; then
-            echo -e "\n   Ошибка: в ${path_site_from_links} нет каталога bitrix."
+            echo -e "\n   $(t add.no_bitrix "${path_site_from_links}")"
             press_any_key_to_return_menu
             return
         fi
@@ -232,16 +233,16 @@ function add_site() {
         db_name="${base}"
         db_user="${base}_u"
 
-        read_by_def "   Имя базы данных [${db_name}]: " db_name "$db_name"
-        read_by_def "   Пользователь базы данных [${db_user}]: " db_user "$db_user"
+        read_by_def "   $(t add.db_name_prompt "${db_name}")" db_name "$db_name"
+        read_by_def "   $(t add.db_user_prompt "${db_user}")" db_user "$db_user"
 
         if db_exists "$db_name"; then
-            echo -e "\n   Ошибка: база данных ${db_name} уже существует."
+            echo -e "\n   $(t add.db_exists "${db_name}")"
             press_any_key_to_return_menu
             return
         fi
         if user_exists "$db_user"; then
-            echo -e "\n   Ошибка: пользователь MySQL ${db_user} уже существует."
+            echo -e "\n   $(t add.user_exists "${db_user}")"
             press_any_key_to_return_menu
             return
         fi
@@ -250,39 +251,43 @@ function add_site() {
     fi
 
     echo ""
-    if confirm_action "Выпустить сертификат Let's Encrypt после создания сайта?"; then
+    if confirm_action "$(t add.confirm_ssl)"; then
         ssl_lets_encrypt="Y"
         while true; do
-            read -r -p "   E-mail для Let's Encrypt: " ssl_lets_encrypt_email
+            read -r -p "   $(t le.email_prompt)" ssl_lets_encrypt_email
             if is_valid_email "$ssl_lets_encrypt_email"; then
                 break
             fi
-            echo "   Ошибка: некорректный e-mail."
+            echo "   $(t common.invalid_email)"
         done
-        if confirm_action "Выпустить сертификат также для www.${domain}?"; then
+        if confirm_action "$(t add.confirm_www "${domain}")"; then
             ssl_lets_encrypt_www="Y"
         fi
     fi
 
-    if confirm_action "Включить редирект HTTP → HTTPS?"; then
+    if confirm_action "$(t add.confirm_redirect)"; then
         redirect_to_https="Y"
     fi
 
     echo ""
-    echo "   Проверьте параметры:"
-    echo "     Домен:        ${domain}"
-    echo "     Режим:        ${mode}"
+    echo "   $(t common.check_params)"
+    echo "     $(t add.param_domain)        ${domain}"
+    echo "     $(t add.param_mode)        ${mode}"
     if [[ "$mode" == "link" ]]; then
-        echo "     Ядро сайта:   ${path_site_from_links}"
+        echo "     $(t add.param_core)   ${path_site_from_links}"
     else
-        echo "     База данных:  ${db_name} (пользователь ${db_user})"
+        echo "     $(t add.param_db)  $(t add.param_db_value "${db_name}" "${db_user}")"
     fi
-    echo "     Let's Encrypt: ${ssl_lets_encrypt}${ssl_lets_encrypt_email:+ (${ssl_lets_encrypt_email}, www: ${ssl_lets_encrypt_www})}"
-    echo "     HTTPS-редирект: ${redirect_to_https}"
+    if [[ -n "$ssl_lets_encrypt_email" ]]; then
+        echo "     $(t add.param_ssl) $(t add.param_ssl_value_full "${ssl_lets_encrypt}" "${ssl_lets_encrypt_email}" "${ssl_lets_encrypt_www}")"
+    else
+        echo "     $(t add.param_ssl) $(t add.param_ssl_value "${ssl_lets_encrypt}")"
+    fi
+    echo "     $(t add.param_redirect) ${redirect_to_https}"
     echo ""
 
-    if ! confirm_action "Создать сайт ${domain}?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t add.confirm_create "${domain}")"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -292,10 +297,10 @@ function add_site() {
 
 function delete_site() {
     clear
-    echo -e "\n   Меню → Удаление сайта\n"
-    echo "   Будут удалены каталог сайта, конфигурации Nginx/Apache и (для режима full) база данных."
+    echo -e "\n   $(t del.title)\n"
+    echo "   $(t del.warning)"
 
-    if ! choose_site "Какой сайт удалить"; then
+    if ! choose_site "$(t del.choose)"; then
         press_any_key_to_return_menu
         return
     fi
@@ -314,17 +319,17 @@ function delete_site() {
     fi
 
     echo ""
-    echo "   Сайт:      ${site}"
-    echo "   Каталог:   ${full_path_site}"
-    echo "   Тип:       ${type}"
+    printf '   %-12s %s\n' "$(t del.param_site)" "$site"
+    printf '   %-12s %s\n' "$(t del.param_dir)" "$full_path_site"
+    printf '   %-12s %s\n' "$(t del.param_type)" "$type"
     if [[ -n "$db_name" ]]; then
-        echo "   База:      ${db_name} (пользователь ${db_user:-неизвестен})"
+        printf '   %-12s %s\n' "$(t del.param_db)" "$(t del.param_db_value "$db_name" "${db_user:-$(t common.unknown)}")"
     fi
     echo ""
-    read -r -p "   Для подтверждения введите имя сайта (${site}): " confirm_text
+    read -r -p "   $(t del.confirm_prompt "${site}")" confirm_text
 
     if [[ "$confirm_text" != "$site" ]]; then
-        echo "   Отменено."
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -334,11 +339,10 @@ function delete_site() {
 
 function get_lets_encrypt_certificate() {
     clear
-    echo -e "\n   Меню → Сертификат Let's Encrypt\n"
-    echo "   Сертификат выпускается по протоколу HTTP-01: домен должен уже указывать на этот сервер,"
-    echo "   а порт 80 — быть доступен извне."
+    echo -e "\n   $(t le.title)\n"
+    echo "   $(t le.http01)"
 
-    if ! choose_site "Для какого сайта выпустить сертификат"; then
+    if ! choose_site "$(t le.choose)"; then
         press_any_key_to_return_menu
         return
     fi
@@ -348,23 +352,23 @@ function get_lets_encrypt_certificate() {
     local email="" is_www="N" redirect_to_https="N"
 
     while true; do
-        read -r -p "   E-mail для Let's Encrypt: " email
+        read -r -p "   $(t le.email_prompt)" email
         if is_valid_email "$email"; then
             break
         fi
-        echo "   Ошибка: некорректный e-mail."
+        echo "   $(t common.invalid_email)"
     done
 
-    if confirm_action "Выпустить сертификат также для www.${domain}?"; then
+    if confirm_action "$(t add.confirm_www "${domain}")"; then
         is_www="Y"
     fi
 
-    if confirm_action "Включить редирект HTTP → HTTPS?"; then
+    if confirm_action "$(t add.confirm_redirect)"; then
         redirect_to_https="Y"
     fi
 
-    if ! confirm_action "Выпустить сертификат для ${domain}?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t le.confirm "${domain}")"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -374,9 +378,9 @@ function get_lets_encrypt_certificate() {
 
 function enable_or_disable_redirect_http_to_https() {
     clear
-    echo -e "\n   Меню → Редирект HTTP → HTTPS\n"
+    echo -e "\n   $(t redir.title)\n"
 
-    if ! choose_site "Для какого сайта изменить редирект"; then
+    if ! choose_site "$(t redir.choose)"; then
         press_any_key_to_return_menu
         return
     fi
@@ -386,17 +390,17 @@ function enable_or_disable_redirect_http_to_https() {
     local action="enable"
 
     if [ -f "${path_site}/.htsecure" ]; then
-        echo -e "\n   Сейчас редирект ВКЛЮЧЁН."
-        if ! confirm_action "Выключить редирект HTTP → HTTPS для ${site}?"; then
-            echo "   Отменено."
+        echo -e "\n   $(t redir.enabled)"
+        if ! confirm_action "$(t redir.confirm_disable "${site}")"; then
+            echo "   $(t common.cancelled)"
             press_any_key_to_return_menu
             return
         fi
         action="disable"
     else
-        echo -e "\n   Сейчас редирект ВЫКЛЮЧЕН."
-        if ! confirm_action "Включить редирект HTTP → HTTPS для ${site}?"; then
-            echo "   Отменено."
+        echo -e "\n   $(t redir.disabled)"
+        if ! confirm_action "$(t redir.confirm_enable "${site}")"; then
+            echo "   $(t common.cancelled)"
             press_any_key_to_return_menu
             return
         fi
@@ -408,13 +412,13 @@ function enable_or_disable_redirect_http_to_https() {
 
 function change_php_version() {
     clear
-    echo -e "\n   Меню → Смена версии PHP\n"
+    echo -e "\n   $(t php.title)\n"
 
     get_current_version_php
     get_available_version_php
 
     local new_version_php
-    read -r -p "   Введите версию PHP для установки (например, 8.3; 0 — отмена): " new_version_php
+    read -r -p "   $(t php.version_prompt "$(t common.cancel_hint)"): " new_version_php
 
     [[ -z "$new_version_php" || "$new_version_php" == "0" ]] && return
 
@@ -424,7 +428,7 @@ function change_php_version() {
         [[ "$new_version_php" == "$v" ]] && version_allowed=1 && break
     done
     if [[ $version_allowed -eq 0 ]]; then
-        echo -e "\n   Ошибка: версия ${new_version_php} не поддерживается меню (доступно: ${BS_PHP_SUPPORTED_VERSIONS[*]})."
+        echo -e "\n   $(t php.unsupported "${new_version_php}" "${BS_PHP_SUPPORTED_VERSIONS[*]}")"
         press_any_key_to_return_menu
         return
     fi
@@ -432,13 +436,13 @@ function change_php_version() {
     local candidate
     candidate="$(apt-cache policy "php${new_version_php}" 2>/dev/null | awk '/^[[:space:]]*Candidate:/{print $2; exit}')"
     if [[ -z "$candidate" || "$candidate" == "(none)" ]]; then
-        echo -e "\n   Ошибка: версия PHP ${new_version_php} недоступна в подключённых репозиториях."
+        echo -e "\n   $(t php.unavailable "${new_version_php}")"
         press_any_key_to_return_menu
         return
     fi
 
-    if ! confirm_action "Установить PHP ${new_version_php} и переключить Apache на неё?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t php.confirm "${new_version_php}")"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -450,13 +454,13 @@ function settings_smtp_sites() {
     local command=""
     until [[ "$command" == "0" ]]; do
         clear
-        echo -e "\n   Меню → SMTP\n"
-        echo "     1) Настроить или обновить SMTP-аккаунт для сайта"
-        echo "     2) Настроить общий аккаунт default (используется, если для сайта аккаунт не задан)"
-        echo "     3) Показать сохранённые аккаунты"
-        echo "     0) Вернуться в главное меню"
+        echo -e "\n   $(t smtp.title)\n"
+        echo "     1) $(t smtp.item_site)"
+        echo "     2) $(t smtp.item_default)"
+        echo "     3) $(t smtp.item_show)"
+        echo "     0) $(t common.back_main)"
         echo ""
-        echo -n "   Введите команду: "
+        echo -n "   $(t common.enter_command) "
         read -r command
 
         case "$command" in
@@ -464,22 +468,22 @@ function settings_smtp_sites() {
             2) smtp_configure_account "default" ;;
             3) smtp_show_accounts ;;
             0|z|q) return ;;
-            *) echo "   Ошибка: неизвестная команда."; sleep 2 ;;
+            *) echo "   $(t common.unknown_command_short)"; sleep 2 ;;
         esac
     done
 }
 
 function smtp_show_accounts() {
     clear
-    echo -e "\n   Сохранённые SMTP-аккаунты (${BS_SMTP_FILE_SITES_CONFIG}):\n"
+    echo -e "\n   $(t smtp.saved "${BS_SMTP_FILE_SITES_CONFIG}")\n"
 
     if [ ! -f "$BS_SMTP_FILE_SITES_CONFIG" ]; then
-        echo "   Файл не найден. Аккаунты ещё не настраивались."
+        echo "   $(t smtp.no_file)"
     else
         local accounts
         accounts="$(grep -E '^account[[:space:]]+' "$BS_SMTP_FILE_SITES_CONFIG" 2>/dev/null | awk '{print $2}' | sort -u)"
         if [ -z "$accounts" ]; then
-            echo "   Аккаунты не найдены."
+            echo "   $(t smtp.no_accounts)"
         else
             local account
             for account in $accounts; do
@@ -497,10 +501,10 @@ function smtp_configure_account() {
     local account_name=""
 
     clear
-    echo -e "\n   Меню → SMTP → Настройка аккаунта\n"
+    echo -e "\n   $(t smtp.configure_title)\n"
 
     if [[ "$mode" == "site" ]]; then
-        if ! choose_site "Для какого сайта настроить SMTP"; then
+        if ! choose_site "$(t smtp.choose_site)"; then
             press_any_key_to_return_menu
             return
         fi
@@ -510,53 +514,53 @@ function smtp_configure_account() {
     fi
 
     echo ""
-    echo "   Аккаунт: ${account_name}"
-    echo "   (это имя должно совпадать с доменом сайта: Apache передаёт его в msmtp-wrapper)"
+    echo "   $(t smtp.account "${account_name}")"
+    echo "   $(t smtp.account_note)"
     echo ""
 
     local smtp_host="" smtp_port="587" email_from="" is_auth="Y"
     local authentication_method="auto" login="" password="" enable_TLS="Y"
 
     while true; do
-        read -r -p "   SMTP-сервер (например, smtp.yandex.ru): " smtp_host
+        read -r -p "   $(t smtp.host_prompt)" smtp_host
         [[ -n "$smtp_host" ]] && break
     done
 
-    read_by_def "   Порт SMTP [587]: " smtp_port "587"
+    read_by_def "   $(t smtp.port_prompt)" smtp_port "587"
 
     local default_from="noreply@${account_name}"
     [[ "$account_name" == "default" ]] && default_from="noreply@localhost"
-    read_by_def "   Адрес отправителя [${default_from}]: " email_from "$default_from"
+    read_by_def "   $(t smtp.from_prompt "${default_from}")" email_from "$default_from"
 
-    if confirm_action "Требуется авторизация на SMTP-сервере?"; then
+    if confirm_action "$(t smtp.confirm_auth)"; then
         is_auth="Y"
-        read_by_def "   Метод авторизации (auto/plain/login/cram-md5) [auto]: " authentication_method "auto"
-        read -r -p "   Логин: " login
-        read -r -s -p "   Пароль: " password
+        read_by_def "   $(t smtp.auth_method_prompt)" authentication_method "auto"
+        read -r -p "   $(t smtp.login_prompt)" login
+        read -r -s -p "   $(t smtp.password_prompt)" password
         echo ""
     else
         is_auth="N"
     fi
 
-    if ! confirm_action "Использовать TLS?"; then
+    if ! confirm_action "$(t smtp.confirm_tls)"; then
         enable_TLS="N"
     fi
 
     echo ""
-    echo "   Проверьте параметры:"
-    echo "     Аккаунт:     ${account_name}"
-    echo "     Сервер:      ${smtp_host}:${smtp_port}"
-    echo "     От:          ${email_from}"
+    echo "   $(t common.check_params)"
+    printf '     %-14s %s\n' "$(t smtp.param_account)" "${account_name}"
+    printf '     %-14s %s\n' "$(t smtp.param_server)" "${smtp_host}:${smtp_port}"
+    printf '     %-14s %s\n' "$(t smtp.param_from)" "${email_from}"
     if [[ "$is_auth" == "Y" ]]; then
-        echo "     Авторизация: включена (логин ${login}, метод ${authentication_method})"
+        printf '     %-14s %s\n' "$(t smtp.param_auth)" "$(t smtp.param_auth_on "${login}" "${authentication_method}")"
     else
-        echo "     Авторизация: выключена"
+        printf '     %-14s %s\n' "$(t smtp.param_auth)" "$(t smtp.param_auth_off)"
     fi
-    echo "     TLS:         ${enable_TLS}"
+    printf '     %-14s %s\n' "$(t smtp.param_tls)" "${enable_TLS}"
     echo ""
 
-    if ! confirm_action "Сохранить настройки SMTP?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t smtp.confirm_save)"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -566,22 +570,22 @@ function smtp_configure_account() {
 
 function install_sphinx() {
     clear
-    echo -e "\n   Меню → Sphinx (полнотекстовый поиск)\n"
-    echo "     1) Установить Sphinx"
-    echo "     2) Удалить Sphinx"
-    echo "     0) Назад"
-    echo -n "   Введите команду: "
+    echo -e "\n   $(t sphinx.title)\n"
+    echo "     1) $(t sphinx.install)"
+    echo "     2) $(t sphinx.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
     local command
     read -r command
 
     case "$command" in
         1)
-            if confirm_action "Установить Sphinx (${BS_SPHINX_PACKAGE})?"; then
+            if confirm_action "$(t sphinx.confirm_install "${BS_SPHINX_PACKAGE}")"; then
                 action_install_or_delete_sphinx install
             fi
             ;;
         2)
-            if confirm_action "Удалить Sphinx?"; then
+            if confirm_action "$(t sphinx.confirm_delete)"; then
                 action_install_or_delete_sphinx delete
             fi
             ;;
@@ -590,22 +594,22 @@ function install_sphinx() {
 
 function install_netdata() {
     clear
-    echo -e "\n   Меню → Netdata (мониторинг)\n"
-    echo "     1) Установить Netdata"
-    echo "     2) Удалить Netdata"
-    echo "     0) Назад"
-    echo -n "   Введите команду: "
+    echo -e "\n   $(t netdata.title)\n"
+    echo "     1) $(t netdata.install)"
+    echo "     2) $(t netdata.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
     local command
     read -r command
 
     case "$command" in
         1)
-            if confirm_action "Установить Netdata?"; then
+            if confirm_action "$(t netdata.confirm_install)"; then
                 action_install_or_delete_netdata install
             fi
             ;;
         2)
-            if confirm_action "Удалить Netdata?"; then
+            if confirm_action "$(t netdata.confirm_delete)"; then
                 action_install_or_delete_netdata delete
             fi
             ;;
@@ -614,14 +618,14 @@ function install_netdata() {
 
 function install_file_conversion_server() {
     clear
-    echo -e "\n   Меню → Сервер конвертации файлов\n"
-    echo "   Компоненты: LibreOffice, RabbitMQ, transformer (служба обработки файлов)."
-    echo "   Требуется установленный сайт с ядром Bitrix."
+    echo -e "\n   $(t conv.title)\n"
+    echo "   $(t conv.note)"
+    echo "   $(t conv.need_site)"
     echo ""
-    echo "     1) Установить"
-    echo "     2) Удалить"
-    echo "     0) Назад"
-    echo -n "   Введите команду: "
+    echo "     1) $(t conv.install)"
+    echo "     2) $(t conv.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
     local command
     read -r command
     local action=""
@@ -632,7 +636,7 @@ function install_file_conversion_server() {
         *) return ;;
     esac
 
-    if ! choose_site "Для какого сайта выполнить действие"; then
+    if ! choose_site "$(t conv.choose)"; then
         press_any_key_to_return_menu
         return
     fi
@@ -640,8 +644,14 @@ function install_file_conversion_server() {
     domain="$SELECTED_SITE"
     full_path_site="${BS_PATH_SITES}/${domain}"
 
-    if ! confirm_action "Выполнить «${action}» сервера конвертации для ${domain}?"; then
-        echo "   Отменено."
+    local action_label
+    case "$action" in
+        install) action_label="$(t conv.action_install)" ;;
+        *)       action_label="$(t conv.action_delete)" ;;
+    esac
+
+    if ! confirm_action "$(t conv.confirm "${action_label}" "${domain}")"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -651,73 +661,15 @@ function install_file_conversion_server() {
 
 function show_help() {
     clear
-    cat <<'HELP'
-
-   Справка по меню Debian BitrixVM
-   ==============================
-
-   САЙТЫ
-   1) Список сайтов — каталоги в /var/www/html, тип (full/link), признак
-      «сайт по умолчанию», наличие HTTPS-редиректа и полный путь к document root.
-      full — у сайта собственное ядро Bitrix; link — символические ссылки на
-      общее ядро (каталоги local, bitrix, upload, images).
-
-   2) Создать сайт — создаёт каталог, конфигурации Nginx и Apache, при режиме full
-      базу данных и пользователя MySQL, генерирует .settings.php и dbconn.php,
-      при необходимости переводит агенты Bitrix на CRON и выпускает сертификат.
-
-   3) Удалить сайт — удаляет каталог сайта, конфигурации Nginx/Apache, а для
-      режима full — базу данных и пользователя MySQL. Требуется ввести имя сайта.
-
-   ДОСТУП И БЕЗОПАСНОСТЬ
-   4) Сертификат Let's Encrypt — выпуск по HTTP-01. Домен должен указывать на
-      сервер, порт 80 должен быть открыт.
-   5) Редирект HTTP → HTTPS — включает или выключает перенаправление на HTTPS
-      (файл-маркер .htsecure в каталоге сайта).
-
-   ОКРУЖЕНИЕ
-   6) Смена версии PHP — доустанавливает выбранную версию из репозитория
-      deb.sury.org и переключает Apache и CLI (update-alternatives).
-   7) SMTP — аккаунты в /var/www/html/.msmtprc. Apache передаёт имя аккаунта
-      в msmtp-wrapper (обычно это домен сайта). Аккаунт default используется,
-      если аккаунт сайта не найден.
-   8) Дополнения — Sphinx, сервер конвертации файлов, Netdata.
-   9) Эмуляция BitrixVM — переменная BITRIX_VA_VER в /etc/apache2/envvars
-      (нужна некоторым решениям маркетплейса).
-
-   СЕРВЕР
-   A) Обновление пакетов — apt update && apt upgrade.
-   R) Перезагрузка. P) Выключение. U) Обновление меню.
-
-   ШАПКА МЕНЮ
-   Панель «Состояние сервера» показывает load average, загрузку CPU, память,
-   диск и аптайм. Значения окрашены по порогам: до 70% — зелёный,
-   70–89% — жёлтый, от 90% — красный.
-
-   Панель «Установлено» подсказывает, что уже развёрнуто на сервере:
-   сайты (тип full/link, пометка default), срок действия сертификата
-   Let's Encrypt, версию и состояние push&pull и установленные дополнения
-   (Sphinx, Netdata, RabbitMQ). Сертификаты подсвечиваются по остатку дней:
-   меньше 14 — красный, меньше 30 — жёлтый.
-
-   Настройки в /root/vm_menu/bash_scripts/config.sh:
-     BS_STATUS_PANEL        — вкл/выкл панель состояния (true/false);
-     BS_STATUS_PANEL_SITES  — вкл/выкл панель «Установлено»;
-     BS_STATUS_MAX_SITES    — сколько сайтов перечислять (остальные «и ещё N»);
-     BS_STATUS_PANEL_WIDTH  — ширина панелей в символах;
-     BS_CPU_SAMPLE_MS       — окно замера CPU в миллисекундах (0 — без замера);
-     BS_USE_COLOR           — вкл/выкл цвета (можно отключить через NO_COLOR=1);
-     BS_SHOW_IP_CURRENT_SERVER_IN_MENU — показывать интерфейсы и IP.
-
-HELP
+    i18n_help_text
 
     press_any_key_to_return_menu
 }
 
 function update_server() {
     clear
-    if ! confirm_action "Обновить пакеты системы (apt update && apt upgrade)?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t upd.confirm_pkgs)"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -726,8 +678,8 @@ function update_server() {
 
 function update_menu() {
     clear
-    if ! confirm_action "Обновить меню (текущая версия сохранится в /root/backup_vm_menu)?"; then
-        echo "   Отменено."
+    if ! confirm_action "$(t upd.confirm_menu)"; then
+        echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
@@ -791,11 +743,11 @@ generate_random_hash() {
 function reboot_server() {
   clear
   while true; do
-    read -r -p $'   Do you really want to\e[33m RESTART \e[0mserver? (Y/N): ' answer
+    read -r -p "   $(t server.confirm_reboot)" answer
     case $answer in
         [Yy]* ) reboot; break;;
         [Nn]* ) break;;
-        * ) echo "   Please enter Y or N.";;
+        * ) echo "   $(t server.enter_yn)";;
     esac
   done
 }
@@ -803,11 +755,11 @@ function reboot_server() {
 function power_off_server() {
   clear
   while true; do
-    read -r -p $'   Do you really want to\e[33m SHUT DOWN \e[0mserver? (Y/N): ' answer
+    read -r -p "   $(t server.confirm_poweroff)" answer
     case $answer in
         [Yy]* ) poweroff; break;;
         [Nn]* ) break;;
-        * ) echo "   Please enter Y or N.";;
+        * ) echo "   $(t server.enter_yn)";;
     esac
   done
 }

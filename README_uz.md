@@ -37,6 +37,7 @@ Bitrix muhiti boshqaruvi uchun menyu, **Debian 12 / Debian 13** uchun moslashtir
   ```bash
   update_menu
   ```
+- **Ikki interfeys tili — rus va ingliz** — tizim lokaliga qarab avtomatik tanlanadi (`ru_*` → rus tili, boshqalari → ingliz tili); `BS_MENU_LANG` o‘zgaruvchisi bilan majburan belgilash mumkin.
 
 ---
 
@@ -142,6 +143,22 @@ Barcha parametrlarni quyidagi faylda o‘zgartirish mumkin:
 /root/vm_menu/bash_scripts/config.sh
 ```
 Standart holatda barcha sozlamalar optimal, ammo zarurat bo‘lsa, muhitni o‘zingizga moslashtirishingiz mumkin.
+
+### Interfeys tili
+
+Menyu ikki tilli: rus va ingliz. Til tizim lokaliga qarab avtomatik tanlanadi:
+`ru_RU.UTF-8` (yoki har qanday `ru_*`) — rus tili; boshqa har qanday, jumladan `uz_UZ.UTF-8`
+va `C.UTF-8` — ingliz tili.
+
+Majburan tanlash — muhit o‘zgaruvchisi yoki `config.sh` faylidagi `BS_MENU_LANG` parametri:
+
+```bash
+BS_MENU_LANG=en /root/menu.sh   # rus lokali serverda ingliz tili
+BS_MENU_LANG=ru /root/menu.sh   # ingliz lokali serverda rus tili
+```
+
+Interfeysning barcha satrlari bitta faylda saqlanadi — `/root/vm_menu/bash_scripts/i18n.sh`
+(`MSG_RU` va `MSG_EN` lug‘atlari).
 
 ---
 

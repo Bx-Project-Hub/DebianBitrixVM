@@ -37,6 +37,7 @@ Based on the project [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix
   ```bash
   update_menu
   ```
+- **Two interface languages — Russian and English** — selected automatically from the system locale (`ru_*` → Russian, any other → English); can be forced with the `BS_MENU_LANG` variable.
 
 ---
 
@@ -142,6 +143,20 @@ All parameters can be modified in the file:
 /root/vm_menu/bash_scripts/config.sh
 ```
 By default, everything is pre-configured, but you can adjust the environment as needed.
+
+### Interface language
+
+The menu is bilingual: Russian and English. The language is selected automatically from the system locale:
+`ru_RU.UTF-8` (or any `ru_*`) — Russian; any other locale, including `C.UTF-8` and `en_US.UTF-8` — English.
+
+To force it, use the environment variable or the `BS_MENU_LANG` parameter in `config.sh`:
+
+```bash
+BS_MENU_LANG=en /root/menu.sh   # English on a server with a Russian locale
+BS_MENU_LANG=ru /root/menu.sh   # Russian on a server with an English locale
+```
+
+All interface strings live in one file — `/root/vm_menu/bash_scripts/i18n.sh` (dictionaries `MSG_RU` and `MSG_EN`).
 
 ---
 

@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.3.3"
+BS_VERSION_MENU="2.4.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -35,6 +35,12 @@ BS_DOWNLOAD_BITRIX_INSTALL_FILES_NEW_SITE=(
 )
 BS_TIMEOUT_DOWNLOAD_BITRIX_INSTALL_FILES_NEW_SITE=30
 BS_SHOW_IP_CURRENT_SERVER_IN_MENU=true
+
+# Язык интерфейса меню
+# auto — по локали системы: ru_* → русский, любая другая (включая C/C.UTF-8) → английский.
+# Можно задать жёстко: BS_MENU_LANG="ru" или BS_MENU_LANG="en";
+# переопределяется переменной окружения: BS_MENU_LANG=en /root/menu.sh
+BS_MENU_LANG="${BS_MENU_LANG:-auto}"
 
 # Оформление меню (шапка)
 BS_USE_COLOR=true              # false — отключить ANSI-цвета (например, при выводе в лог)

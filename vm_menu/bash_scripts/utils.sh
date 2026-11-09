@@ -101,7 +101,7 @@ function get_site_db_data() {
 list_sites(){
   ARR_ALL_DIR_SITES_DATA=()
   ARR_ALL_DIR_SITES=()
-  echo -e "   Сайты в ${BS_PATH_SITES}:\n"
+  echo -e "   $(t sites.in_path "${BS_PATH_SITES}")\n"
 
   fill_array() {
     local index=0
@@ -110,17 +110,17 @@ list_sites(){
     for tmp_dir in "${SITES_LIST[@]}"; do
       ARR_ALL_DIR_SITES+=("$tmp_dir")
       ARR_ALL_DIR_SITES_DATA["${index}_dir"]="$tmp_dir"
-      ARR_ALL_DIR_SITES_DATA[$index,is_default]="нет"
-      ARR_ALL_DIR_SITES_DATA[$index,is_https]="нет"
+      ARR_ALL_DIR_SITES_DATA[$index,is_default]="$(t common.no)"
+      ARR_ALL_DIR_SITES_DATA[$index,is_https]="$(t common.no)"
       ARR_ALL_DIR_SITES_DATA[$index,type]="$(get_site_type "$tmp_dir")"
       ARR_ALL_DIR_SITES_DATA[$index,doc_root]="$BS_PATH_SITES/$tmp_dir"
 
       if [[ "$tmp_dir" == "$BS_DEFAULT_SITE_NAME" ]]; then
-        ARR_ALL_DIR_SITES_DATA[$index,is_default]="да"
+        ARR_ALL_DIR_SITES_DATA[$index,is_default]="$(t common.yes)"
       fi
 
       if [[ -f "$BS_PATH_SITES/$tmp_dir/.htsecure" ]]; then
-        ARR_ALL_DIR_SITES_DATA[$index,is_https]="да"
+        ARR_ALL_DIR_SITES_DATA[$index,is_https]="$(t common.yes)"
       fi
 
       ((index++))
@@ -145,7 +145,7 @@ list_sites(){
 
   print_table() {
     print_line
-    printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" "Каталог сайта" "Тип" "По умолч." "HTTPS" "Document root"
+    printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" "$(t sites.col_dir)" "$(t sites.col_type)" "$(t sites.col_default)" "$(t sites.col_https)" "$(t sites.col_docroot)"
     print_line
 
     local index=0
@@ -161,9 +161,9 @@ list_sites(){
     done
 
     if [[ ${TOTAL_SITES:-0} -eq 0 ]]; then
-      echo "   Сайты не найдены."
+      echo "   $(t sites.none)"
     else
-      echo -e "\n   Тип: full — собственное ядро сайта, link — символические ссылки на общее ядро."
+      echo -e "\n   $(t sites.type_note)"
     fi
   }
 
@@ -174,12 +174,12 @@ list_sites(){
 
 press_any_key_to_return_menu(){
     echo -e "\n";
-    read -r -p "   Нажмите Enter, чтобы вернуться в меню. " _
+    read -r -p "   $(t common.press_enter)" _
 }
 
 # Запрос подтверждения действия (y/n, по умолчанию — нет).
 function confirm_action() {
-    local message="${1:-Выполнить действие?}"
+    local message="${1:-$(t common.confirm_default)}"
     local answer
     read -r -p "   ${message} (y/N): " answer
     [[ "$answer" =~ ^[YyNn]?$ ]] || return 1
@@ -189,8 +189,8 @@ function confirm_action() {
 # Проверка, что меню запущено от root.
 function require_root() {
     if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
-        echo "Ошибка: меню нужно запускать от пользователя root." >&2
-        echo "Используйте: sudo /root/menu.sh" >&2
+        echo "$(t common.need_root)" >&2
+        echo "$(t common.need_root_hint)" >&2
         exit 1
     fi
 }
@@ -229,7 +229,7 @@ function get_ip_current_server() {
     fi
   done
 
-  CURRENT_SERVER_IP="Сетевые интерфейсы и IP:\n"
+  CURRENT_SERVER_IP="$(t status.interfaces)"
 
   while read -r line; do
       iface=$(echo "$line" | awk '{print $1}')
@@ -281,7 +281,7 @@ function get_cpu_count() {
 
 # Три значения load average: "0.14 0.09 0.05"
 function get_load_average() {
-    [ -r /proc/loadavg ] || { printf 'н/д н/д н/д'; return; }
+    [ -r /proc/loadavg ] || { printf '%s %s %s' "$(t common.na)" "$(t common.na)" "$(t common.na)"; return; }
     awk '{print $1, $2, $3}' /proc/loadavg
 }
 
@@ -307,11 +307,13 @@ function get_cpu_usage_percent() {
 
 # Память: "1.2 / 5.8 ГБ (21%)"
 function get_memory_usage() {
-    [ -r /proc/meminfo ] || { printf 'н/д'; return; }
-    awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{
-        if (t == 0) { printf "н/д"; exit }
+    [ -r /proc/meminfo ] || { printf '%s' "$(t common.na)"; return; }
+    local gb
+    gb="$(t common.gb)"
+    awk -v na="$(t common.na)" -v gb="$gb" '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{
+        if (t == 0) { printf "%s", na; exit }
         used = t - a;
-        printf "%.1f / %.1f ГБ (%d%%)", used/1048576, t/1048576, (used*100)/t
+        printf "%.1f / %.1f %s (%d%%)", used/1048576, t/1048576, gb, (used*100)/t
     }' /proc/meminfo
 }
 
@@ -329,14 +331,14 @@ function get_disk_usage_root() {
 function get_uptime_short() {
     local s d h m
     s="$(awk '{print int($1)}' /proc/uptime 2>/dev/null)"
-    [ -z "$s" ] && { printf 'н/д'; return; }
+    [ -z "$s" ] && { printf '%s' "$(t common.na)"; return; }
     d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
     if (( d > 0 )); then
-        printf '%d д %d ч %d мин' "$d" "$h" "$m"
+        t common.dhms "$d" "$h" "$m"
     elif (( h > 0 )); then
-        printf '%d ч %d мин' "$h" "$m"
+        t common.hm "$h" "$m"
     else
-        printf '%d мин' "$m"
+        t common.m "$m"
     fi
 }
 
@@ -363,27 +365,36 @@ function render_status_panel() {
     [ "${BS_STATUS_PANEL:-true}" = true ] || return 0
     [ -n "${STATUS_PANEL_READY:-}" ] || return 0
 
-    panel_top " Состояние сервера "
+    panel_top "$(t status.title)"
 
-    local load_plain="Загрузка   ${STATUS_LOAD}   ${STATUS_CPU_COUNT} CPU"
+    # Подписи выравниваются по ширине 11 символов: plain-строка нужна для расчёта
+    # ширины панели, colored — тот же текст с ANSI-цветами.
+    local l_load l_cpu l_mem l_disk l_uptime
+    printf -v l_load '%-11s' "$(t status.load)"
+    printf -v l_cpu '%-11s' "CPU"
+    printf -v l_mem '%-11s' "$(t status.mem)"
+    printf -v l_disk '%-11s' "$(t status.disk)"
+    printf -v l_uptime '%-11s' "$(t status.uptime)"
+
+    local load_plain="${l_load}${STATUS_LOAD}   ${STATUS_CPU_COUNT} CPU"
     status_panel_row "$load_plain" \
-        "${C_GREY}Загрузка${C_RESET}   ${C_BOLD}${STATUS_LOAD}${C_RESET}   ${C_GREY}${STATUS_CPU_COUNT} CPU${C_RESET}"
+        "${C_GREY}${l_load}${C_RESET}${C_BOLD}${STATUS_LOAD}${C_RESET}   ${C_GREY}${STATUS_CPU_COUNT} CPU${C_RESET}"
 
-    local cpu_plain="CPU        ${STATUS_CPU_PCT}%"
+    local cpu_plain="${l_cpu}${STATUS_CPU_PCT}%"
     status_panel_row "$cpu_plain" \
-        "${C_GREY}CPU${C_RESET}        $(severity_color "$STATUS_CPU_PCT")${C_BOLD}${STATUS_CPU_PCT}%${C_RESET}"
+        "${C_GREY}${l_cpu}${C_RESET}$(severity_color "$STATUS_CPU_PCT")${C_BOLD}${STATUS_CPU_PCT}%${C_RESET}"
 
-    local mem_plain="Память     ${STATUS_MEM}"
+    local mem_plain="${l_mem}${STATUS_MEM}"
     status_panel_row "$mem_plain" \
-        "${C_GREY}Память${C_RESET}     $(severity_color "${STATUS_MEM_PCT:-0}")${STATUS_MEM}${C_RESET}"
+        "${C_GREY}${l_mem}${C_RESET}$(severity_color "${STATUS_MEM_PCT:-0}")${STATUS_MEM}${C_RESET}"
 
-    local disk_plain="Диск /     ${STATUS_DISK}"
+    local disk_plain="${l_disk}${STATUS_DISK}"
     status_panel_row "$disk_plain" \
-        "${C_GREY}Диск /${C_RESET}     $(severity_color "${STATUS_DISK_PCT:-0}")${STATUS_DISK}${C_RESET}"
+        "${C_GREY}${l_disk}${C_RESET}$(severity_color "${STATUS_DISK_PCT:-0}")${STATUS_DISK}${C_RESET}"
 
-    local uptime_plain="Аптайм     ${STATUS_UPTIME}"
+    local uptime_plain="${l_uptime}${STATUS_UPTIME}"
     status_panel_row "$uptime_plain" \
-        "${C_GREY}Аптайм${C_RESET}     ${STATUS_UPTIME}"
+        "${C_GREY}${l_uptime}${C_RESET}${STATUS_UPTIME}"
 
     panel_bottom
 }
@@ -395,13 +406,13 @@ function collect_status_panel() {
     STATUS_LOAD="$(get_load_average)"
     STATUS_CPU_COUNT="$(get_cpu_count)"
     STATUS_CPU_PCT="$(get_cpu_usage_percent)"
-    [ -n "$STATUS_CPU_PCT" ] || STATUS_CPU_PCT="н/д"
+    [ -n "$STATUS_CPU_PCT" ] || STATUS_CPU_PCT="$(t common.na)"
 
     STATUS_MEM="$(get_memory_usage)"
     STATUS_MEM_PCT="$(printf '%s' "$STATUS_MEM" | sed -n 's/.*(\([0-9]\+\)%).*/\1/p')"
 
     STATUS_DISK="$(get_disk_usage_root)"
-    [ -n "$STATUS_DISK" ] || STATUS_DISK="н/д"
+    [ -n "$STATUS_DISK" ] || STATUS_DISK="$(t common.na)"
     STATUS_DISK_PCT="$(get_disk_usage_percent_root)"
 
     STATUS_UPTIME="$(get_uptime_short)"
@@ -534,9 +545,9 @@ function render_environment_panel() {
     [ "${BS_STATUS_PANEL_SITES:-true}" = true ] || return 0
     [ -n "${ENV_PANEL_READY:-}" ] || return 0
 
-    panel_top " Установлено "
+    panel_top "$(t env.title)"
 
-    status_panel_row "Сайты (${ENV_SITES_TOTAL})" "Сайты (${C_BOLD}${ENV_SITES_TOTAL}${C_RESET})"
+    status_panel_row "$(t env.sites "${ENV_SITES_TOTAL}")" "$(t env.sites "${C_BOLD}${ENV_SITES_TOTAL}${C_RESET}")"
 
     local line site type ssl_days is_default type_plain type_colored domain_padded
     for line in "${ENV_SITES_LINES[@]}"; do
@@ -546,16 +557,16 @@ function render_environment_panel() {
         type_plain="${type}"
         type_colored="${C_GREY}${type}${C_RESET}"
         if [ "${is_default:-0}" = "1" ]; then
-            type_plain="${type} · default"
-            type_colored="${C_GREY}${type} · ${C_CYAN}default${C_RESET}"
+            type_plain="${type} · $(t env.default)"
+            type_colored="${C_GREY}${type} · ${C_CYAN}$(t env.default)${C_RESET}"
         fi
 
         if [[ "$ssl_days" =~ ^-?[0-9]+$ ]]; then
-            ssl_plain="SSL ${ssl_days} дн."
-            ssl_colored="$(ssl_days_color "$ssl_days")SSL ${ssl_days} дн.${C_RESET}"
+            ssl_plain="$(t env.ssl_days "$ssl_days")"
+            ssl_colored="$(ssl_days_color "$ssl_days")$(t env.ssl_days "$ssl_days")${C_RESET}"
         else
-            ssl_plain="без SSL"
-            ssl_colored="${C_GREY}без SSL${C_RESET}"
+            ssl_plain="$(t env.no_ssl)"
+            ssl_colored="${C_GREY}$(t env.no_ssl)${C_RESET}"
         fi
 
         status_panel_row "  ${domain_padded} ${type_plain}   ${ssl_plain}" \
@@ -563,11 +574,11 @@ function render_environment_panel() {
     done
 
     if (( ${ENV_SITES_REST:-0} > 0 )); then
-        status_panel_row "  … и ещё ${ENV_SITES_REST}" "  ${C_GREY}… и ещё ${ENV_SITES_REST}${C_RESET}"
+        status_panel_row "  $(t env.and_more "${ENV_SITES_REST}")" "  ${C_GREY}$(t env.and_more "${ENV_SITES_REST}")${C_RESET}"
     fi
 
     if (( ENV_SITES_TOTAL == 0 )); then
-        status_panel_row "  сайтов нет" "  ${C_GREY}сайтов нет${C_RESET}"
+        status_panel_row "  $(t env.no_sites)" "  ${C_GREY}$(t env.no_sites)${C_RESET}"
     fi
 
     local push_version push_state push_color
@@ -581,11 +592,11 @@ function render_environment_panel() {
         "${C_GREY}Push&Pull${C_RESET}  ${push_version}  ${push_color}${push_state}${C_RESET}"
 
     if [ -n "${ENV_ADDONS:-}" ]; then
-        status_panel_row "Дополнения ${ENV_ADDONS}" \
-            "${C_GREY}Дополнения${C_RESET} ${ENV_ADDONS}"
+        status_panel_row "$(t env.addons "${ENV_ADDONS}")" \
+            "${C_GREY}$(t env.addons "${ENV_ADDONS}")${C_RESET}"
     else
-        status_panel_row "Дополнения не установлены" \
-            "${C_GREY}Дополнения не установлены${C_RESET}"
+        status_panel_row "$(t env.addons_none)" \
+            "${C_GREY}$(t env.addons_none)${C_RESET}"
     fi
 
     panel_bottom
@@ -598,18 +609,18 @@ function get_current_version_php() {
         version="$(php -r 'echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;' 2>/dev/null)"
     fi
 
-    echo -e "\n   Текущая версия PHP: ${version:-не определена}"
+    echo -e "\n   $(t php.current "${version:-$(t common.undefined)}")"
 }
 
 function get_available_version_php() {
-    echo -e "\n   Доступные для установки версии PHP:\n"
+    echo -e "\n   $(t php.available)\n"
 
     local versions
     versions="$(apt-cache search --names-only '^php8\.[0-9]+$' 2>/dev/null | awk '{print $1}' | sort -V -u)"
 
     if [[ -z "$versions" ]]; then
-        echo "   Не удалось получить список версий PHP (apt-cache search)."
-        echo "   Проверьте, что подключён репозиторий deb.sury.org."
+        echo "   $(t php.cant_list)"
+        echo "   $(t php.check_repo)"
     else
         local version
         for version in $versions; do

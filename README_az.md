@@ -37,6 +37,7 @@ Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 12 / Debian 13** üç
   ```bash
   update_menu
   ```
+- **İki interfeys dili — rus və ingilis** — sistem lokalına görə avtomatik seçilir (`ru_*` → rus dili, digərləri → ingilis dili); `BS_MENU_LANG` dəyişəni ilə məcburi təyin etmək olar.
 
 ---
 
@@ -142,6 +143,22 @@ Bütün parametrləri aşağıdakı faylda dəyişmək mümkündür:
 /root/vm_menu/bash_scripts/config.sh
 ```
 Varsayılan olaraq hər şey optimal şəkildə tənzimlənib, lakin ehtiyac yaranarsa, mühiti fərdi ehtiyaclarınıza uyğun tənzimləyə bilərsiniz.
+
+### İnterfeys dili
+
+Menyu ikidilli: rus və ingilis. Dil sistem lokalına görə avtomatik seçilir:
+`ru_RU.UTF-8` (və ya hər hansı `ru_*`) — rus dili; hər hansı digəri, o cümlədən `az_AZ.UTF-8`
+və `C.UTF-8` — ingilis dili.
+
+Məcburi seçim — mühit dəyişəni və ya `config.sh` faylındakı `BS_MENU_LANG` parametri:
+
+```bash
+BS_MENU_LANG=en /root/menu.sh   # rus lokalı olan serverdə ingilis dili
+BS_MENU_LANG=ru /root/menu.sh   # ingilis lokalı olan serverdə rus dili
+```
+
+Bütün interfeys sətirləri bir faylda saxlanılır — `/root/vm_menu/bash_scripts/i18n.sh`
+(`MSG_RU` və `MSG_EN` lüğətləri).
 
 ---
 

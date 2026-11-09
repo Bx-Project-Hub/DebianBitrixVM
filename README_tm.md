@@ -37,6 +37,7 @@ Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 12 / Debian 13** üçin uý
   ```bash
   update_menu
   ```
+- **Iki interfeýs dili — rus we iňlis** — ulgam lokalyna görä awtomatik saýlanýar (`ru_*` → rus dili, beýlekiler → iňlis dili); `BS_MENU_LANG` üýtgeýjisi bilen mejbury bellemek bolýar.
 
 ---
 
@@ -142,6 +143,22 @@ Menýu köp ugurdan sazlanmaga mümkinçilik berýär.
 /root/vm_menu/bash_scripts/config.sh
 ```
 Asyl ýagdaýda ähli zat öňünden gurlan, ýöne gerek bolsa, gurşawy özüňize laýyklykda düzedip bilersiňiz.
+
+### Interfeýs dili
+
+Menyu iki dilli: rus we iňlis. Dil ulgam lokalyna görä awtomatik saýlanýar:
+`ru_RU.UTF-8` (ýa-da islendik `ru_*`) — rus dili; beýleki islendik, şol sanda `tk_TM.UTF-8`
+we `C.UTF-8` — iňlis dili.
+
+Mejbury saýlaw — gurşaw üýtgeýjisi ýa-da `config.sh` faýlyndaky `BS_MENU_LANG` parametri:
+
+```bash
+BS_MENU_LANG=en /root/menu.sh   # rus lokalynyň serwerinde iňlis dili
+BS_MENU_LANG=ru /root/menu.sh   # iňlis lokalynyň serwerinde rus dili
+```
+
+Interfeýsiň ähli setirleri bir faýlda saklanýar — `/root/vm_menu/bash_scripts/i18n.sh`
+(`MSG_RU` we `MSG_EN` sözlükleri).
 
 ---
 
