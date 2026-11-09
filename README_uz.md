@@ -6,7 +6,7 @@
 
 # **Ma'lumot**
 Bitrix muhiti boshqaruvi uchun menyu, **Debian 12 / Debian 13** uchun moslashtirilgan. Asosiy maqsad — Debian 13 (trixie): loyiha zamonaviy Debian mashinalarida CentOS 9 muhitini almashtiradi.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) loyihasi asosida ishlab chiqilgan va **zamonaviy Debian 12–13 hamda Bitrix** uchun optimallashtirilgan.
+Muhit **1C-Bitrix rasmiy hujjatlari** asosida yig‘ilgan — [«Debian 13 uchun muhitni sozlash»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) kursi (paketlar, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — va Bitrix mahsulotlarining rasmiy tizim talablariga mos. Avtomatlashtirish **standart Ansible sxemasi** bo‘yicha qurilgan (`playbooks/` + `roles/`: `defaults`, `vars`, `tasks`, `meta`), faqat `ansible.builtin` modullari ishlatiladi, tashqi kolleksiyalarsiz.
 
 ---
 

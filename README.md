@@ -9,7 +9,11 @@
 Меню для управления окружением Bitrix на **Debian 12 и Debian 13**.  
 Основная целевая платформа — **Debian 13 (trixie)**: проект предназначен для замены окружения CentOS 9 на современных Debian-машинах.
 
-Основано на проекте [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), переработано под актуальные версии Debian и Bitrix.
+Окружение собрано по **официальной документации 1С-Битрикс** — курс [«Настройка окружения для Debian 13»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32)
+(пакеты, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — и по официальным
+системным требованиям к продуктам Bitrix. Структура автоматизации следует стандартной схеме
+**Ansible** (`playbooks/` + `roles/` с `defaults`, `vars`, `tasks`, `meta`), используются только
+модули `ansible.builtin`, без внешних коллекций.
 
 ---
 

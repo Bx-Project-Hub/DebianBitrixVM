@@ -6,7 +6,7 @@
 
 # **Information**
 A menu for managing the Bitrix environment, adapted for **Debian 12 / Debian 13**. Debian 13 (trixie) is the primary target: the project replaces the CentOS 9 environment on modern Debian machines.  
-Based on the project [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), improved and optimized for **modern versions of Debian 12–13 and Bitrix**.
+The environment follows the **official 1C-Bitrix documentation** — the [«Setting up an environment for Debian 13»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) course (packages, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — and the official Bitrix system requirements. Automation follows the **standard Ansible layout** (`playbooks/` + `roles/` with `defaults`, `vars`, `tasks`, `meta`) and uses only `ansible.builtin` modules, without external collections.
 
 ---
 

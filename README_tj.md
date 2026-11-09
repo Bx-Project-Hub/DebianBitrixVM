@@ -6,7 +6,7 @@
 
 # **Маълумот**
 Меню барои идоракунии муҳити Bitrix, ки барои **Debian 12 / Debian 13** мутобиқ карда шудааст. Ҳадафи асосӣ — Debian 13 (trixie): лоиҳа муҳити CentOS 9-ро дар мошинҳои муосири Debian иваз мекунад.  
-Дар асоси лоиҳаи [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) таҳия шуда, барои **Debian 12–13 ва Bitrix** оптимизатсия шудааст.
+Муҳит дар асоси **ҳуҷҷатгузории расмии 1С-Битрикс** ҷамъ оварда шудааст — курси [«Танзими муҳит барои Debian 13»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) (бастаҳо, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — ва талаботи расмии система барои маҳсулоти Bitrix. Автоматикунонӣ аз рӯи **схемаи стандартии Ansible** сохта шудааст (`playbooks/` + `roles/` бо `defaults`, `vars`, `tasks`, `meta`), танҳо модулҳои `ansible.builtin` истифода мешаванд, бе коллексияҳои беруна.
 
 ---
 

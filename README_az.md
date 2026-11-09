@@ -6,7 +6,7 @@
 
 # **Məlumat**
 Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 12 / Debian 13** üçün uyğunlaşdırılıb. Əsas hədəf — Debian 13 (trixie): layihə müasir Debian maşınlarında CentOS 9 mühitini əvəz edir.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) layihəsi əsasında hazırlanıb və **müasir Debian 12–13 və Bitrix** üçün optimallaşdırılıb.
+Mühit **1C-Bitrix rəsmi sənədləşməsinə** əsasən yığılıb — [«Debian 13 üçün mühitin quraşdırılması»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) kursu (paketlər, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — və Bitrix məhsullarının rəsmi sistem tələblərinə uyğundur. Avtomatlaşdırma **standart Ansible sxemi** ilə qurulub (`playbooks/` + `roles/`: `defaults`, `vars`, `tasks`, `meta`), yalnız `ansible.builtin` modulları istifadə olunur, xarici kolleksiyalar yoxdur.
 
 ---
 

@@ -6,7 +6,7 @@
 
 # **Maglumat**
 Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 12 / Debian 13** üçin uýgunlaşdyrylan. Esasy maksat — Debian 13 (trixie): taslama häzirki zaman Debian maşynlarynda CentOS 9 gurşawyny çalyşýar.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) taslamasynyň esasynda döredildi we **häzirki zaman Debian 12–13 we Bitrix** üçin optimizasiýa edildi.
+Gurşaw **1C-Bitrix resmi resminamalary** esasynda ýygnaldy — [«Debian 13 üçin gurşawy sazlamak»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) kursy (paketler, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — we Bitrix önümleriniň resmi ulgam talaplaryna laýyk. Awtomatlaşdyrma **standart Ansible shemasy** boýunça guruldy (`playbooks/` + `roles/`: `defaults`, `vars`, `tasks`, `meta`), diňe `ansible.builtin` modullary ulanylýar, daşarky kolleksiýalarysyz.
 
 ---
 

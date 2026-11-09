@@ -6,7 +6,7 @@
 
 # **Ақпарат**
 Bitrix ортасын басқаруға арналған мәзір, **Debian 12 / Debian 13** үшін бейімделген. Негізгі мақсат — Debian 13 (trixie): жоба заманауи Debian машиналарында CentOS 9 ортасын алмастырады.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) жобасы негізінде әзірленген және **заманауи Debian 12–13 және Bitrix** үшін оңтайландырылған.
+Орта **1С-Битрикс ресми құжаттамасы** бойынша жиналған — [«Debian 13 үшін ортаны баптау»](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32) курсы (пакеттер, Nginx, PHP, Apache, MySQL/MariaDB, PostgreSQL, Redis, push-server) — және Bitrix өнімдерінің ресми жүйелік талаптарына сай. Автоматтандыру **Ansible-дың стандартты схемасы** бойынша құрылған (`playbooks/` + `roles/`: `defaults`, `vars`, `tasks`, `meta`), тек `ansible.builtin` модульдері қолданылады, сыртқы коллекцияларсыз.
 
 ---
 
