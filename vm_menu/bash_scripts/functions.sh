@@ -14,6 +14,7 @@ function do_load_menu() {
     get_ip_current_server
   fi
   collect_status_panel
+  collect_environment_panel
 }
 
 main_menu(){
@@ -48,6 +49,8 @@ main_menu(){
       echo -e "   ${C_GREY}${CURRENT_SERVER_IP}${C_RESET}"
     fi
     render_status_panel
+    echo ""
+    render_environment_panel
     echo ""
     echo -e "   ${C_GREY}Сервисы:${C_RESET} $(service_badge "$BS_SERVICE_NGINX_NAME")  $(service_badge "$BS_SERVICE_APACHE_NAME")  $(service_badge "$BS_MYSQL_SERVICE_NAME")"
     echo -e "             $(service_badge "$BS_REDIS_SERVICE_NAME")  $(service_badge "$BS_PUSH_SERVER_SERVICE_NAME")\n"
@@ -690,9 +693,18 @@ function show_help() {
    Панель «Состояние сервера» показывает load average, загрузку CPU, память,
    диск и аптайм. Значения окрашены по порогам: до 70% — зелёный,
    70–89% — жёлтый, от 90% — красный.
+
+   Панель «Установлено» подсказывает, что уже развёрнуто на сервере:
+   сайты (тип full/link, пометка default), срок действия сертификата
+   Let's Encrypt, версию и состояние push&pull и установленные дополнения
+   (Sphinx, Netdata, RabbitMQ). Сертификаты подсвечиваются по остатку дней:
+   меньше 14 — красный, меньше 30 — жёлтый.
+
    Настройки в /root/vm_menu/bash_scripts/config.sh:
-     BS_STATUS_PANEL        — вкл/выкл панель (true/false);
-     BS_STATUS_PANEL_WIDTH  — ширина панели в символах;
+     BS_STATUS_PANEL        — вкл/выкл панель состояния (true/false);
+     BS_STATUS_PANEL_SITES  — вкл/выкл панель «Установлено»;
+     BS_STATUS_MAX_SITES    — сколько сайтов перечислять (остальные «и ещё N»);
+     BS_STATUS_PANEL_WIDTH  — ширина панелей в символах;
      BS_CPU_SAMPLE_MS       — окно замера CPU в миллисекундах (0 — без замера);
      BS_USE_COLOR           — вкл/выкл цвета (можно отключить через NO_COLOR=1);
      BS_SHOW_IP_CURRENT_SERVER_IN_MENU — показывать интерфейсы и IP.

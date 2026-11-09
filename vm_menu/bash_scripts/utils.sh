@@ -363,17 +363,7 @@ function render_status_panel() {
     [ "${BS_STATUS_PANEL:-true}" = true ] || return 0
     [ -n "${STATUS_PANEL_READY:-}" ] || return 0
 
-    local width="${BS_STATUS_PANEL_WIDTH:-52}"
-    local title=" Состояние сервера "
-    local fill=$(( width - ${#title} ))
-    (( fill < 2 )) && fill=2
-    local left=$(( fill / 2 ))
-    local right=$(( fill - left ))
-
-    printf '   %s┌%s%s%s%s%s%s┐%s\n' \
-        "$C_DIM" "$(repeat_char "$left")" "$C_RESET" \
-        "${C_BOLD}${C_CYAN}${title}${C_RESET}" \
-        "$C_DIM" "$(repeat_char "$right")" "$C_RESET"
+    panel_top " Состояние сервера "
 
     local load_plain="Загрузка   ${STATUS_LOAD}   ${STATUS_CPU_COUNT} CPU"
     status_panel_row "$load_plain" \
@@ -395,7 +385,7 @@ function render_status_panel() {
     status_panel_row "$uptime_plain" \
         "${C_GREY}Аптайм${C_RESET}     ${STATUS_UPTIME}"
 
-    printf '   %s└%s┘%s\n' "$C_DIM" "$(repeat_char "$width")" "$C_RESET"
+    panel_bottom
 }
 
 # Собираем данные панели (вызывается из do_load_menu раз за отрисовку).
@@ -417,6 +407,182 @@ function collect_status_panel() {
     STATUS_UPTIME="$(get_uptime_short)"
 
     STATUS_PANEL_READY=1
+}
+
+############################################################
+# Панель «Установлено»: сайты, сертификаты, push&pull, дополнения
+############################################################
+
+# Срок действия сертификата Let's Encrypt для домена — в днях. Пусто, если нет.
+function get_site_ssl_days() {
+    local domain="$1"
+    local pem="/etc/letsencrypt/live/${domain}/cert.pem"
+
+    [ -r "$pem" ] || return 0
+
+    local end_date end_epoch now_epoch
+    end_date="$(openssl x509 -in "$pem" -noout -enddate 2>/dev/null | cut -d= -f2)"
+    [ -n "$end_date" ] || return 0
+
+    end_epoch="$(date -d "$end_date" +%s 2>/dev/null)" || return 0
+    now_epoch="$(date +%s)"
+
+    printf '%s' "$(( (end_epoch - now_epoch) / 86400 ))"
+}
+
+# Цвет по остатку дней сертификата
+function ssl_days_color() {
+    local days="${1:-}"
+    [[ "$days" =~ ^-?[0-9]+$ ]] || { printf '%s' "$C_GREY"; return; }
+    if (( days < 14 )); then
+        printf '%s' "$C_RED"
+    elif (( days < 30 )); then
+        printf '%s' "$C_YELLOW"
+    else
+        printf '%s' "$C_GREEN"
+    fi
+}
+
+# Версия push-server из package.json установленного пакета
+function get_push_server_version() {
+    local f="/opt/push-server/package.json"
+    [ -r "$f" ] || return 0
+    awk -F'"' '/"version"/{print $4; exit}' "$f" 2>/dev/null
+}
+
+# Установленные дополнения (по наличию unit-файлов)
+function get_installed_addons() {
+    local addons=()
+    local units
+    units="$(systemctl list-unit-files --no-legend 2>/dev/null)"
+
+    printf '%s' "$units" | grep -q '^sphinxsearch\.service' && addons+=("Sphinx")
+    printf '%s' "$units" | grep -q '^netdata\.service'      && addons+=("Netdata")
+    if printf '%s' "$units" | grep -q '^rabbitmq-server\.service'; then
+        addons+=("RabbitMQ")
+    fi
+
+    if (( ${#addons[@]} == 0 )); then
+        printf ''
+    else
+        local IFS=', '
+        printf '%s' "${addons[*]}"
+    fi
+}
+
+# Собираем данные панели «Установлено»
+function collect_environment_panel() {
+    [ "${BS_STATUS_PANEL_SITES:-true}" = true ] || return 0
+
+    local max_sites="${BS_STATUS_MAX_SITES:-5}"
+
+    get_sites_array
+    ENV_SITES_TOTAL="${#SITES_LIST[@]}"
+    ENV_SITES_LINES=()
+
+    local site type ssl_days shown=0 is_default
+    for site in "${SITES_LIST[@]}"; do
+        (( shown >= max_sites )) && break
+        type="$(get_site_type "$site")"
+        ssl_days="$(get_site_ssl_days "$site")"
+        is_default=0
+        [ "$site" = "${BS_DEFAULT_SITE_NAME:-}" ] && is_default=1
+        ENV_SITES_LINES+=("${site}|${type}|${ssl_days}|${is_default}")
+        shown=$(( shown + 1 ))
+    done
+    ENV_SITES_REST=$(( ENV_SITES_TOTAL - shown ))
+
+    local push_version push_state
+    push_version="$(get_push_server_version)"
+    push_state="$(get_service_state "$BS_PUSH_SERVER_SERVICE_NAME")"
+    ENV_PUSH="${push_version:-?}|${push_state}"
+
+    ENV_ADDONS="$(get_installed_addons)"
+
+    ENV_PANEL_READY=1
+}
+
+# Универсальный верх панели
+function panel_top() {
+    local title="$1"
+    local width="${BS_STATUS_PANEL_WIDTH:-52}"
+    local fill=$(( width - ${#title} ))
+    (( fill < 2 )) && fill=2
+    local left=$(( fill / 2 ))
+    local right=$(( fill - left ))
+
+    printf '   %s┌%s%s%s%s%s%s┐%s\n' \
+        "$C_DIM" "$(repeat_char "$left")" "$C_RESET" \
+        "${C_BOLD}${C_CYAN}${title}${C_RESET}" \
+        "$C_DIM" "$(repeat_char "$right")" "$C_RESET"
+}
+
+# Универсальный низ панели
+function panel_bottom() {
+    local width="${BS_STATUS_PANEL_WIDTH:-52}"
+    printf '   %s└%s┘%s\n' "$C_DIM" "$(repeat_char "$width")" "$C_RESET"
+}
+
+# Панель «Установлено»: домены, сертификаты, push&pull, дополнения
+function render_environment_panel() {
+    [ "${BS_STATUS_PANEL_SITES:-true}" = true ] || return 0
+    [ -n "${ENV_PANEL_READY:-}" ] || return 0
+
+    panel_top " Установлено "
+
+    status_panel_row "Сайты (${ENV_SITES_TOTAL})" "Сайты (${C_BOLD}${ENV_SITES_TOTAL}${C_RESET})"
+
+    local line site type ssl_days is_default type_plain type_colored domain_padded
+    for line in "${ENV_SITES_LINES[@]}"; do
+        IFS='|' read -r site type ssl_days is_default <<< "$line"
+        domain_padded="$(printf '%-22.22s' "$site")"
+
+        type_plain="${type}"
+        type_colored="${C_GREY}${type}${C_RESET}"
+        if [ "${is_default:-0}" = "1" ]; then
+            type_plain="${type} · default"
+            type_colored="${C_GREY}${type} · ${C_CYAN}default${C_RESET}"
+        fi
+
+        if [[ "$ssl_days" =~ ^-?[0-9]+$ ]]; then
+            ssl_plain="SSL ${ssl_days} дн."
+            ssl_colored="$(ssl_days_color "$ssl_days")SSL ${ssl_days} дн.${C_RESET}"
+        else
+            ssl_plain="без SSL"
+            ssl_colored="${C_GREY}без SSL${C_RESET}"
+        fi
+
+        status_panel_row "  ${domain_padded} ${type_plain}   ${ssl_plain}" \
+            "  ${C_BOLD}${domain_padded}${C_RESET} ${type_colored}   ${ssl_colored}"
+    done
+
+    if (( ${ENV_SITES_REST:-0} > 0 )); then
+        status_panel_row "  … и ещё ${ENV_SITES_REST}" "  ${C_GREY}… и ещё ${ENV_SITES_REST}${C_RESET}"
+    fi
+
+    if (( ENV_SITES_TOTAL == 0 )); then
+        status_panel_row "  сайтов нет" "  ${C_GREY}сайтов нет${C_RESET}"
+    fi
+
+    local push_version push_state push_color
+    IFS='|' read -r push_version push_state <<< "${ENV_PUSH:-?|not-found}"
+    case "$push_state" in
+        active)          push_color="$C_GREEN" ;;
+        inactive|failed) push_color="$C_RED" ;;
+        *)               push_color="$C_YELLOW" ;;
+    esac
+    status_panel_row "Push&Pull  ${push_version}  ${push_state}" \
+        "${C_GREY}Push&Pull${C_RESET}  ${push_version}  ${push_color}${push_state}${C_RESET}"
+
+    if [ -n "${ENV_ADDONS:-}" ]; then
+        status_panel_row "Дополнения ${ENV_ADDONS}" \
+            "${C_GREY}Дополнения${C_RESET} ${ENV_ADDONS}"
+    else
+        status_panel_row "Дополнения не установлены" \
+            "${C_GREY}Дополнения не установлены${C_RESET}"
+    fi
+
+    panel_bottom
 }
 
 function get_current_version_php() {

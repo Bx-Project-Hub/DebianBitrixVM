@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.1.1"
+BS_VERSION_MENU="2.2.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -41,6 +41,8 @@ BS_USE_COLOR=true              # false — отключить ANSI-цвета (�
 BS_STATUS_PANEL=true           # панель состояния сервера в шапке меню
 BS_STATUS_PANEL_WIDTH=52       # ширина панели в символах
 BS_CPU_SAMPLE_MS=200           # окно замера загрузки CPU, мс (0 — не замерять, брать только load average)
+BS_STATUS_PANEL_SITES=true     # панель «Установлено»: сайты, SSL, push&pull, дополнения
+BS_STATUS_MAX_SITES=5          # сколько сайтов перечислять (остальные — «и ещё N»)
 
 # Bitrix agent configurations
 BS_BX_CRON_AGENTS_PATH_FILE_AFTER_DOCUMENT_ROOT="/bitrix/modules/main/tools/cron_events.php"
