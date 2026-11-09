@@ -142,6 +142,20 @@ barlamak — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percon
 repozitoriýalary bilgeşleýin daşarky galýar: olar paket we howpsuzlyk täzelenmeleriniň çeşmesi,
 içine alnan nusgalar derrew könelerdi.
 
+### Bütewiligi barlamak (SHA256)
+
+Her skriptiň, konfigurasiýanyň we paketiň barlag jemi bar. Manifestler repozitoriýada:
+`CHECKSUMS.sha256` (kök: gurnaýjy, täzeleýji, `tools/`, `repositories/`),
+`vm_menu/CHECKSUMS.sha256` (ählı menýu: `menu.sh`, `bash_scripts/`, `ansible/` pleýbuklary we
+rollary, şablonlar we konfigurasiýalar) we `vendor/CHECKSUMS.sha256` (içine alnan paketler we
+faýllar).
+
+Barlaglar awtomatik ýerine ýetirilýär: gurnama wagtynda (ähli manifestler boýunça `sha256sum -c`,
+nädogrylyk gurnamany togtadýar), menýuny täzelände (ýüklenen menýu işleýän nusgany çalyşmazdan
+öň barlanýar), içine alnan nginx `.deb` paketlerini gurmazdan öň we `vendor_get` içinde islendik
+içine alnan faýl ulanylmazdan öň. Manifestleri täzeden hasaplamak —
+`tools/checksums.sh --update`, barlamak — `tools/checksums.sh --check`.
+
 ---
 
 # **Menýuny täzeläň**

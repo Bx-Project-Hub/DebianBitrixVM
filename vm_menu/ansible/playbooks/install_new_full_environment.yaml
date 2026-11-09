@@ -148,6 +148,20 @@
         - libnginx-mod-http-zstd_0.1.1-2.gbp057a7d3~trixie_amd64.deb
       register: nginx_module_debs
 
+    # Контроль целостности: SHA256 локального .deb сверяется с vendor/CHECKSUMS.sha256
+    - name: Verifying bundled nginx module checksums
+      shell: |
+        set -e
+        cd "{{ vendor_dir | default('/root/vm_menu/vendor') }}"
+        rel="deb/$(basename "{{ item.stat.path }}")"
+        expected="$(awk -v f="$rel" '$2 == f { print $1 }' CHECKSUMS.sha256)"
+        [ -n "$expected" ] || { echo "CHECKSUMS.sha256: нет записи для $rel"; exit 1; }
+        actual="$(sha256sum "$rel" | awk '{print $1}')"
+        [ "$expected" = "$actual" ] || { echo "SHA256 не совпадает: $rel"; exit 1; }
+      loop: "{{ nginx_module_debs.results }}"
+      when: item.stat.exists
+      changed_when: false
+
     - name: Installing nginx modules from bundled packages
       apt:
         deb: "{{ item.stat.path }}"

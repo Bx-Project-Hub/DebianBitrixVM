@@ -143,6 +143,19 @@ local copy is missing. Refresh with `tools/vendor-fetch.sh`, verify with
 repositories stay external on purpose: they are package and security-update sources, and
 bundled copies would be outdated immediately.
 
+### Integrity checks (SHA256)
+
+Every script, config and package has a checksum. The manifests live in the repository:
+`CHECKSUMS.sha256` (root: installer, updater, `tools/`, `repositories/`),
+`vm_menu/CHECKSUMS.sha256` (the whole menu: `menu.sh`, `bash_scripts/`, `ansible/` playbooks,
+roles, templates and configs) and `vendor/CHECKSUMS.sha256` (bundled packages and files).
+
+Checks run automatically: during installation (`sha256sum -c` over all manifests, mismatch
+aborts the install), when updating the menu (downloaded menu is verified before replacing the
+working copy), before installing bundled nginx `.deb` packages, and in `vendor_get` before any
+bundled file is used. Refresh the manifests with `tools/checksums.sh --update`, verify with
+`tools/checksums.sh --check`.
+
 ---
 
 # **Menu Update**

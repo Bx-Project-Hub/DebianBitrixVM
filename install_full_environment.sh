@@ -156,7 +156,7 @@ else
     rm -rf "$DEST_DIR_MENU/DebianBitrixVM"
     git clone --branch=$BRANCH --depth 1 --filter=blob:none --sparse $REPO_URL "$DEST_DIR_MENU/DebianBitrixVM"
     cd "$DEST_DIR_MENU/DebianBitrixVM"
-    git sparse-checkout set "$DIR_NAME_MENU" "vendor" "repositories/bitrix-gt"
+    git sparse-checkout set "$DIR_NAME_MENU" "vendor" "repositories/bitrix-gt" "tools"
     rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU"
     mv -f "$DIR_NAME_MENU" "$DEST_DIR_MENU"
     rm -rf "$VENDOR_DIR_MENU"
@@ -164,11 +164,25 @@ else
     SETUP_SCRIPT="$DEST_DIR_MENU/DebianBitrixVM/repositories/bitrix-gt/custom_bitrix_setup.sh"
 fi
 
-# Проверяем целостность вендорных файлов (если контрольные суммы есть)
+# Проверяем целостность скриптов, конфигов и плейбуков меню
+if [[ -f "$DEST_DIR_MENU/$DIR_NAME_MENU/CHECKSUMS.sha256" ]]; then
+    echo "Проверка целостности меню (SHA256)..."
+    ( cd "$DEST_DIR_MENU/$DIR_NAME_MENU" && sha256sum -c CHECKSUMS.sha256 --quiet ) \
+        || { echo "Ошибка: контрольные суммы файлов меню не совпадают." >&2; exit 1; }
+fi
+
+# Проверяем целостность вендорных пакетов и файлов
 if [[ -f "$VENDOR_DIR_MENU/CHECKSUMS.sha256" ]]; then
     echo "Проверка вендорных файлов (SHA256)..."
     ( cd "$VENDOR_DIR_MENU" && sha256sum -c CHECKSUMS.sha256 --quiet ) \
         || { echo "Ошибка: контрольные суммы вендорных файлов не совпадают." >&2; exit 1; }
+fi
+
+# Проверяем скрипт установки окружения по корневому манифесту репозитория
+if [[ -f "$DEST_DIR_MENU/DebianBitrixVM/CHECKSUMS.sha256" ]]; then
+    echo "Проверка целостности скриптов установки (SHA256)..."
+    ( cd "$DEST_DIR_MENU/DebianBitrixVM" && sha256sum -c CHECKSUMS.sha256 --quiet ) \
+        || { echo "Ошибка: контрольные суммы скриптов установки не совпадают." >&2; exit 1; }
 fi
 
 # Запускаем скрипт установки окружения Bitrix (custom_bitrix_setup.sh).

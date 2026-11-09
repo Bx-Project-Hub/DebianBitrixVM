@@ -142,6 +142,20 @@ fayllarni o‘sha yerdan oladi; tarmoq faqat mahalliy nusxa bo‘lmaganda ishlat
 MySQL/Percona va Netdata repozitoriylari ataylab tashqi bo‘lib qoladi: ular paket va xavfsizlik
 yangilanishlari manbai, ichiga olingan nusxalar darhol eskirardi.
 
+### Butunlikni tekshirish (SHA256)
+
+Har bir skript, konfiguratsiya va paketning nazorat summasi bor. Manifestlar repozitoriyda:
+`CHECKSUMS.sha256` (ildiz: o‘rnatuvchi, yangilovchi, `tools/`, `repositories/`),
+`vm_menu/CHECKSUMS.sha256` (butun menyu: `menu.sh`, `bash_scripts/`, `ansible/` pleybuklari va
+rollari, shablonlar va konfiguratsiyalar) va `vendor/CHECKSUMS.sha256` (ichiga olingan paketlar
+va fayllar).
+
+Tekshirishlar avtomatik bajariladi: o‘rnatish paytida (barcha manifestlar bo‘yicha `sha256sum -c`,
+nomuvofiqlik o‘rnatishni to‘xtatadi), menyuni yangilashda (yuklangan menyu ishchi nusxani
+almashtirishdan oldin tekshiriladi), ichiga olingan nginx `.deb` paketlarini o‘rnatishdan oldin
+va `vendor_get` ichida har qanday ichiga olingan fayl ishlatilishidan oldin. Manifestlarni qayta
+hisoblash — `tools/checksums.sh --update`, tekshirish — `tools/checksums.sh --check`.
+
 ---
 
 # **Menyuni yangilash**

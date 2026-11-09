@@ -67,6 +67,14 @@ bash -n "$TMP_DIR/repo/$DIR_NAME_MENU/menu.sh" \
 bash -n "$TMP_DIR/repo/$DIR_NAME_MENU/bash_scripts/config.sh" \
     || fail "скачанный config.sh не проходит проверку синтаксиса"
 
+# Контроль целостности: сверяем SHA256 всех файлов меню с манифестом репозитория
+if [ -f "$TMP_DIR/repo/$DIR_NAME_MENU/CHECKSUMS.sha256" ]; then
+    ( cd "$TMP_DIR/repo/$DIR_NAME_MENU" && sha256sum -c CHECKSUMS.sha256 --quiet ) \
+        || fail "контрольные суммы меню не совпадают — обновление отменено"
+else
+    echo "Предупреждение: в репозитории нет $DIR_NAME_MENU/CHECKSUMS.sha256" >&2
+fi
+
 new_version="$(sed -n 's/^BS_VERSION_MENU="\(.*\)"$/\1/p' "$TMP_DIR/repo/$DIR_NAME_MENU/bash_scripts/config.sh" | head -n1)"
 
 # --- 3. Раскладываем новое меню рядом ---------------------------------------

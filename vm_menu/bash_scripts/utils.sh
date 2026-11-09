@@ -353,6 +353,17 @@ function vendor_get() {  # vendor_get <путь внутри vendor> <куда; 
     local rel="$1" dest="$2"
     local src="${BS_VENDOR_DIR:-/root/vm_menu/vendor}/${rel}"
     if [ -f "$src" ]; then
+        # Контроль целостности: сверяем SHA256 с vendor/CHECKSUMS.sha256
+        local manifest="${BS_VENDOR_DIR:-/root/vm_menu/vendor}/CHECKSUMS.sha256"
+        if [ -f "$manifest" ]; then
+            local expected actual
+            expected="$(awk -v f="$rel" '$2 == f { print $1 }' "$manifest")"
+            actual="$(sha256sum "$src" | awk '{print $1}')"
+            if [ -z "$expected" ] || [ "$expected" != "$actual" ]; then
+                echo "Ошибка: SHA256 не совпадает для ${rel}" >&2
+                return 1
+            fi
+        fi
         if [ "$dest" = "-" ]; then cat "$src"; else cp -f "$src" "$dest"; fi
         return 0
     fi

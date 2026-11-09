@@ -142,6 +142,21 @@ yoxlama — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percona
 repozitoriləri qəsdən xarici qalır: onlar paket və təhlükəsizlik yeniləmələrinin mənbəyidir,
 daxil edilmiş nüsxələr dərhal köhnələrdi.
 
+### Bütövlüyün yoxlanması (SHA256)
+
+Hər skript, konfiqurasiya və paketin yoxlama cəmi var. Manifestlər repozitoridədir:
+`CHECKSUMS.sha256` (kök: quraşdırıcı, yeniləyici, `tools/`, `repositories/`),
+`vm_menu/CHECKSUMS.sha256` (bütün menyu: `menu.sh`, `bash_scripts/`, `ansible/` pleybukları və
+rolları, şablonlar və konfiqurasiyalar) və `vendor/CHECKSUMS.sha256` (daxil edilmiş paketlər və
+fayllar).
+
+Yoxlamalar avtomatik aparılır: quraşdırma zamanı (bütün manifestlər üzrə `sha256sum -c`,
+uyğunsuzluq quraşdırmanı dayandırır), menyunun yenilənməsi zamanı (yüklənmiş menyu işçi
+nüsxəni əvəz etməzdən əvvəl yoxlanılır), daxil edilmiş nginx `.deb` paketlərinin quraşdırılmasından
+əvvəl və `vendor_get` daxilində hər hansı daxil edilmiş fayl istifadə olunmazdan əvvəl.
+Manifestləri yenidən hesablamaq — `tools/checksums.sh --update`, yoxlamaq —
+`tools/checksums.sh --check`.
+
 ---
 
 # **Menyunu yeniləmək**

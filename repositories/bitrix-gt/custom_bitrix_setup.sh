@@ -31,12 +31,31 @@ export DEBIAN_FRONTEND="noninteractive"
 BS_VENDOR_DIR="${BS_VENDOR_DIR:-/root/vm_menu/vendor}"
 BS_VENDOR_RAW_BASE="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/vendor"
 
+# Сверка SHA256 вендорного файла с vendor/CHECKSUMS.sha256
+vendor_verify() {  # vendor_verify <путь внутри vendor>
+    local rel="$1" manifest="${BS_VENDOR_DIR}/CHECKSUMS.sha256"
+    [ -f "$manifest" ] || return 0
+    local expected actual
+    expected="$(awk -v f="$rel" '$2 == f { print $1 }' "$manifest")"
+    if [ -z "$expected" ]; then
+        echo "vendor: в CHECKSUMS.sha256 нет записи для ${rel}" >&2
+        return 1
+    fi
+    actual="$(sha256sum "${BS_VENDOR_DIR}/${rel}" | awk '{print $1}')"
+    if [ "$expected" != "$actual" ]; then
+        echo "vendor: SHA256 не совпадает для ${rel}" >&2
+        return 1
+    fi
+    return 0
+}
+
 vendor_get() {  # vendor_get <путь внутри vendor> <куда положить; "-" = stdout>
     local rel="$1" dest="$2" src
     src="${BS_VENDOR_DIR}/${rel}"
     if [ -f "$src" ]; then
+        vendor_verify "$rel" || return 1
         if [ "$dest" = "-" ]; then cat "$src"; else cp -f "$src" "$dest"; fi
-        echo "vendor: ${rel} (локальная копия)"
+        echo "vendor: ${rel} (локальная копия, SHA256 OK)"
         return 0
     fi
     echo "vendor: ${rel} (локальной копии нет, скачиваем из репозитория проекта)"
