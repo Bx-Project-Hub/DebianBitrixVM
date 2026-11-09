@@ -145,6 +145,202 @@ function installMySQLRepository {
     UpdateSoftwareList
 }
 
+###################################################################
+# Пресеты MySQL/Percona под объём оперативной памяти
+###################################################################
+
+# Объём RAM в мегабайтах
+function detect_ram_mb {
+    awk '/^MemTotal:/{printf "%d", $2/1024}' /proc/meminfo 2>/dev/null
+}
+
+# Выбор пресета. Порядок важен: берём первый, в который влезает RAM.
+# MYSQL_PRESET=auto|2g|4g|8g|16g|32g|64g — можно задать принудительно.
+function select_mysql_preset {
+    local forced="${MYSQL_PRESET:-auto}"
+    case "$forced" in
+        2g|4g|8g|16g|32g|64g) printf '%s' "$forced"; return 0 ;;
+    esac
+
+    local ram_mb
+    ram_mb="$(detect_ram_mb)"
+
+    if   (( ram_mb < 3072  )); then printf '2g'
+    elif (( ram_mb < 6144  )); then printf '4g'
+    elif (( ram_mb < 12288 )); then printf '8g'
+    elif (( ram_mb < 24576 )); then printf '16g'
+    elif (( ram_mb < 49152 )); then printf '32g'
+    else                            printf '64g'
+    fi
+}
+
+# Параметры пресета (буферы, соединения, кеши). Формат: key=value, по одному на строку.
+function mysql_preset_params {
+    case "$1" in
+        2g) cat <<'EOF'
+innodb_buffer_pool_size=768M
+innodb_buffer_pool_instances=1
+max_connections=40
+thread_cache_size=64
+table_open_cache=2000
+table_definition_cache=1000
+tmp_table_size=64M
+max_heap_table_size=64M
+sort_buffer_size=2M
+join_buffer_size=2M
+read_buffer_size=512K
+read_rnd_buffer_size=1M
+innodb_redo_log_capacity=512M
+innodb_log_buffer_size=32M
+innodb_io_capacity=400
+innodb_io_capacity_max=800
+key_buffer_size=32M
+EOF
+        ;;
+        4g) cat <<'EOF'
+innodb_buffer_pool_size=1536M
+innodb_buffer_pool_instances=2
+max_connections=60
+thread_cache_size=96
+table_open_cache=4000
+table_definition_cache=2000
+tmp_table_size=96M
+max_heap_table_size=96M
+sort_buffer_size=2M
+join_buffer_size=2M
+read_buffer_size=1M
+read_rnd_buffer_size=2M
+innodb_redo_log_capacity=768M
+innodb_log_buffer_size=64M
+innodb_io_capacity=600
+innodb_io_capacity_max=1200
+key_buffer_size=48M
+EOF
+        ;;
+        8g) cat <<'EOF'
+innodb_buffer_pool_size=3072M
+innodb_buffer_pool_instances=3
+max_connections=80
+thread_cache_size=128
+table_open_cache=8000
+table_definition_cache=3000
+tmp_table_size=128M
+max_heap_table_size=128M
+sort_buffer_size=4M
+join_buffer_size=4M
+read_buffer_size=1M
+read_rnd_buffer_size=2M
+innodb_redo_log_capacity=1G
+innodb_log_buffer_size=96M
+innodb_io_capacity=1000
+innodb_io_capacity_max=2000
+key_buffer_size=64M
+EOF
+        ;;
+        16g) cat <<'EOF'
+innodb_buffer_pool_size=6144M
+innodb_buffer_pool_instances=6
+max_connections=85
+thread_cache_size=128
+table_open_cache=14336
+table_definition_cache=4096
+tmp_table_size=128M
+max_heap_table_size=128M
+sort_buffer_size=4M
+join_buffer_size=4M
+read_buffer_size=1M
+read_rnd_buffer_size=2M
+innodb_redo_log_capacity=2G
+innodb_log_buffer_size=128M
+innodb_io_capacity=2000
+innodb_io_capacity_max=4000
+key_buffer_size=96M
+EOF
+        ;;
+        32g) cat <<'EOF'
+innodb_buffer_pool_size=12288M
+innodb_buffer_pool_instances=8
+max_connections=200
+thread_cache_size=256
+table_open_cache=20000
+table_definition_cache=5000
+tmp_table_size=256M
+max_heap_table_size=256M
+sort_buffer_size=4M
+join_buffer_size=4M
+read_buffer_size=2M
+read_rnd_buffer_size=4M
+innodb_redo_log_capacity=4G
+innodb_log_buffer_size=256M
+innodb_io_capacity=3000
+innodb_io_capacity_max=6000
+key_buffer_size=128M
+EOF
+        ;;
+        64g) cat <<'EOF'
+innodb_buffer_pool_size=24576M
+innodb_buffer_pool_instances=8
+max_connections=300
+thread_cache_size=256
+table_open_cache=32768
+table_definition_cache=8000
+tmp_table_size=256M
+max_heap_table_size=256M
+sort_buffer_size=8M
+join_buffer_size=8M
+read_buffer_size=2M
+read_rnd_buffer_size=4M
+innodb_redo_log_capacity=8G
+innodb_log_buffer_size=256M
+innodb_io_capacity=4000
+innodb_io_capacity_max=8000
+key_buffer_size=128M
+EOF
+        ;;
+        *)  cat <<'EOF'
+innodb_buffer_pool_size=128M
+innodb_buffer_pool_instances=1
+max_connections=40
+thread_cache_size=32
+table_open_cache=1000
+tmp_table_size=32M
+max_heap_table_size=32M
+innodb_redo_log_capacity=128M
+EOF
+        ;;
+    esac
+}
+
+# Минимальный (аварийный) набор: используется, если пресет не дал серверу стартовать
+function mysql_fallback_params {
+    cat <<'EOF'
+innodb_buffer_pool_size=128M
+innodb_buffer_pool_instances=1
+max_connections=40
+thread_cache_size=32
+table_open_cache=1000
+tmp_table_size=32M
+max_heap_table_size=32M
+innodb_redo_log_capacity=128M
+EOF
+}
+
+# Параметр журнала упреждающей записи зависит от версии:
+# до 8.0.30 это innodb_log_file_size, начиная с 8.0.30 — innodb_redo_log_capacity.
+function mysql_redo_param_supported {
+    local major minor patch
+    major="$(printf '%s' "$MYSQL_FULL_VERSION" | cut -d. -f1)"
+    minor="$(printf '%s' "$MYSQL_FULL_VERSION" | cut -d. -f2)"
+    patch="$(printf '%s' "$MYSQL_FULL_VERSION" | cut -d. -f3)"; patch="${patch%%[!0-9]*}"
+
+    (( ${major:-8} > 8 )) && return 0
+    (( ${major:-8} == 8 && ${minor:-0} > 0 )) && return 0
+    (( ${minor:-0} == 0 && ${patch:-0} >= 30 )) && return 0
+    return 1
+}
+
+# Записать конфигурацию MySQL/Percona с учётом объёма RAM.
+# Возвращает 0 при успехе; при неудачном старте откатывается на минимальный набор.
 function SetRecommendedSettingsMySQL {
     # Настройки Bitrix для MySQL/Percona.
     # Пишем в /etc/mysql/conf.d/ — этот каталог подключают ВСЕ варианты my.cnf
@@ -165,33 +361,121 @@ function SetRecommendedSettingsMySQL {
 
     if [ "$MYSQL_VERSION" = "8.4" ]; then
         # MySQL 8.4: default_authentication_plugin удалён,
-        # включаеть mysql_native_password нужно явно (совместимость с Bitrix и бэкапами)
+        # включать mysql_native_password нужно явно (совместимость с Bitrix и бэкапами)
         AUTH_SETTINGS='authentication_policy=mysql_native_password
 mysql_native_password=ON'
     else
         AUTH_SETTINGS='default-authentication-plugin=mysql_native_password'
     fi
 
+    # Полная версия сервера (8.4.11, 8.0.43 …) — от неё зависит выбор параметра
+    # журнала упреждающей записи (innodb_redo_log_capacity появился в 8.0.30).
+    if [ -z "${MYSQL_FULL_VERSION:-}" ]; then
+        MYSQL_FULL_VERSION="$(mysqld --version 2>/dev/null \
+            | sed -n 's/.*Ver[[:space:]]\+\([0-9][0-9.]*\).*/\1/p' | head -1)"
+        MYSQL_FULL_VERSION="${MYSQL_FULL_VERSION:-$MYSQL_VERSION}"
+    fi
+
+    local preset ram_mb preset_params redo_filtered
+    preset="$(select_mysql_preset)"
+    ram_mb="$(detect_ram_mb)"
+
+    preset_params="$(mysql_preset_params "$preset")"
+    if ! mysql_redo_param_supported; then
+        # Старые сборки MySQL 8.0 (< 8.0.30) не знают innodb_redo_log_capacity
+        redo_filtered="$(printf '%s\n' "$preset_params" | grep -v '^innodb_redo_log_capacity=')"
+        redo_filtered="${redo_filtered}
+innodb_log_file_size=256M"
+        preset_params="$redo_filtered"
+    fi
+
+    # --- 10: параметры, зависящие от RAM -------------------------------------
+    {
+        echo "[mysqld]"
+        echo "# Сгенерировано автоматически: пресет ${preset} (RAM: ${ram_mb} МБ)."
+        echo "# Переопределить: MYSQL_PRESET=2g|4g|8g|16g|32g|64g перед запуском установщика."
+        printf '%s\n' "$preset_params"
+    } > "${cnf_dir}/10-bitrix-memory.cnf"
+
+    # --- 20: логирование -----------------------------------------------------
+    cat <<'EOF' > "${cnf_dir}/20-bitrix-logging.cnf"
+[mysqld_safe]
+log-error=/var/log/mysql/error.log
+
+[mysqld]
+log-error=/var/log/mysql/error.log
+general_log=0
+slow_query_log=0
+sync_binlog=0
+EOF
+
+    # --- 99: статичная база --------------------------------------------------
     cat <<EOF > "${cnf_dir}/99-bitrix.cnf"
 [mysqld]
-disable-log-bin
-innodb-buffer-pool-size=128M
-innodb-flush-log-at-trx-commit=2
-innodb-flush-method=O_DIRECT
-max-heap-table-size=32M
-sql-mode=
-tmp-table-size=32M
-transaction-isolation=READ-COMMITTED
-mysqlx=OFF
-performance-schema=OFF
+user=mysql
+port=3306
+bind-address=127.0.0.1
+skip-name-resolve
 
-# Из Bitrix-окружения
+disable-log-bin
+max_connect_errors=1000000
+back_log=512
+open_files_limit=65535
+
+max_allowed_packet=256M
+net_read_timeout=120
+net_write_timeout=120
+connect_timeout=30
+
+default_storage_engine=InnoDB
+innodb_file_per_table=1
+innodb_default_row_format=DYNAMIC
+
+innodb_flush_log_at_trx_commit=2
+innodb_flush_method=O_DIRECT
+innodb_read_io_threads=8
+innodb_write_io_threads=8
+innodb_flush_neighbors=0
+innodb_purge_threads=4
+innodb_max_dirty_pages_pct=75
+innodb_max_dirty_pages_pct_lwm=10
+innodb_lru_scan_depth=1024
+innodb_change_buffering=none
+
+performance_schema=ON
+transaction-isolation=READ-COMMITTED
 innodb_strict_mode=off
 
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+sql-mode=""
+
+local_infile=0
+mysqlx=OFF
+
+# Из Bitrix-окружения
 ${AUTH_SETTINGS}
 EOF
 
-    systemctl restart mysql.service || InstallationFailed
+    if systemctl restart mysql.service >/dev/null 2>&1 && [ "$(systemctl is-active mysql.service)" = "active" ]; then
+        echo "MySQL: применён пресет ${preset} (RAM: ${ram_mb} МБ)."
+        return 0
+    fi
+
+    # --- Откат: минимальный безопасный набор ---------------------------------
+    echo "Внимание: MySQL не запустился с пресетом ${preset}. Откат на минимальный набор." >&2
+    {
+        echo "[mysqld]"
+        echo "# Аварийный набор (пресет ${preset} не прошёл проверку старта)"
+        mysql_fallback_params
+    } > "${cnf_dir}/10-bitrix-memory.cnf"
+
+    if systemctl restart mysql.service >/dev/null 2>&1 && [ "$(systemctl is-active mysql.service)" = "active" ]; then
+        echo "MySQL: применён минимальный набор параметров. Проверьте /var/log/mysql/error.log и увеличьте RAM." >&2
+        return 0
+    fi
+
+    InstallationFailed
 }
 
 function MySQLSecureInstallation {
