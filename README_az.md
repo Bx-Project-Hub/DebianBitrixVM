@@ -2,19 +2,20 @@
 ![Əsas menyu](images/main_menu.png)
 
 # **Məlumat**
-Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 11 / Debian 12** üçün uyğunlaşdırılıb.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) layihəsi əsasında hazırlanıb və **müasir Debian 11-12 və Bitrix** üçün optimallaşdırılıb.
+Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 12 / Debian 13** üçün uyğunlaşdırılıb. Əsas hədəf — Debian 13 (trixie): layihə müasir Debian maşınlarında CentOS 9 mühitini əvəz edir.  
+(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) layihəsi əsasında hazırlanıb və **müasir Debian 12–13 və Bitrix** üçün optimallaşdırılıb.
 
 ---
 
 # **Mühitin imkanları**
 - Bütün vacib komponentlərin tam avtomatik quraşdırılması:  
-  **Ansible, PHP 8.2 (standart), MySQL 8.0, Nginx, Apache, Redis, Push & Pull serveri.**
+  **Ansible, PHP 8.3 (standart), MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull serveri.**
+- **VB mühərrikinin seçimi: Oracle MySQL 8.4 LTS və ya Percona Server 8.4 LTS** (`DB_ENGINE` dəyişəni).
 - **Kompozit dəstəyi**.
 - Statik faylların **Brotli vasitəsilə ötürülməsi**.
 - Standart konfiqurasiyaları dəyişdirmədən **fərdi Nginx konfiqurasiyalarını istifadə etmək** imkanı.
 - **Sphinx ilə tam mətn axtarışı** dəstəyi.
-- **Sənəd konvertasiya serverinin (`unoconv`, `ImageMagick`) quraşdırılması və konfiqurasiyası** imkanı.
+- **Sənəd konvertasiya serverinin (`LibreOffice`, `ImageMagick`) quraşdırılması və konfiqurasiyası** imkanı.
 - **Netdata quraşdırmaq və monitorinq aparmaq** imkanı.
 
 ---
@@ -39,7 +40,7 @@ Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 11 / Debian 12** üç
 # **Quraşdırma**
 ### ⚠ **Vacib:** Menyunu **yalnız root istifadəçi olaraq** quraşdırmaq və istifadə etmək tövsiyə olunur.
 
-#### **Debian 11 / Debian 12 üçün tam mühitin quraşdırılması**
+#### **Debian 12 / Debian 13 üçün tam mühitin quraşdırılması**
 ##### `CURL` vasitəsilə quraşdırma
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -48,6 +49,24 @@ apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx
 ```bash
 apt install -y curl wget && bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
 ```
+
+---
+
+## Verilənlər bazası mühərrikinin seçimi: MySQL və ya Percona Server
+Quraşdırıcı **Oracle MySQL 8.4 LTS** və ya **Percona Server for MySQL 8.4 LTS** seçməyə imkan verir. Hər ikisi eyni xidmətdən (`mysql.service`), eyni konfiqurasiya qovluğundan (`/etc/mysql/conf.d/99-bitrix.cnf`) və eyni autentifikasiya rejimindən (`mysql_native_password`) istifadə edir, ona görə Bitrix hər iki halda eyni işləyir.
+
+```bash
+# İnteraktiv seçim (susmaya görə MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Percona Server 8.4 LTS, sualsız
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Oracle MySQL 8.4 LTS, sualsız
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+**Təmiz Debian 13 (trixie), amd64 üzərində yoxlanılıb:** PHP 8.3.36 (sistemdə yeganə PHP budağı), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; bütün xidmətlər aktivdir; `full` və `link` rejimlərində sayt yaradılması işləyir.
 
 ---
 

@@ -1,34 +1,104 @@
 # **Главное меню**
 ![Главное меню](images/main_menu.png)
+*Скриншот иллюстративный; актуальный состав пунктов меню — в разделе «Возможности меню» и в справке по клавише `H`.*
 
 # **Информация**
-Меню для управления окружением Bitrix, адаптированное для **Debian 11 / Debian 12**.  
-Основано на проекте [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), доработано и оптимизировано для **современных версий Debian 11-12 и Bitrix**.
+Меню для управления окружением Bitrix на **Debian 12 и Debian 13**.  
+Основная целевая платформа — **Debian 13 (trixie)**: проект предназначен для замены окружения CentOS 9 на современных Debian-машинах.
+
+Основано на проекте [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), переработано под актуальные версии Debian и Bitrix.
+
+---
+
+# **Состав окружения**
+
+| Компонент | Версия | Источник / примечание |
+|-----------|--------|----------------------|
+| Debian | 13 (trixie), поддерживается также 12 (bookworm) | — |
+| PHP | **8.3** по умолчанию (8.2 и 8.4 — переключаются из меню) | репозиторий deb.sury.org |
+| MySQL | **8.4 LTS** на Debian 13, 8.0 — на Debian 12 | официальный APT-репозиторий Oracle |
+| Percona Server | **8.4 LTS** (альтернатива MySQL) | репозиторий `repo.percona.com/ps-84-lts` |
+| Nginx | 1.26 | Debian + модули Brotli, zip, zstd |
+| Apache | 2.4 + mod_php | Debian |
+| Redis | 8.0 | Debian |
+| Node.js / push-server | Node.js 20 + push-server 0.4.0 | Bitrix |
+| Sphinx | 2.2.11 | Debian (устанавливается из меню) |
+| Почта | exim4 + msmtp | Debian |
+| Firewall | nftables | Debian |
+
+> **Важно про MySQL.** Для Debian 13 (trixie) Oracle публикует только ветку **8.4 LTS** — пакетов `mysql-8.0` для trixie нет. Окружение настраивает `mysql_native_password` для совместимости Bitrix и резервного копирования.
+
+## Выбор СУБД: MySQL или Percona Server
+
+При установке можно выбрать Oracle MySQL или **Percona Server for MySQL 8.4 LTS**. Оба варианта используют одинаковые сервис (`mysql.service`), каталог конфигурации (`/etc/mysql/conf.d/99-bitrix.cnf`) и режим авторизации (`mysql_native_password`), поэтому Bitrix работает одинаково.
+
+```bash
+# Интерактивный выбор (по умолчанию MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Без вопросов — Percona Server 8.4 LTS
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Без вопросов — Oracle MySQL 8.4 LTS
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+Особенности Percona:
+- подключаются репозитории `ps-84-lts` и `telemetry` (агент телеметрии — жёсткая зависимость пакета `percona-server-server`);
+- **телеметрия отключается** (сервис `percona-telemetry-agent` останавливается и маскируется);
+- пакет `percona-server-server` предоставляет `mysql-server`, поэтому все команды и модули Ansible работают без изменений.
+
+> Если `install_full_environment.sh` запущен из клона репозитория, меню и `custom_bitrix_setup.sh` берутся **из локальной копии**, а не с GitHub (удобно для отладки).
+
+---
+
+## Проверено на реальном сервере Debian 13
+
+Установка прогнана на чистой Debian 13 (trixie), amd64, 4 vCPU / 5.8 ГБ RAM. Выбран `DB_ENGINE=percona`.
+
+| Проверка | Результат |
+|----------|-----------|
+| Версия ОС | Debian GNU/Linux 13 (trixie) |
+| PHP `php -v` | 8.3.36 — **единственная** ветка PHP в системе, `/usr/bin/php → /usr/bin/php8.3` |
+| СУБД | Percona Server 8.4.11-11, `authentication_policy=mysql_native_password` |
+| Конфигурация MySQL | `/etc/mysql/my.cnf → mysql.cnf`, настройки Bitrix в `/etc/mysql/conf.d/99-bitrix.cnf` |
+| Nginx / Apache | 1.26.3 / 2.4.69 + `php8.3` (mpm_prefork) |
+| Node.js / push-server | 20.19.2 / 0.4.0 (`push-server` единый сервис pub+sub) |
+| Сервисы | `mysql`, `nginx`, `apache2`, `redis-server`, `push-server`, `exim4`, `nftables` — **active** |
+| Ansible-плейбуки | `install_new_full_environment` — `ok=52 failed=0`; остальные 8 — `--syntax-check` OK |
+| Сайт (режим full) | создан сайт `example.ru`: каталог, nginx+apache конфиги, БД `example_ru`, `.settings.php`, `dbconn.php`, `bitrixsetup.php` отдаёт `200` |
+| Сайт (режим link) | создан сайт `shop.example.ru` в режиме `link`: симлинк `bitrix → ../example.ru/bitrix`, отдельные конфиги; страница отдаёт `500`, пока на основном сайте не установлено ядро Bitrix (ожидаемо) |
+| Пункты меню | список сайтов, версии PHP, SMTP, справка — работают; смена версии PHP и Let's Encrypt требуют внешней сети и на стенде не запускались |
 
 ---
 
 # **Возможности окружения**
 - Полная автоматическая установка всех необходимых компонентов:  
-  **Ansible, PHP 8.2 (по умолчанию), MySQL 8.0, Nginx, Apache, Redis, Push & Pull сервер.**
+  **Ansible, PHP 8.3, MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull сервер.**
 - Поддержка **композита**.
 - Отдача статики **через Brotli**.
 - Возможность **использовать собственные конфигурации Nginx**, не изменяя стандартные.
 - Поддержка **полнотекстового поиска Sphinx**.
-- Возможность **установки сервера конвертации документов (`unoconv`, `ImageMagick`)**.
+- Возможность **установки сервера конвертации документов (LibreOffice + RabbitMQ + transformer)**.
 - Возможность **установки и мониторинга Netdata**.
 
 ---
 
 # **Возможности меню**
-- Просмотр списка сайтов.
-- Создание и удаление сайтов в режимах **ядра и символической ссылки**.
+- Просмотр списка сайтов с типом (собственное ядро или ссылки на общее ядро), признаком сайта по умолчанию и статусом HTTPS.
+- Создание и удаление сайтов в режимах **ядра (full)** и **символической ссылки (link)**.
 - Автоматический перевод агентов на **CRON** при создании сайта в режиме ядра.
 - Выпуск **SSL-сертификатов Let’s Encrypt**.
 - Управление редиректом **HTTP → HTTPS**.
-- **Изменение версий PHP**.
-- **Настройка SMTP** (глобально и индивидуально для каждого сайта).
+- **Изменение версий PHP** (8.2 / 8.3 / 8.4).
+- **Настройка SMTP** (общий аккаунт `default` и отдельный аккаунт для каждого сайта).
+- **Установка и удаление дополнений**: Sphinx, сервер конвертации файлов, Netdata.
 - **Обновление, перезагрузка и выключение сервера** через меню.
 - Информирование о выходе новой версии меню.
+- **Панель «Состояние сервера»** в шапке: load average, загрузка CPU, память, диск, аптайм
+  и статус сервисов. Значения окрашены по порогам (зелёный / жёлтый / красный).
+- Цветное оформление меню (отключается настройкой или переменной `NO_COLOR`).
+- Подробная справка по пунктам — клавиша `H` в меню.
 - Обновление меню **всего одной командой**:
   ```bash
   update_menu
@@ -39,7 +109,13 @@
 # **Установка**
 ### ⚠ **Важно:** Устанавливать и использовать меню **только от root-пользователя**.
 
-#### **Полная установка окружения на Debian 11 / Debian 12**
+### **Требования**
+- Чистая Debian 12 или Debian 13 (рекомендуется Debian 13).
+- Архитектура **amd64** (репозиторий MySQL от Oracle не содержит пакетов для других архитектур).
+- Доступ в интернет, не менее 2 ГБ RAM (рекомендуется 4 ГБ и больше).
+- Домен или IP, указывающий на сервер, — для выпуска сертификатов Let’s Encrypt.
+
+#### **Полная установка окружения на Debian 12 / Debian 13**
 ##### Установка через `CURL`
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -91,6 +167,89 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 ```
 По умолчанию там уже всё настроено, но при необходимости можно подстроить окружение под свои задачи.
 
+Ключевые параметры:
+
+| Параметр | Значение по умолчанию | Назначение |
+|----------|-----------------------|-----------|
+| `BS_PATH_SITES` | `/var/www/html` | каталог сайтов |
+| `BS_DEFAULT_SITE_NAME` | `bx-site` | сайт-источник ядра для режима `link` |
+| `BS_USER_SERVER_SITES` | `www-data` | пользователь сайтов |
+| `BS_PHP_VERSION_DEFAULT` | `8.3` | версия PHP по умолчанию |
+| `BS_MYSQL_VERSION_DEFAULT` | `8.4` | версия MySQL (на Debian 13 — 8.4 LTS) |
+| `BS_PUSH_SERVER_VERSION` | `0.4.0` | версия push-server Bitrix |
+| `BS_SHOW_IP_CURRENT_SERVER_IN_MENU` | `true` | показывать интерфейсы и IP в шапке меню |
+| `BS_STATUS_PANEL` | `true` | панель «Состояние сервера» в шапке |
+| `BS_STATUS_PANEL_WIDTH` | `52` | ширина панели в символах |
+| `BS_CPU_SAMPLE_MS` | `200` | окно замера загрузки CPU, мс (`0` — не замерять) |
+| `BS_USE_COLOR` | `true` | цветное оформление (отключается и переменной `NO_COLOR=1`) |
+
+### Панель «Состояние сервера»
+
+В шапке меню выводится компактная панель:
+
+```
+   ┌──────────────── Состояние сервера ─────────────────┐
+   │ Загрузка   0.06 0.02 0.00   4 CPU                  │
+   │ CPU        3%                                      │
+   │ Память     1,0 / 5,8 ГБ (17%)                      │
+   │ Диск /     4,9G / 30G (18%)                        │
+   │ Аптайм     58 мин                                  │
+   └────────────────────────────────────────────────────┘
+```
+
+Данные берутся из `/proc` (`loadavg`, `stat`, `meminfo`, `uptime`) и `df`, без установки
+дополнительных пакетов. Пороги подсветки: до **70%** — зелёный, **70–89%** — жёлтый,
+**90% и выше** — красный. Если вывод направлен не в терминал или задан `NO_COLOR=1`,
+цвета отключаются автоматически, чтобы не ломать логи.
+
+---
+
+# **Как устроены сайты**
+
+Меню поддерживает два режима создания сайта:
+
+- **`full` (ядро)** — в каталоге сайта создаётся собственное ядро Bitrix (`bitrix/`, `local/`, `upload/`, `images/`), отдельная база данных и пользователь MySQL, генерируются `.settings.php` и `dbconn.php`. Агенты Bitrix переводятся на CRON. Рекомендуется для нового сайта.
+- **`link` (символические ссылки)** — каталоги `local`, `bitrix`, `upload`, `images` ссылаются на ядро существующего сайта. Используется для мультисайтовости: одно ядро — много доменов.
+
+При создании сайта можно сразу:
+- выпустить сертификат **Let’s Encrypt**;
+- включить **редирект HTTP → HTTPS**.
+
+Удаление сайта (пункт `3`) удаляет каталог, конфигурации Nginx/Apache, а для режима `full` — базу данных и пользователя MySQL. Для подтверждения нужно ввести имя сайта.
+
+### Сертификаты Let’s Encrypt
+Выпуск идёт по протоколу **HTTP-01**: домен должен уже указывать на сервер, порт 80 — быть доступен извне. При выпуске сертификата Nginx автоматически переключается на полученные файлы (блок с комментариями `MANAGED SSL CERTS` в конфигурации сайта).
+
+### SMTP
+Письма отправляются через `msmtp`. Настройки хранятся в `/var/www/html/.msmtprc` (права `0600`, владелец `www-data`).
+- Аккаунт для сайта должен называться **так же, как домен сайта** — Apache передаёт домен в `msmtp-wrapper`.
+- Аккаунт **`default`** используется, если для сайта аккаунт не найден.
+- Просмотреть сохранённые аккаунты можно в пункте `7` → «Показать сохранённые аккаунты».
+
+### Смена версии PHP
+Пункт `6` устанавливает выбранную версию из репозитория deb.sury.org, подключает `mod_php` этой версии в Apache и переключает CLI через `update-alternatives`. Настройки Bitrix (`php.d` из документации 1С-Битрикс) применяются к новой версии автоматически.
+
+### Дополнения
+Пункт `8`:
+- **Sphinx** — полнотекстовый поиск (пакет `sphinxsearch`, отдельный systemd-сервис).
+- **Сервер конвертации файлов** — LibreOffice, RabbitMQ и служба `transformer` для сайта.
+- **Netdata** — мониторинг. Доступен по адресу `https://<домен>/netdata/`, логин `admin`; пароль создаётся при установке и выводится в выводе Ansible (сохраняется в `/root/.netdata_web_password`).
+
+---
+
+# **Где смотреть логи и данные**
+
+| Что | Где |
+|-----|-----|
+| Журнал установки окружения | `/root/recipe.log` |
+| Ошибки PHP | `/var/log/php/error.log` |
+| Исключения Bitrix | `/var/log/php/exceptions.log` |
+| Логи Nginx | `/var/log/nginx/` |
+| Логи Apache | `/var/log/apache2/` |
+| CRON-логи агентов Bitrix | `/var/log/bitrix_cron_agents/` |
+| Пароль root MySQL | `/root/.my.cnf` |
+| Пароль пользователя сайтов | выводится в конце установки |
+
 ---
 
 # **Обновления и новые возможности**
@@ -102,6 +261,56 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 update_menu
 ```
 Если меню сломалось из-за экспериментов или изменений — просто **запусти обновление**, и оно **вернётся к рабочей версии**.
+
+---
+
+# **Частые вопросы и проблемы**
+
+**Установка прервалась на MySQL.**  
+Проверьте `/root/recipe.log`. Для Debian 13 используется компонент `mysql-8.4-lts`; ветки `mysql-8.0` для trixie в репозитории Oracle нет. Убедитесь, что архитектура — `amd64`.
+
+**Сайт отдаёт 500, в логах Nginx «FastCGI sent in stderr …».**
+Смотрите `/var/log/php/error.log` и `/var/log/apache2/error_<домен>_log`. Чаще всего причина — ошибка в `dbconn.php`/`.settings.php` или несовместимость старого кода с новой версией PHP.
+
+**После смены версии PHP сайт перестал работать.**
+Верните предыдущую версию пунктом `6` и проверьте `/var/log/php/error.log`. Для старого кода может потребоваться `short_open_tag=On` — он уже включён в конфигурации Bitrix.
+
+**Let’s Encrypt не выпускает сертификат.**
+Проверьте, что домен резолвится в этот сервер и порт 80 открыт: `curl -I http://<домен>/.well-known/acme-challenge/test`. Логи — `/var/log/letsencrypt/`.
+
+**Не уходят письма.**
+Проверьте `/var/www/html/.msmtprc`, журнал аккаунта (`/var/www/html/msmtp_<аккаунт>.log`) и тест: `echo test | msmtp -C /var/www/html/.msmtprc -a default`.
+
+**Sphinx не запускается.**
+`systemctl status sphinxsearch`, логи `/var/log/sphinxsearch/searchd.log`. Конфигурация — `/etc/sphinxsearch/sphinx.conf`.
+
+**После установки в системе несколько версий PHP (`7.4`, `8.3`, `8.5`) и `/usr/bin/php` смотрит не туда.**
+Причина — пакеты-**метапакеты** из `deb.sury.org`: `php-pear` требует `php-xml` и подтягивает PHP 7.4, а `php-redis`/`php-igbinary` ставят самую новую ветку (8.5). Установщик использует только версионные пакеты (`php8.3-redis`, `php8.3-igbinary`). Если лишние ветки уже появились:
+```bash
+apt-get purge -y php-pear php-redis php-geoip php-igbinary "php7.4-*" "php8.5-*"
+apt-get install -y php8.3-redis php8.3-igbinary
+readlink -f /usr/bin/php   # должно быть /usr/bin/php8.3
+```
+
+**Настройки Bitrix для MySQL «не применяются» (`sql_mode`, `innodb_buffer_pool_size` и т. п.).**
+На Debian 12/13 `/etc/mysql/my.cnf` — это symlink, которым управляет `update-alternatives`. Установка `libreoffice-sdbc-mysql` приносит `mariadb-common`, а тот регистрирует `mariadb.cnf` с приоритетом **500** и переключает ссылку на себя. `mariadb.cnf` подключает `conf.d` и `mariadb.conf.d`, но **не** `mysql.conf.d`. Поэтому установщик пишет настройки в `/etc/mysql/conf.d/99-bitrix.cnf` и поднимает приоритет `mysql.cnf` до 700. Проверка:
+```bash
+readlink -f /etc/mysql/my.cnf        # /etc/mysql/mysql.cnf
+mysql -e "select @@transaction_isolation, @@authentication_policy"
+```
+
+**Пользователь MySQL не может подключиться после обновления до 8.4 (ошибка аутентификации).**
+В MySQL/Percona 8.4 плагин `mysql_native_password` выключен по умолчанию, а `CREATE USER IF NOT EXISTS` не меняет плагин у существующей учётки. Установщик задаёт `authentication_policy=mysql_native_password`, включает плагин и создаёт/переводит пользователей через `IDENTIFIED WITH mysql_native_password`. Проверка:
+```bash
+mysql -e "select user, host, plugin from mysql.user"
+```
+
+**Установка «зависла» на шаге `Restart getty@tty1.service`, SSH отвалился, `systemctl` пишет `Transport endpoint is not connected`.**
+Этот шаг — наследие CentOS (показ IP на консоли). На Debian перезапуск `getty@tty1` не завершается и подвешивает PID 1; лечится только принудительной перезагрузкой:
+```bash
+sync; echo s > /proc/sysrq-trigger; echo u > /proc/sysrq-trigger; echo b > /proc/sysrq-trigger
+```
+В актуальной версии плейбука этот блок удалён — обновите меню командой `update_menu`.
 
 ---
 

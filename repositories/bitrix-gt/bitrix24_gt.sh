@@ -2,7 +2,7 @@
 #
 # metadata_begin
 # recipe: Bitrix24 GT
-# tags: centos7,debian11,debian12
+# tags: centos7,debian12,debian13
 # revision: 6
 # description_ru: Рецепт установки Bitrix24
 # description_en: Bitrix CMS installing recipe
@@ -371,9 +371,9 @@ cronagent(){
 
 dplPush(){
 	cd /opt
-	wget -q https://repo.bitrix.info/vm/push-server-0.3.0.tgz
-	npm install --production ./push-server-0.3.0.tgz
-	rm ./push-server-0.3.0.tgz
+	wget -q https://repo.bitrix.info/vm/push-server-0.4.0.tgz
+	npm install --production ./push-server-0.4.0.tgz
+	rm ./push-server-0.4.0.tgz
 	ln -sf /opt/node_modules/push-server/etc/push-server /etc/push-server
 
 	cd /opt/node_modules/push-server
@@ -545,14 +545,14 @@ then
 
 	systemctl enable redis php-fpm nginx httpd push-server mariadb
 	systemctl restart redis crond httpd nginx php-fpm mysql push-server
-	mysql -e "create database bitrix;create user bitrix@localhost;grant all on bitrix.* to bitrix@localhost;set password for bitrix@localhost = PASSWORD('${mypwddb}')"
+     mysql -e "create database if not exists bitrix;create user if not exists bitrix@localhost identified by '${mypwddb}';alter user bitrix@localhost identified by '${mypwddb}';grant all on bitrix.* to bitrix@localhost"
 fi
 
 
 if echo $os|grep -Eo 'Debian' >/dev/null
 then
 	apt update
-	apt-get install -y software-properties-common apt-transport-https debconf-utils lsb-release gnupg gnupg2 debian-archive-keyring pwgen make build-essential wget curl
+    apt-get install -y apt-transport-https debconf-utils lsb-release gnupg gnupg2 debian-archive-keyring pwgen make build-essential wget curl
 	type=$(lsb_release -is|tr '[A-Z]' '[a-z]')
 	release=$(lsb_release -sc|tr '[A-Z]' '[a-z]')
 	mkdir -p /etc/apt/keyrings
@@ -570,9 +570,9 @@ then
 	echo -e "[client]\npassword=${mypwd}" > /root/.my.cnf
 
 	wget -qO /etc/apt/trusted.gpg.d/php.gpg https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php/apt.gpg
-	echo "deb https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php ${release} main" > /etc/apt/sources.list.d/php8.2.list
+     echo "deb https://packages.sury.org/php/ ${release} main" > /etc/apt/sources.list.d/php8.3.list
 	apt update
-	apt install -y php8.2-opcache php8.2-mysqli php8.2-fpm php8.2-gd php8.2-curl php8.2-xml php8.2-mbstring \
+     apt install -y php8.3-opcache php8.3-mysql php8.3-fpm php8.3-gd php8.3-curl php8.3-xml php8.3-mbstring \
 		mariadb-server mysql-common mariadb-client \
 		nginx catdoc exim4 exim4-config apache2 libapache2-mod-rpaf \
 		nodejs npm redis sysfsutils nftables
@@ -580,7 +580,7 @@ then
 	systemctl restart sysfsconf
 	sed -i "s/dc_eximconfig_configtype='local'/dc_eximconfig_configtype='internet'/" /etc/exim4/update-exim4.conf.conf && dpkg-reconfigure --frontend noninteractive exim4-config
 	ip=$(wget -qO- "https://ipinfo.io/ip")
-	mariadb -e "create database bitrix;create user bitrix@localhost;grant all on bitrix.* to bitrix@localhost;set password for bitrix@localhost = PASSWORD('${mypwddb}')"
+        mariadb -e "create database if not exists bitrix;create user if not exists bitrix@localhost identified by '${mypwddb}';alter user bitrix@localhost identified by '${mypwddb}';grant all on bitrix.* to bitrix@localhost"
 	nfTabl
 	dplRedis
 	dplPush
@@ -630,8 +630,8 @@ then
 	sed -i 's|collation-server=utf8_general_ci|collation-server=utf8mb4_general_ci|' /etc/mysql/conf.d/z9_bitrix.cnf
 	chmod 644 ${mycnf} ${phpini} ${phpfpmcnf} ${croncnf} ${phpini2}
 
-	systemctl restart cron mysql php8.2-fpm apache2 nginx php8.2-fpm redis-server push-server
-	systemctl enable cron mysql php8.2-fpm apache2 nginx php8.2-fpm push-server sysfsconf.service
+systemctl restart cron mysql php8.3-fpm apache2 nginx php8.3-fpm redis-server push-server
+systemctl enable cron mysql php8.3-fpm apache2 nginx php8.3-fpm push-server sysfsconf.service
 fi
 
 ip=$(wget -qO- "https://ipinfo.io/ip")

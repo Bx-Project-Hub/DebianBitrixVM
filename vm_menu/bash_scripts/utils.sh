@@ -2,82 +2,169 @@
 
 declare -A ARR_ALL_DIR_SITES_DATA
 
+# Генерация пароля.
+# Символы подобраны так, чтобы пароль безопасно проходил через shell,
+# SQL, .settings.php и .my.cnf: без кавычек, обратных слэшей, $, #, !, &, ;, |, пробелов.
 generate_password() {
-    local length=$1
-    local specials='!@#$%^&*()-_=+[]|;:,.<>?/~'
+    local length=${1:-24}
+    local specials='-_+=@%.,:'
     local all_chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789${specials}"
 
     local password=""
-    for i in $(seq 1 $length); do
-        local char=${all_chars:RANDOM % ${#all_chars}:1}
-        password+=$char
+    local i
+    for ((i = 0; i < length; i++)); do
+        password+="${all_chars:RANDOM % ${#all_chars}:1}"
     done
 
-    echo "$password"
+    printf '%s' "$password"
+}
+
+# Определение ОС (Debian 12/13) для шапки меню и проверок совместимости.
+function get_os_info() {
+  OS_NAME=""
+  OS_VERSION=""
+  OS_CODENAME=""
+
+  if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    OS_NAME="${NAME:-Debian}"
+    OS_VERSION="${VERSION_ID:-}"
+    OS_CODENAME="${VERSION_CODENAME:-}"
+  fi
+
+  OS_DESCRIPTION="${OS_NAME} ${OS_VERSION} (${OS_CODENAME:-unknown})"
+}
+
+# Проверка, что запущено на поддерживаемой версии Debian.
+function check_supported_os() {
+  get_os_info
+  local v
+  for v in "${BS_SUPPORTED_OS_VERSIONS[@]}"; do
+    if [[ "${OS_VERSION}" == "$v" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Массив каталогов сайтов (публичный, для меню).
+# В отличие от find -type d -o -type l, учитывает приоритет операторов и не ломается на пробелах.
+function get_sites_array() {
+  SITES_LIST=()
+
+  [ -d "$BS_PATH_SITES" ] || return 0
+
+  local entry name
+  while IFS= read -r entry; do
+    name="$(basename "$entry")"
+    [[ "$name" == "." || "$name" == ".." ]] && continue
+    [[ "$name" == .* ]] && continue
+
+    local excluded=0
+    local ex
+    for ex in "${BS_EXCLUDED_DIRS_SITES[@]}"; do
+      [[ "$name" == "$ex" ]] && excluded=1 && break
+    done
+    [[ $excluded -eq 1 ]] && continue
+
+    SITES_LIST+=("$name")
+  done < <(find "$BS_PATH_SITES" -mindepth 1 -maxdepth 1 \( -type d -o -type l \) | sort)
+}
+
+# Тип сайта: full (ядро) или link (символические ссылки на общее ядро).
+function get_site_type() {
+  local site="$1"
+  local path_site="$BS_PATH_SITES/$site"
+
+  if [ -L "$path_site/local" ] || [ -L "$path_site/bitrix" ]; then
+    printf 'link'
+  else
+    printf 'full'
+  fi
+}
+
+# Чтение имени БД и пользователя из .settings.php сайта.
+function get_site_db_data() {
+  local path_site="$1"
+  SITE_DB_NAME=""
+  SITE_DB_USER=""
+
+  if [ -f "$path_site/.settings.php" ] && command -v php >/dev/null 2>&1; then
+    # shellcheck disable=SC2016
+    SITE_DB_NAME="$(php -r '$s = include $argv[1]; echo $s["connections"]["value"]["default"]["database"] ?? "";' "$path_site/.settings.php" 2>/dev/null)"
+    # shellcheck disable=SC2016
+    SITE_DB_USER="$(php -r '$s = include $argv[1]; echo $s["connections"]["value"]["default"]["login"] ?? "";' "$path_site/.settings.php" 2>/dev/null)"
+  fi
 }
 
 list_sites(){
   ARR_ALL_DIR_SITES_DATA=()
   ARR_ALL_DIR_SITES=()
-  echo -e "   List site directories: \n";
+  echo -e "   Сайты в ${BS_PATH_SITES}:\n"
 
   fill_array() {
     local index=0
-    for tmp_dir in $(find "$BS_PATH_SITES" -maxdepth 1 -type d -o -type l | grep -v "^$BS_PATH_SITES$" | sed 's|.*/||'); do
-
-      if [[ $tmp_dir =~ ^\. ]]; then
-        continue
-      fi
-
-      if [[ " ${BS_EXCLUDED_DIRS_SITES[@]} " =~ " $tmp_dir " ]]; then
-        continue
-      fi
-
+    local tmp_dir
+    get_sites_array
+    for tmp_dir in "${SITES_LIST[@]}"; do
       ARR_ALL_DIR_SITES+=("$tmp_dir")
       ARR_ALL_DIR_SITES_DATA["${index}_dir"]="$tmp_dir"
-      ARR_ALL_DIR_SITES_DATA[$index,is_default]="N"
-      ARR_ALL_DIR_SITES_DATA[$index,is_https]="N"
+      ARR_ALL_DIR_SITES_DATA[$index,is_default]="нет"
+      ARR_ALL_DIR_SITES_DATA[$index,is_https]="нет"
+      ARR_ALL_DIR_SITES_DATA[$index,type]="$(get_site_type "$tmp_dir")"
       ARR_ALL_DIR_SITES_DATA[$index,doc_root]="$BS_PATH_SITES/$tmp_dir"
 
       if [[ "$tmp_dir" == "$BS_DEFAULT_SITE_NAME" ]]; then
-        ARR_ALL_DIR_SITES_DATA[$index,is_default]="Y"
+        ARR_ALL_DIR_SITES_DATA[$index,is_default]="да"
       fi
 
       if [[ -f "$BS_PATH_SITES/$tmp_dir/.htsecure" ]]; then
-        ARR_ALL_DIR_SITES_DATA[$index,is_https]="Y"
+        ARR_ALL_DIR_SITES_DATA[$index,is_https]="да"
       fi
 
       ((index++))
     done
+
+    TOTAL_SITES="$index"
   }
 
   print_line() {
     printf "   +"
-    for i in {1..20}; do printf "-"; done
+    for _ in {1..26}; do printf "-"; done
     printf "+"
-    for i in {1..30}; do printf "-"; done
+    for _ in {1..12}; do printf "-"; done
     printf "+"
-    for i in {1..40}; do printf "-"; done
+    for _ in {1..10}; do printf "-"; done
     printf "+"
-    for i in {1..45}; do printf "-"; done
+    for _ in {1..12}; do printf "-"; done
+    printf "+"
+    for _ in {1..44}; do printf "-"; done
     printf "+\n"
   }
 
   print_table() {
     print_line
-    printf "   | %-40s | %-15s | %-18s | %-50s |\n" "Directory site" "Default site" "Redirect to HTTPS" "Document root"
+    printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" "Каталог сайта" "Тип" "По умолч." "HTTPS" "Document root"
     print_line
 
     local index=0
-    while [[ -n "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]}" ]]; do
-      printf "   | %-40s | %-15s | %-18s | %-50s |\n" \
+    while [[ -n "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]:-}" ]]; do
+      printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" \
         "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,is_default]}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,is_https]}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,doc_root]}"
+        "${ARR_ALL_DIR_SITES_DATA[$index,type]:-}" \
+        "${ARR_ALL_DIR_SITES_DATA[$index,is_default]:-}" \
+        "${ARR_ALL_DIR_SITES_DATA[$index,is_https]:-}" \
+        "${ARR_ALL_DIR_SITES_DATA[$index,doc_root]:-}"
       print_line
       ((index++))
     done
+
+    if [[ ${TOTAL_SITES:-0} -eq 0 ]]; then
+      echo "   Сайты не найдены."
+    else
+      echo -e "\n   Тип: full — собственное ядро сайта, link — символические ссылки на общее ядро."
+    fi
   }
 
   fill_array
@@ -87,12 +174,25 @@ list_sites(){
 
 press_any_key_to_return_menu(){
     echo -e "\n";
-    while true; do
-        read -r -p "   Press Enter to return to the menu. " answer
-        case $answer in
-            * ) break;;
-        esac
-    done
+    read -r -p "   Нажмите Enter, чтобы вернуться в меню. " _
+}
+
+# Запрос подтверждения действия (y/n, по умолчанию — нет).
+function confirm_action() {
+    local message="${1:-Выполнить действие?}"
+    local answer
+    read -r -p "   ${message} (y/N): " answer
+    [[ "$answer" =~ ^[YyNn]?$ ]] || return 1
+    [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+# Проверка, что меню запущено от root.
+function require_root() {
+    if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+        echo "Ошибка: меню нужно запускать от пользователя root." >&2
+        echo "Используйте: sudo /root/menu.sh" >&2
+        exit 1
+    fi
 }
 
 read_by_def(){
@@ -129,7 +229,7 @@ function get_ip_current_server() {
     fi
   done
 
-  CURRENT_SERVER_IP="Current Network Interfaces and IPs:\n"
+  CURRENT_SERVER_IP="Сетевые интерфейсы и IP:\n"
 
   while read -r line; do
       iface=$(echo "$line" | awk '{print $1}')
@@ -138,21 +238,268 @@ function get_ip_current_server() {
   done <<< "$interfaces"
 }
 
+############################################################
+# Цвета и панель состояния сервера (шапка меню)
+############################################################
+
+# ANSI-цвета. Отключаются, если вывод не в терминал, задан NO_COLOR
+# или в конфигурации BS_USE_COLOR=false.
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${BS_USE_COLOR:-true}" = true ]; then
+    C_RESET=$'\e[0m'
+    C_BOLD=$'\e[1m'
+    C_DIM=$'\e[2m'
+    C_RED=$'\e[31m'
+    C_GREEN=$'\e[32m'
+    C_YELLOW=$'\e[33m'
+    C_BLUE=$'\e[34m'
+    C_MAGENTA=$'\e[35m'
+    C_CYAN=$'\e[36m'
+    C_GREY=$'\e[90m'
+else
+    C_RESET=""; C_BOLD=""; C_DIM=""; C_RED=""; C_GREEN=""
+    C_YELLOW=""; C_BLUE=""; C_MAGENTA=""; C_CYAN=""; C_GREY=""
+fi
+
+# Цвет по порогу: <70 — зелёный, 70–89 — жёлтый, >=90 — красный.
+function severity_color() {
+    local value="${1:-0}"
+    [[ "$value" =~ ^[0-9]+$ ]] || { printf '%s' "$C_GREEN"; return; }
+    if (( value >= 90 )); then
+        printf '%s' "$C_RED"
+    elif (( value >= 70 )); then
+        printf '%s' "$C_YELLOW"
+    else
+        printf '%s' "$C_GREEN"
+    fi
+}
+
+function get_cpu_count() {
+    local n
+    n="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)"
+    printf '%s' "${n:-1}"
+}
+
+# Три значения load average: "0.14 0.09 0.05"
+function get_load_average() {
+    [ -r /proc/loadavg ] || { printf 'н/д н/д н/д'; return; }
+    awk '{print $1, $2, $3}' /proc/loadavg
+}
+
+# Загрузка CPU в процентах за окно BS_CPU_SAMPLE_MS (по разнице счётчиков /proc/stat).
+# Пустая строка, если замер невозможен.
+function get_cpu_usage_percent() {
+    [ -r /proc/stat ] || return 0
+    local sample_ms="${BS_CPU_SAMPLE_MS:-200}"
+    local first second
+    first="$(awk '/^cpu /{busy=$2+$3+$4+$7+$8+$9; idle=$5+$6; print busy, busy+idle}' /proc/stat)"
+    if (( sample_ms > 0 )); then
+        sleep "$(awk -v ms="$sample_ms" 'BEGIN{printf "%.3f", ms/1000}')"
+    fi
+    second="$(awk '/^cpu /{busy=$2+$3+$4+$7+$8+$9; idle=$5+$6; print busy, busy+idle}' /proc/stat)"
+
+    awk -v a="$first" -v b="$second" 'BEGIN{
+        split(a, x, " "); split(b, y, " ");
+        dt = y[2] - x[2]; di = y[1] - x[1];
+        if (dt <= 0) exit;
+        printf "%d", (di * 100) / dt
+    }'
+}
+
+# Память: "1.2 / 5.8 ГБ (21%)"
+function get_memory_usage() {
+    [ -r /proc/meminfo ] || { printf 'н/д'; return; }
+    awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{
+        if (t == 0) { printf "н/д"; exit }
+        used = t - a;
+        printf "%.1f / %.1f ГБ (%d%%)", used/1048576, t/1048576, (used*100)/t
+    }' /proc/meminfo
+}
+
+# Процент занятости корневого раздела
+function get_disk_usage_percent_root() {
+    df -P / 2>/dev/null | awk 'NR==2{gsub("%","",$5); print $5}'
+}
+
+# Диск: "8.4G / 28G (30%)"
+function get_disk_usage_root() {
+    df -Ph / 2>/dev/null | awk 'NR==2{printf "%s / %s (%s)", $3, $2, $5}'
+}
+
+# Аптайм: "3 ч 28 мин"
+function get_uptime_short() {
+    local s d h m
+    s="$(awk '{print int($1)}' /proc/uptime 2>/dev/null)"
+    [ -z "$s" ] && { printf 'н/д'; return; }
+    d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
+    if (( d > 0 )); then
+        printf '%d д %d ч %d мин' "$d" "$h" "$m"
+    elif (( h > 0 )); then
+        printf '%d ч %d мин' "$h" "$m"
+    else
+        printf '%d мин' "$m"
+    fi
+}
+
+# Повторить символ N раз (устойчиво к N=0 и к многобайтным символам вроде «─»)
+function repeat_char() {
+    local n="${1:-0}" ch="${2:-─}" buf=""
+    (( n <= 0 )) && return 0
+    printf -v buf '%*s' "$n" ""
+    printf '%s' "${buf// /$ch}"
+}
+
+# Строка панели: $1 — «чистый» текст (для расчёта ширины), $2 — цветной вариант
+function status_panel_row() {
+    local plain="$1" colored="${2:-$1}"
+    local width="${BS_STATUS_PANEL_WIDTH:-52}"
+    local inner=$(( width - 2 ))
+    local pad=$(( inner - ${#plain} ))
+    (( pad < 0 )) && pad=0
+    printf '   %s│%s %s%*s %s│%s\n' "$C_DIM" "$C_RESET" "$colored" "$pad" "" "$C_DIM" "$C_RESET"
+}
+
+# Панель состояния сервера. Данные собираются в do_load_menu (collect_status_panel).
+function render_status_panel() {
+    [ "${BS_STATUS_PANEL:-true}" = true ] || return 0
+    [ -n "${STATUS_PANEL_READY:-}" ] || return 0
+
+    local width="${BS_STATUS_PANEL_WIDTH:-52}"
+    local title=" Состояние сервера "
+    local fill=$(( width - ${#title} ))
+    (( fill < 2 )) && fill=2
+    local left=$(( fill / 2 ))
+    local right=$(( fill - left ))
+
+    printf '   %s┌%s%s%s%s%s%s┐%s\n' \
+        "$C_DIM" "$(repeat_char "$left")" "$C_RESET" \
+        "${C_BOLD}${C_CYAN}${title}${C_RESET}" \
+        "$C_DIM" "$(repeat_char "$right")" "$C_RESET"
+
+    local load_plain="Загрузка   ${STATUS_LOAD}   ${STATUS_CPU_COUNT} CPU"
+    status_panel_row "$load_plain" \
+        "${C_GREY}Загрузка${C_RESET}   ${C_BOLD}${STATUS_LOAD}${C_RESET}   ${C_GREY}${STATUS_CPU_COUNT} CPU${C_RESET}"
+
+    local cpu_plain="CPU        ${STATUS_CPU_PCT}%"
+    status_panel_row "$cpu_plain" \
+        "${C_GREY}CPU${C_RESET}        $(severity_color "$STATUS_CPU_PCT")${C_BOLD}${STATUS_CPU_PCT}%${C_RESET}"
+
+    local mem_plain="Память     ${STATUS_MEM}"
+    status_panel_row "$mem_plain" \
+        "${C_GREY}Память${C_RESET}     $(severity_color "${STATUS_MEM_PCT:-0}")${STATUS_MEM}${C_RESET}"
+
+    local disk_plain="Диск /     ${STATUS_DISK}"
+    status_panel_row "$disk_plain" \
+        "${C_GREY}Диск /${C_RESET}     $(severity_color "${STATUS_DISK_PCT:-0}")${STATUS_DISK}${C_RESET}"
+
+    local uptime_plain="Аптайм     ${STATUS_UPTIME}"
+    status_panel_row "$uptime_plain" \
+        "${C_GREY}Аптайм${C_RESET}     ${STATUS_UPTIME}"
+
+    printf '   %s└%s┘%s\n' "$C_DIM" "$(repeat_char "$width")" "$C_RESET"
+}
+
+# Собираем данные панели (вызывается из do_load_menu раз за отрисовку).
+function collect_status_panel() {
+    [ "${BS_STATUS_PANEL:-true}" = true ] || return 0
+
+    STATUS_LOAD="$(get_load_average)"
+    STATUS_CPU_COUNT="$(get_cpu_count)"
+    STATUS_CPU_PCT="$(get_cpu_usage_percent)"
+    [ -n "$STATUS_CPU_PCT" ] || STATUS_CPU_PCT="н/д"
+
+    STATUS_MEM="$(get_memory_usage)"
+    STATUS_MEM_PCT="$(printf '%s' "$STATUS_MEM" | sed -n 's/.*(\([0-9]\+\)%).*/\1/p')"
+
+    STATUS_DISK="$(get_disk_usage_root)"
+    [ -n "$STATUS_DISK" ] || STATUS_DISK="н/д"
+    STATUS_DISK_PCT="$(get_disk_usage_percent_root)"
+
+    STATUS_UPTIME="$(get_uptime_short)"
+
+    STATUS_PANEL_READY=1
+}
+
 function get_current_version_php() {
-    for module in $(ls "${BS_PATH_APACHE}/mods-enabled" | grep php | sed 's/_module\.load//'); do
-      version=$(echo "$module" | sed -e 's/\.conf//' -e 's/\.load//' -e 's/php//')
-      break
-    done
-    echo -e "\n   Current PHP version: $version"
+    local version=""
+
+    if command -v php >/dev/null 2>&1; then
+        version="$(php -r 'echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;' 2>/dev/null)"
+    fi
+
+    echo -e "\n   Текущая версия PHP: ${version:-не определена}"
 }
 
 function get_available_version_php() {
-    echo -e "\n   Available PHP versions:\n"
+    echo -e "\n   Доступные для установки версии PHP:\n"
 
-    versions=$(apt-cache search php | grep -oP '^php[0-9.]+ ' | sort -ur)
-    for version in $versions; do
-        echo "   $version"
-    done
+    local versions
+    versions="$(apt-cache search --names-only '^php8\.[0-9]+$' 2>/dev/null | awk '{print $1}' | sort -V -u)"
+
+    if [[ -z "$versions" ]]; then
+        echo "   Не удалось получить список версий PHP (apt-cache search)."
+        echo "   Проверьте, что подключён репозиторий deb.sury.org."
+    else
+        local version
+        for version in $versions; do
+            printf '   - %s\n' "${version#php}"
+        done
+    fi
 
     echo -e "\n"
+}
+
+# Состояние systemd-сервиса: active / inactive / not-found
+function get_service_state() {
+    local service="$1"
+    local state
+
+    state="$(systemctl is-active "$service" 2>/dev/null)"
+    if [[ -z "$state" || "$state" == "unknown" ]]; then
+        state="not-found"
+    fi
+
+    printf '%s' "$state"
+}
+
+# Цветной бейдж сервиса для шапки меню: "nginx=active" (зелёный) / "mysql=failed" (красный)
+function service_badge() {
+    local name="$1"
+    local state color
+
+    state="$(get_service_state "$name")"
+    case "$state" in
+        active)            color="$C_GREEN" ;;
+        inactive|failed)   color="$C_RED" ;;
+        *)                 color="$C_YELLOW" ;;
+    esac
+
+    printf '%s%s%s=%s%s%s' "$C_GREY" "$name" "$C_RESET" "$color" "$state" "$C_RESET"
+}
+
+# Версия MySQL-сервера (с указанием Percona, если используется Percona Server)
+function get_mysql_version() {
+    command -v "$BS_MYSQL_CMD" >/dev/null 2>&1 || return 0
+
+    local out version
+    out="$("$BS_MYSQL_CMD" --version 2>/dev/null)"
+    version="$(printf '%s' "$out" | sed -E 's/.*Distrib ([0-9.]+).*/\1/; s/^mysql  Ver ([0-9.]+).*/\1/' | head -n1)"
+
+    if printf '%s' "$out" | grep -qi percona; then
+        printf '%s (Percona)' "$version"
+    else
+        printf '%s' "$version"
+    fi
+}
+
+# Состояние PHP-модуля Apache (загружен ли mod_php соответствующей версии)
+# В Debian файлы называются php8.3.load / php8.3.conf,
+# в других сборках встречается php8.3_module.load — поддерживаем оба варианта.
+function get_active_php_module() {
+    local module
+    for module in "${BS_PATH_APACHE}/mods-enabled"/php[0-9]*.load; do
+        [[ -e "$module" ]] || continue
+        basename "$module" | sed -E 's/^php([0-9.]+)(_module)?\.load$/\1/'
+        return 0
+    done
+    return 1
 }

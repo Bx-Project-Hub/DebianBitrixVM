@@ -2,12 +2,30 @@
 # tasks file for install_or_delete_netdata
 - block:
     - name: Installing Netdata
-      shell: wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive
+      shell: wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --stable-channel --disable-telemetry
 
-    - name: Copying {{ service_nginx_name }} directory to /etc/{{ service_nginx_name }}
+    - name: Copying nginx directory to /etc/{{ service_nginx_name }}
       copy:
         src: "nginx/"
         dest: "/etc/{{ service_nginx_name }}/"
+
+    - name: Generating password for Netdata web access
+      set_fact:
+        netdata_web_password: "{{ lookup('password', '/root/.netdata_web_password length=16 chars=ascii_letters,digits') }}"
+      no_log: true
+
+    - name: Creating htpasswd file for Netdata
+      community.general.htpasswd:
+        path: "/etc/{{ service_nginx_name }}/netdata_passwds"
+        name: admin
+        password: "{{ netdata_web_password }}"
+        owner: root
+        group: "{{ group_user_server_sites | default('www-data') }}"
+        mode: '0640'
+
+    - name: Showing Netdata web credentials
+      debug:
+        msg: "Netdata доступен по адресу https://<домен>/netdata/ — логин admin, пароль {{ netdata_web_password }}"
 
     - name: Restarting Nginx
       systemd:
@@ -19,16 +37,21 @@
 - block:
     - name: Find files deleting nginx configs
       find:
-        paths: "{{ role_path }}/files/{{ service_nginx_name }}"
+        paths: "{{ role_path }}/files/nginx"
         file_type: file
         recurse: yes
       register: found_files
 
     - name: Deleting files in /etc/{{ service_nginx_name }}
       file:
-        path: "/etc/nginx/{{ item.path | regex_replace('^' + role_path + '/files/'+ service_nginx_name +'/', '') }}"
+        path: "/etc/{{ service_nginx_name }}/{{ item.path | regex_replace('^' + role_path + '/files/nginx/', '') }}"
         state: absent
       loop: "{{ found_files.files }}"
+
+    - name: Removing Netdata htpasswd file
+      file:
+        path: "/etc/{{ service_nginx_name }}/netdata_passwds"
+        state: absent
 
     - name: Stoping Netdata service
       systemd:

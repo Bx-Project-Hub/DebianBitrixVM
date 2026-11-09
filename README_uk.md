@@ -2,19 +2,20 @@
 ![Головне меню](images/main_menu.png)
 
 # **Інформація**
-Меню для керування середовищем Bitrix, адаптоване для **Debian 11 / Debian 12**.  
-Засноване на проєкті [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), доопрацьоване та оптимізоване для **сучасних версій Debian 11-12 і Bitrix**.
+Меню для керування середовищем Bitrix, адаптоване для **Debian 12 / Debian 13**. Основна мета — Debian 13 (trixie): проєкт замінює середовище CentOS 9 на сучасних Debian-машинах.  
+Засноване на проєкті [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt), доопрацьоване та оптимізоване для **сучасних версій Debian 12–13 і Bitrix**.
 
 ---
 
 # **Можливості середовища**
 - Повна автоматична установка всіх необхідних компонентів:  
-  **Ansible, PHP 8.2 (за замовчуванням), MySQL 8.0, Nginx, Apache, Redis, Push & Pull сервер.**
+  **Ansible, PHP 8.3 (за замовчуванням), MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull сервер.**
+- **Вибір СУБД: Oracle MySQL 8.4 LTS або Percona Server 8.4 LTS** (змінна `DB_ENGINE`).
 - **Підтримка композиту**.
 - Віддача статичних файлів **через Brotli**.
 - Можливість **використовувати власні конфігурації Nginx**, не змінюючи стандартні.
 - Підтримка **повнотекстового пошуку Sphinx**.
-- Можливість **встановлення сервера конвертації документів (`unoconv`, `ImageMagick`)**.
+- Можливість **встановлення сервера конвертації документів (`LibreOffice`, `ImageMagick`)**.
 - Можливість **встановлення та моніторингу Netdata**.
 
 ---
@@ -39,7 +40,7 @@
 # **Встановлення**
 ### ⚠ **Важливо:** Встановлювати та використовувати меню **тільки від root-користувача**.
 
-#### **Повне встановлення середовища на Debian 11 / Debian 12**
+#### **Повне встановлення середовища на Debian 12 / Debian 13**
 ##### Встановлення через `CURL`
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -48,6 +49,24 @@ apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx
 ```bash
 apt install -y curl wget && bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
 ```
+
+---
+
+## Вибір СУБД: MySQL або Percona Server
+Інсталятор дозволяє вибрати **Oracle MySQL 8.4 LTS** або **Percona Server for MySQL 8.4 LTS**. Обидва варіанти використовують той самий сервіс (`mysql.service`), каталог конфігурації (`/etc/mysql/conf.d/99-bitrix.cnf`) і режим автентифікації (`mysql_native_password`), тому Bitrix працює однаково.
+
+```bash
+# Інтерактивний вибір (за замовчуванням MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Percona Server 8.4 LTS, без питань
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Oracle MySQL 8.4 LTS, без питань
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+**Перевірено на чистій Debian 13 (trixie), amd64:** PHP 8.3.36 (єдина гілка PHP у системі), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; усі сервіси активні; створення сайту в режимах `full` і `link` працює.
 
 ---
 

@@ -2,7 +2,7 @@
 #
 # metadata_begin
 # recipe: Bitrix Vanilla
-# tags: debian11
+# tags: debian12,debian13
 # revision: 1
 # description_ru: Рецепт установки Bitrix Vanilla
 # description_en: Bitrix CMS installing recipe
@@ -160,20 +160,20 @@ settings() {
 
 installPkg(){
 	apt update
-	apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 unzip rsync nftables pwgen make build-essential wget curl
+apt install -y lsb-release ca-certificates apt-transport-https gnupg2 unzip rsync nftables pwgen make build-essential wget curl
 
 	echo "deb [signed-by=/etc/apt/trusted.gpg.d/suru.gpg] https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury-php.list
   curl -s -o /etc/apt/trusted.gpg.d/suru.gpg https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php/apt.gpg
   apt update
 	export DEBIAN_FRONTEND="noninteractive"
 	debconf-set-selections <<< 'exim4-config exim4/dc_eximconfig_configtype select internet site; mail is sent and received directly using SMTP'
-  apt install -y  php8.2 php8.2-cli \
-                  php8.2-common php8.2-gd php8.2-ldap \
-                  php8.2-mbstring php8.2-mysql \
-                  php8.2-opcache \
-                  php-pear php8.2-apcu php-geoip \
-                  php8.2-mcrypt php8.2-memcache \
-                  php8.2-zip php8.2-pspell php8.2-xml \
+  apt install -y  php8.3 php8.3-cli \
+                  php8.3-common php8.3-gd php8.3-ldap \
+                  php8.3-mbstring php8.3-mysql \
+                  php8.3-opcache \
+                  php8.3-apcu php8.3-redis php8.3-igbinary \
+                  php8.3-mcrypt php8.3-memcache \
+                  php8.3-zip php8.3-pspell php8.3-xml \
                   apache2 nginx mariadb-server mariadb-common \
                   nodejs npm redis \
                   exim4 exim4-config
@@ -186,8 +186,8 @@ dplApache(){
 PrivateTmp=false
 EOF
 		systemctl daemon-reload
-	  ln -sf /etc/php/8.2/mods-available/zbx-bitrix.ini  /etc/php/8.2/apache2/conf.d/99-bitrix.ini
-    ln -sf /etc/php/8.2/mods-available/zbx-bitrix.ini  /etc/php/8.2/cli/conf.d/99-bitrix.ini
+          ln -sf /etc/php/8.3/mods-available/zbx-bitrix.ini  /etc/php/8.3/apache2/conf.d/99-bitrix.ini
+    ln -sf /etc/php/8.3/mods-available/zbx-bitrix.ini  /etc/php/8.3/cli/conf.d/99-bitrix.ini
     a2dismod --force autoindex
     a2enmod rewrite
 		systemctl stop apache2
@@ -221,9 +221,9 @@ dplRedis(){
 
 dplPush(){
 	cd /opt
-	wget -q https://repo.bitrix.info/vm/push-server-0.3.0.tgz
-	npm install --production ./push-server-0.3.0.tgz
-	rm ./push-server-0.3.0.tgz
+	wget -q https://repo.bitrix.info/vm/push-server-0.4.0.tgz
+	npm install --production ./push-server-0.4.0.tgz
+	rm ./push-server-0.4.0.tgz
 	ln -sf /opt/node_modules/push-server/etc/push-server /etc/push-server
 
 	cd /opt/node_modules/push-server
@@ -257,7 +257,7 @@ EOF
 
 dplMYSQL() {
 	echo 'innodb_strict_mode=off' >> /etc/mysql/my-bx.d/zbx-custom.cnf
-	mysql -e "create database bitrix;create user bitrix@localhost;grant all on bitrix.* to bitrix@localhost;set password for bitrix@localhost = PASSWORD('${DBPASS}')"
+    mysql -e "create database if not exists bitrix;create user if not exists bitrix@localhost identified by '${DBPASS}';alter user bitrix@localhost identified by '${DBPASS}';grant all on bitrix.* to bitrix@localhost"
 	systemctl stop mysql
 	systemctl --now enable mysql
 	systemctl start mysql
@@ -297,8 +297,7 @@ deployConfig() {
 	wget -q 'https://dev.1c-bitrix.ru/docs/chm_files/debian.zip'
   unzip debian.zip && rm debian.zip
   rsync -a --exclude=php.d ./debian/ /etc/
-  rsync -a ./debian/php.d/ /etc/php/8.2/mods-available/
-  rsync -a ./debian/php.d/ /etc/php/7.4/mods-available/
+  rsync -a ./debian/php.d/ /etc/php/8.3/mods-available/
 	mkdir -p /var/www/html/bx-site
 
 	nfTabl

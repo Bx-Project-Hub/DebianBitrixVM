@@ -2,19 +2,20 @@
 ![Менюи асосӣ](images/main_menu.png)
 
 # **Маълумот**
-Меню барои идоракунии муҳити Bitrix, ки барои **Debian 11 / Debian 12** мутобиқ карда шудааст.  
-Дар асоси лоиҳаи [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) таҳия шуда, барои **Debian 11-12 ва Bitrix** оптимизатсия шудааст.
+Меню барои идоракунии муҳити Bitrix, ки барои **Debian 12 / Debian 13** мутобиқ карда шудааст. Ҳадафи асосӣ — Debian 13 (trixie): лоиҳа муҳити CentOS 9-ро дар мошинҳои муосири Debian иваз мекунад.  
+Дар асоси лоиҳаи [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) таҳия шуда, барои **Debian 12–13 ва Bitrix** оптимизатсия шудааст.
 
 ---
 
 # **Имкониятҳои муҳит**
 - Насби пурраи автоматии ҳамаи ҷузъҳои зарурӣ:  
-  **Ansible, PHP 8.2 (пешфарз), MySQL 8.0, Nginx, Apache, Redis, Push & Pull сервер.**
+  **Ansible, PHP 8.3 (пешфарз), MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull сервер.**
+- **Интихоби муҳаррики пойгоҳи додаҳо: Oracle MySQL 8.4 LTS ё Percona Server 8.4 LTS** (тағйирёбандаи `DB_ENGINE`).
 - **Дастгирии композит**.
 - Тақсими статикӣ **бо Brotli**.
 - Имконияти **истифодаи конфигуратсияҳои шахсии Nginx** бе тағйири стандартӣ.
 - Дастгирии **ҷустуҷӯи пурраи матнӣ бо Sphinx**.
-- Имконияти **насб ва танзими сервери табдили ҳуҷҷатҳо (`unoconv`, `ImageMagick`)**.
+- Имконияти **насб ва танзими сервери табдили ҳуҷҷатҳо (`LibreOffice`, `ImageMagick`)**.
 - Имконияти **насб ва мониторинги Netdata**.
 
 ---
@@ -39,7 +40,7 @@
 # **Насб**
 ### ⚠ **Муҳим:** Менюро **танҳо ҳамчун root-корбар** насб ва истифода баред.
 
-#### **Насби пурраи муҳит дар Debian 11 / Debian 12**
+#### **Насби пурраи муҳит дар Debian 12 / Debian 13**
 ##### Насб бо `CURL`
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -48,6 +49,24 @@ apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx
 ```bash
 apt install -y curl wget && bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
 ```
+
+---
+
+## Интихоби муҳаррики пойгоҳи додаҳо: MySQL ё Percona Server
+Насбкунанда имкон медиҳад **Oracle MySQL 8.4 LTS** ё **Percona Server for MySQL 8.4 LTS**-ро интихоб кунед. Ҳарду ҳамон хидмат (`mysql.service`), ҳамон ҷузвдони конфигуратсия (`/etc/mysql/conf.d/99-bitrix.cnf`) ва ҳамон режими аутентификатсия (`mysql_native_password`)-ро истифода мебаранд, бинобар ин Bitrix дар ҳар ду ҳолат якхела кор мекунад.
+
+```bash
+# Интихоби интерактивӣ (пешфарз — MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Percona Server 8.4 LTS, бе савол
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Oracle MySQL 8.4 LTS, бе савол
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+**Дар Debian 13 (trixie)-и тоза, amd64 санҷида шуд:** PHP 8.3.36 (танҳо шохаи PHP дар система), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; ҳамаи хидматҳо фаъоланд; сохтани сайт дар режимҳои `full` ва `link` кор мекунад.
 
 ---
 

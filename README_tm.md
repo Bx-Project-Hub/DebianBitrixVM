@@ -2,19 +2,20 @@
 ![Baş menyu](images/main_menu.png)
 
 # **Maglumat**
-Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 11 / Debian 12** üçin uýgunlaşdyrylan.  
-(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) taslamasynyň esasynda döredildi we **häzirki zaman Debian 11-12 we Bitrix** üçin optimizasiýa edildi.
+Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 12 / Debian 13** üçin uýgunlaşdyrylan. Esasy maksat — Debian 13 (trixie): taslama häzirki zaman Debian maşynlarynda CentOS 9 gurşawyny çalyşýar.  
+(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) taslamasynyň esasynda döredildi we **häzirki zaman Debian 12–13 we Bitrix** üçin optimizasiýa edildi.
 
 ---
 
 # **Gurşawyň mümkinçilikleri**
 - Ähli zerur komponentleriň doly awtomatiki gurnalmagy:  
-  **Ansible, PHP 8.2 (öňden kesgitlenen), MySQL 8.0, Nginx, Apache, Redis, Push & Pull serveri.**
+  **Ansible, PHP 8.3 (öňden kesgitlenen), MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull serveri.**
+- **Maglumatlar bazasynyň hereketlendirijisini saýlamak: Oracle MySQL 8.4 LTS ýa-da Percona Server 8.4 LTS** (`DB_ENGINE` üýtgeýjisi).
 - **Kompozit goldawy**.
 - Statik faýllaryň **Brotli arkaly berilmegi**.
 - Standart konfigurasiýalary üýtgetmän **özboluşly Nginx konfigurasiýalaryny ulanmak** mümkinçiligi.
 - **Sphinx bilen doly tekst gözlegini** goldamak.
-- **Resminamalary öwürmek hyzmatyny (`unoconv`, `ImageMagick`) gurnamak we sazlamak** mümkinçiligi.
+- **Resminamalary öwürmek hyzmatyny (`LibreOffice`, `ImageMagick`) gurnamak we sazlamak** mümkinçiligi.
 - **Netdata-y gurnamak we gözegçilik etmek** mümkinçiligi.
 
 ---
@@ -39,7 +40,7 @@ Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 11 / Debian 12** üçin uý
 # **Gurnama**
 ### ⚠ **Möhüm:** Menýuny **diňe root ulanyjy hökmünde** gurnamagy we ulanmagy maslahat berýäris.
 
-#### **Debian 11 / Debian 12 üçin doly gurşaw gurnamak**
+#### **Debian 12 / Debian 13 üçin doly gurşaw gurnamak**
 ##### `CURL` arkaly gurnama
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -48,6 +49,24 @@ apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx
 ```bash
 apt install -y curl wget && bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
 ```
+
+---
+
+## Maglumatlar bazasynyň hereketlendirijisini saýlamak: MySQL ýa-da Percona Server
+Gurnaýjy **Oracle MySQL 8.4 LTS** ýa-da **Percona Server for MySQL 8.4 LTS** saýlamaga mümkinçilik berýär. Ikisi hem birmeňzeş hyzmaty (`mysql.service`), konfigurasiýa papkasyny (`/etc/mysql/conf.d/99-bitrix.cnf`) we autentifikasiýa tertibini (`mysql_native_password`) ulanýar, şonuň üçin Bitrix iki ýagdaýda-da deň işleýär.
+
+```bash
+# Interaktiw saýlaw (deslapky — MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Percona Server 8.4 LTS, soragsyz
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Oracle MySQL 8.4 LTS, soragsyz
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+**Arassa Debian 13 (trixie), amd64-de barlanyldy:** PHP 8.3.36 (ulgamda ýeke-täk PHP şahasy), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; ähli hyzmatlar işjeň; saýt döretmek `full` we `link` tertiplerinde işleýär.
 
 ---
 

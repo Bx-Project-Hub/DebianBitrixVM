@@ -2,7 +2,7 @@
 #
 # metadata_begin
 # recipe: Bitrix GT
-# tags: centos,debian11,debian12
+# tags: centos,debian12,debian13
 # revision: 6
 # description_ru: Рецепт установки Bitrix CMS
 # description_en: Bitrix CMS installing recipe
@@ -311,7 +311,7 @@ then
 	chown -R apache:apache /var/www/html
 	chmod 771 /var/www/html
   systemctl start mysql
-	mysql -e "create database bitrix;create user bitrix@localhost;grant all on bitrix.* to bitrix@localhost;set password for bitrix@localhost = PASSWORD('${mypwddb}')"
+mysql -e "create database if not exists bitrix;create user if not exists bitrix@localhost identified by '${mypwddb}';alter user bitrix@localhost identified by '${mypwddb}';grant all on bitrix.* to bitrix@localhost"
 
 	envver=$(wget -qO- 'https://repos.1c-bitrix.ru/yum/SRPMS/' | grep -Eo 'bitrix-env-[0-9]\.[^src\.rpm]*'|sort -n|tail -n 1 | sed 's/bitrix-env-//;s/-/./')
   touch /etc/php-fpm.d/bx
@@ -333,7 +333,7 @@ EOF
 if echo $os|grep -Eo 'Debian' >/dev/null
 then
 	apt update
-	apt-get install -y software-properties-common apt-transport-https debconf-utils curl lsb-release gnupg gnupg2 debian-archive-keyring
+      apt-get install -y apt-transport-https debconf-utils curl lsb-release gnupg gnupg2 debian-archive-keyring
 	type=$(lsb_release -is|tr '[A-Z]' '[a-z]')
 	release=$(lsb_release -sc|tr '[A-Z]' '[a-z]')
 	mkdir -p /etc/apt/keyrings
@@ -351,12 +351,12 @@ then
 	echo -e "[client]\npassword=${mypwd}" > /root/.my.cnf
 
 	wget -qO /etc/apt/trusted.gpg.d/php.gpg https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php/apt.gpg
-	echo "deb https://ftp.mpi-inf.mpg.de/mirrors/linux/mirror/deb.sury.org/repositories/php ${release} main" > /etc/apt/sources.list.d/php8.2.list
+      echo "deb https://packages.sury.org/php/ ${release} main" > /etc/apt/sources.list.d/php8.3.list
 	apt update
-	apt install -y php8.2-opcache php8.2-mysqli php8.2-fpm php8.2-gd php8.2-curl php8.2-xml php8.2-mbstring mariadb-server mysql-common mariadb-client nginx catdoc exim4 exim4-config apache2 libapache2-mod-rpaf nftables
+      apt install -y php8.3-opcache php8.3-mysql php8.3-fpm php8.3-gd php8.3-curl php8.3-xml php8.3-mbstring mariadb-server mysql-common mariadb-client nginx catdoc exim4 exim4-config apache2 libapache2-mod-rpaf nftables
 	sed -i "s/dc_eximconfig_configtype='local'/dc_eximconfig_configtype='internet'/" /etc/exim4/update-exim4.conf.conf && dpkg-reconfigure --frontend noninteractive exim4-config
 	ip=$(wget -qO- "https://ipinfo.io/ip")
-	mariadb -e "create database bitrix;create user bitrix@localhost;grant all on bitrix.* to bitrix@localhost;set password for bitrix@localhost = PASSWORD('${mypwddb}')"
+      mariadb -e "create database if not exists bitrix;create user if not exists bitrix@localhost identified by '${mypwddb}';alter user bitrix@localhost identified by '${mypwddb}';grant all on bitrix.* to bitrix@localhost"
 	nfTabl
 
 	cd /var/www/html || exit
@@ -402,8 +402,8 @@ then
 	sed -i 's|collation-server=utf8_general_ci|collation-server=utf8mb4_general_ci|' /etc/mysql/conf.d/z9_bitrix.cnf
 	chmod 644 ${mycnf} ${phpini} ${phpfpmcnf} ${croncnf} ${phpini2}
 
-	systemctl restart cron mysql php8.2-fpm apache2 nginx php8.2-fpm
-	systemctl enable cron mysql php8.2-fpm apache2 nginx php8.2-fpm
+systemctl restart cron mysql php8.3-fpm apache2 nginx php8.3-fpm
+systemctl enable cron mysql php8.3-fpm apache2 nginx php8.3-fpm
 fi
 
 

@@ -3,7 +3,8 @@
 - name: Installing of Certbot
   apt:
     name: certbot
-    state: latest
+    state: present
+    update_cache: yes
 
 - name: Getting SSL certificate
   shell: |

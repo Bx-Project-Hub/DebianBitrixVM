@@ -3,82 +3,97 @@
 - block:
     - name: Installing Sphinx
       apt:
-        name: sphinxsearch=2.2.11-8+b1
+        name: "{{ sphinx_package | default('sphinxsearch') }}"
         state: present
+        update_cache: yes
+
+    - name: Ensuring Sphinx directories exist
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: sphinxsearch
+        group: sphinxsearch
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /etc/sphinxsearch, mode: '0755' }
+        - { path: /etc/sphinxsearch/dicts, mode: '0755' }
+        - { path: /var/run/sphinxsearch, mode: '0755' }
+        - { path: /var/log/sphinxsearch, mode: '0755' }
+        - { path: /var/lib/sphinxsearch/data, mode: '0750' }
 
     - name: Copying config to /etc/sphinxsearch/sphinx.conf
       copy:
         src: "sphinxsearch/"
         dest: "/etc/sphinxsearch/"
-
-    - name: Restarting sphinxsearch
-      systemd:
-        name: "sphinxsearch"
-        state: restarted
-
-    - name: Create the script file
-      copy:
-        dest: /usr/local/bin/create_dir_for_sphinx.sh
-        content: |
-         #!/bin/bash
-         mkdir -p /var/run/sphinxsearch
-         searchd
-        mode: '0755'
-
-    - name: Create systemd service file
-      copy:
-        dest: /etc/systemd/system/create_dir_for_sphinx.service
-        content: |
-         [Unit]
-         Description=Create directory for Sphinx
-         After=network.target
-
-         [Service]
-         ExecStart=/usr/local/bin/create_dir_for_sphinx.sh
-         Type=oneshot
-         RemainAfterExit=true
-
-         [Install]
-         WantedBy=multi-user.target
+        owner: root
+        group: sphinxsearch
         mode: '0644'
+        directory_mode: '0755'
+
+    - name: Enabling Sphinx in /etc/default (for cron reindex)
+      lineinfile:
+        path: /etc/default/sphinxsearch
+        regexp: '^START='
+        line: 'START=yes'
+        create: yes
+
+    - name: Creating systemd unit for Sphinx
+      copy:
+        dest: /etc/systemd/system/sphinxsearch.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Sphinx full-text search daemon
+          After=network.target mysql.service
+          Wants=network.target
+
+          [Service]
+          Type=forking
+          User=sphinxsearch
+          Group=sphinxsearch
+          RuntimeDirectory=sphinxsearch
+          RuntimeDirectoryMode=0755
+          PIDFile=/var/run/sphinxsearch/searchd.pid
+          ExecStartPre=/usr/bin/install -d -o sphinxsearch -g sphinxsearch /var/run/sphinxsearch /var/log/sphinxsearch /var/lib/sphinxsearch/data
+          ExecStart=/usr/bin/searchd --config /etc/sphinxsearch/sphinx.conf
+          ExecStop=/usr/bin/searchd --config /etc/sphinxsearch/sphinx.conf --stopwait
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
 
     - name: Reload systemd to apply changes
-      command: systemctl daemon-reload
-
-    - name: Enabling the service to run at startup
       systemd:
-        name: create_dir_for_sphinx.service
+        daemon_reload: yes
+
+    - name: Enabling and starting Sphinx
+      systemd:
+        name: "{{ sphinx_service_name | default('sphinxsearch') }}"
         enabled: yes
-        state: started
-
-    - name: Runing searchd command
-      shell: searchd
-
+        state: restarted
   when: sphinx_action == 'INSTALL'
 
 - block:
-    - name: Deleting Sphinx
-      apt:
-        name: sphinxsearch
-        state: absent
-
-    - name: Stoping the systemd service
+    - name: Stoping and disabling the Sphinx service
       systemd:
-        name: create_dir_for_sphinx.service
+        name: "{{ sphinx_service_name | default('sphinxsearch') }}"
         state: stopped
         enabled: no
+      ignore_errors: yes
 
-    - name: Remove the systemd service file
+    - name: Remove the systemd unit file
       file:
-        path: /etc/systemd/system/create_dir_for_sphinx.service
+        path: /etc/systemd/system/sphinxsearch.service
         state: absent
+
+    - name: Deleting Sphinx package
+      apt:
+        name: "{{ sphinx_package | default('sphinxsearch') }}"
+        state: absent
+        purge: yes
 
     - name: Reload systemd to apply changes
-      command: systemctl daemon-reload
-
-    - name: Remove the script file
-      file:
-        path: /usr/local/bin/create_dir_for_sphinx.sh
-        state: absent
-
+      systemd:
+        daemon_reload: yes
   when: sphinx_action == 'DELETE'

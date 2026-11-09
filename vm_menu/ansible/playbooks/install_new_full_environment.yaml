@@ -5,15 +5,15 @@
   become: yes
   gather_facts: yes
   vars:
-    - bx_temporary_files_directory: "{{ path_sites }}/tmp/{{ db_name }}/"
+    bx_temporary_files_directory: "{{ path_sites }}/tmp/{{ db_name }}/"
   tasks:
     - include_tasks: "tasks/add_cron_agents.yaml"
       vars:
-        - path_file_run_cron: "{{ document_root }}{{ bx_cron_agents_path_file_after_document_root }}"
-        - user_site: "{{ user_server_sites }}"
-        - group_user_site: "{{ group_user_server_sites }}"
-        - logs_path_dir: "{{ bx_cron_logs_path_dir }}"
-        - logs_path_file: "{{ bx_cron_logs_path_file }}"
+        path_file_run_cron: "{{ document_root }}{{ bx_cron_agents_path_file_after_document_root }}"
+        user_site: "{{ user_server_sites }}"
+        group_user_site: "{{ group_user_server_sites }}"
+        logs_path_dir: "{{ bx_cron_logs_path_dir }}"
+        logs_path_file: "{{ bx_cron_logs_path_file }}"
 
     - name: Creating directory from bitrix temporary files
       file:
@@ -27,6 +27,14 @@
     - name: Setting timezone to UTC
       command:
         cmd: timedatectl set-timezone UTC
+
+    - name: Creating directory for PHP logs
+      file:
+        path: /var/log/php
+        state: directory
+        owner: "{{ user_server_sites }}"
+        group: "{{ group_user_server_sites }}"
+        mode: '0775'
 
     - name: Restarting MySQL service
       service:
@@ -140,7 +148,7 @@
 
     - name: Add nginx modules repo.
       apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/yogsottot.asc] https://yogsottot.github.io/ppa/debian {{ ansible_distribution_release }} main"
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/yogsottot.asc] https://yogsottot.github.io/ppa/debian {{ ansible_distribution_release }} main"
         state: present
 
     - name: Update apt caches after repo is added.
@@ -148,6 +156,8 @@
         name:
           - libnginx-mod-http-zip
           - libnginx-mod-http-zstd
+        state: present
+        update_cache: yes
 
     - name: Copying nginx_files directory to /etc/{{ service_nginx_name }}
       copy:
@@ -249,64 +259,23 @@
         name: "{{ service_apache_name }}"
         state: restarted
 
-    ############## Show IP address ##############
-    - name: Creating script
-      copy:
-        dest: /usr/local/bin/display-ip.sh
-        content: |
-          #!/bin/bash
-          source /root/vm_menu/bash_scripts/utils.sh
-          get_ip_current_server
-          echo -e "\n\n          ${CURRENT_SERVER_IP}\ndebian login:" > /dev/tty1
-
-        mode: '0755'
-
-    - name: Creating systemd service for IP showing
-      copy:
-        dest: /etc/systemd/system/display-ip@.service
-        content: |
-         [Unit]
-         Description=Show IP address on tty%I
-         After=network-online.target multi-user.target
-         Wants=network-online.target multi-user.target
-
-         [Service]
-         ExecStart=/usr/local/bin/display-ip.sh
-         StandardOutput=tty
-         TTYPath=/dev/tty%I
-         Type=simple
-
-         [Install]
-         WantedBy=getty.target
-        mode: '0644'
-
-    - name: Create directory for getty@.service override
-      file:
-        path: /etc/systemd/system/getty@tty1.service.d
-        state: directory
-        mode: '0755'
-
-    - name: Override getty@.service to use display-ip.sh
-      copy:
-        dest: /etc/systemd/system/getty@tty1.service.d/override.conf
-        content: |
-         [Service]
-         ExecStartPost=/usr/local/bin/display-ip.sh
-        mode: '0644'
-
     - name: Reload systemd daemon
-      command: systemctl daemon-reload
-
-    - name: Restart getty@tty1.service
       systemd:
-        name: getty@tty1
-        state: restarted
+        daemon_reload: yes
+
+    # Показ IP на консоли (tty1) в Debian НЕ настраиваем.
+    # В CentOS это делалось через override getty@tty1 + ExecStartPost.
+    # В Debian 12/13 такая схема ломает установку: `systemctl restart getty@tty1`
+    # не может остановить getty, PID 1 перестаёт отвечать по D-Bus
+    # ("Transport endpoint is not connected"), Ansible зависает, SSH рвётся.
+    # Приглашение входа Debian печатает сам, а IP администратор видит в панели.
 
 # Change site user for connection SSH
     - name: Installing of python3-passlib
       apt:
         name: python3-passlib
         state: present
+        update_cache: yes
 
     - name: Creating home directory for user {{ user_server_sites }}
       file:
@@ -344,11 +313,21 @@
         group: "{{ group_user_server_sites }}"
         recurse: yes
 
+    - name: Getting uid and gid of user {{ user_server_sites }}
+      getent:
+        database: passwd
+        key: "{{ user_server_sites }}"
+
+    - name: Getting gid of group {{ group_user_server_sites }}
+      getent:
+        database: group
+        key: "{{ group_user_server_sites }}"
+
     - name: Change user {{ user_server_sites }} for connecting SSH
       lineinfile:
         path: /etc/passwd
         regexp: "^{{ user_server_sites }}:"
-        line: "{{ user_server_sites }}:x:33:33:{{ group_user_server_sites }}:{{ path_sites }}:/bin/bash"
+        line: "{{ user_server_sites }}:x:{{ getent_passwd[user_server_sites][1] }}:{{ getent_group[group_user_server_sites][1] }}:{{ group_user_server_sites }}:{{ path_sites }}:/bin/bash"
         state: present
 
     - name: Setting password from user {{ user_server_sites }}

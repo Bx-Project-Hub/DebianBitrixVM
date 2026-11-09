@@ -92,11 +92,14 @@
       apt:
         name: python3-pymysql
         state: present
+        update_cache: yes
 
     - name: Creating database
       mysql_db:
         name: "{{ db_name }}"
         state: present
+        encoding: "{{ db_character_set_server }}"
+        collation: "{{ db_collation_server }}"
 
     - name: Creating database user
       mysql_user:
@@ -161,11 +164,11 @@
 
     - include_tasks: "tasks/add_cron_agents.yaml"
       vars:
-        - path_file_run_cron: "{{ path_sites }}/{{ domain }}{{ bx_cron_agents_path_file_after_document_root }}"
-        - user_site: "{{ user_server_sites }}"
-        - group_user_site: "{{ group_user_server_sites }}"
-        - logs_path_dir: "{{ bx_cron_logs_path_dir }}"
-        - logs_path_file: "{{ bx_cron_logs_path_file }}"
+        path_file_run_cron: "{{ path_sites }}/{{ domain }}{{ bx_cron_agents_path_file_after_document_root }}"
+        user_site: "{{ user_server_sites }}"
+        group_user_site: "{{ group_user_server_sites }}"
+        logs_path_dir: "{{ bx_cron_logs_path_dir }}"
+        logs_path_file: "{{ bx_cron_logs_path_file }}"
 
   when: mode == 'full'
 

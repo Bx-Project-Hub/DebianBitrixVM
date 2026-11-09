@@ -2,19 +2,20 @@
 ![მთავარი მენიუ](images/main_menu.png)
 
 # **ინფორმაცია**
-მენიუ Bitrix-ის გარემოს სამართავად, ადაპტირებული **Debian 11 / Debian 12**-ისთვის.  
-დაფუძნებულია [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) პროექტზე და ოპტიმიზირებულია **თანამედროვე Debian 11-12 და Bitrix**-ისათვის.
+მენიუ Bitrix-ის გარემოს სამართავად, ადაპტირებული **Debian 12 / Debian 13**-ისთვის. მთავარი სამიზნე — Debian 13 (trixie): პროექტი ცვლის CentOS 9 გარემოს თანამედროვე Debian მანქანებზე.  
+დაფუძნებულია [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix-gt) პროექტზე და ოპტიმიზირებულია **თანამედროვე Debian 12–13 და Bitrix**-ისათვის.
 
 ---
 
 # **გარემოს შესაძლებლობები**
 - ყველა საჭირო კომპონენტის სრული ავტომატური ინსტალაცია:  
-  **Ansible, PHP 8.2 (ნაგულისხმევი), MySQL 8.0, Nginx, Apache, Redis, Push & Pull სერვერი.**
+  **Ansible, PHP 8.3 (ნაგულისხმევი), MySQL 8.4 LTS, Nginx, Apache, Redis, Push & Pull სერვერი.**
+- **მონაცემთა ბაზის ძრავის არჩევა: Oracle MySQL 8.4 LTS ან Percona Server 8.4 LTS** (`DB_ENGINE` ცვლადი).
 - **კომპოზიტის მხარდაჭერა**.
 - სტატიკური ფაილების **Brotli-თ გადაცემა**.
 - შესაძლებლობა **Nginx-ის პერსონალური კონფიგურაციების გამოყენება** სტანდარტულის ცვლილების გარეშე.
 - **Sphinx-ის სრული ტექსტური ძიების მხარდაჭერა**.
-- **დოკუმენტების კონვერტაციის სერვერის (`unoconv`, `ImageMagick`) ინსტალაციის და მორგების** შესაძლებლობა.
+- **დოკუმენტების კონვერტაციის სერვერის (`LibreOffice`, `ImageMagick`) ინსტალაციის და მორგების** შესაძლებლობა.
 - **Netdata-ის ინსტალაციის და მონიტორინგის** შესაძლებლობა.
 
 ---
@@ -39,7 +40,7 @@
 # **ინსტალაცია**
 ### ⚠ **მნიშვნელოვანი:** მენიუს **მხოლოდ root მომხმარებლის სახელით** დააყენეთ და გამოიყენეთ.
 
-#### **Debian 11 / Debian 12 გარემოს სრული ინსტალაცია**
+#### **Debian 12 / Debian 13 გარემოს სრული ინსტალაცია**
 ##### `CURL`-ით ინსტალაცია
 ```bash
 apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
@@ -48,6 +49,24 @@ apt install -y curl wget && bash <(curl -sL https://raw.githubusercontent.com/Bx
 ```bash
 apt install -y curl wget && bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
 ```
+
+---
+
+## მონაცემთა ბაზის ძრავის არჩევა: MySQL ან Percona Server
+ინსტალატორი იძლევა **Oracle MySQL 8.4 LTS**-ის ან **Percona Server for MySQL 8.4 LTS**-ის არჩევის საშუალებას. ორივე იყენებს ერთსა და იმავე სერვისს (`mysql.service`), კონფიგურაციის საქაღალდეს (`/etc/mysql/conf.d/99-bitrix.cnf`) და ავთენტიფიკაციის რეჟიმს (`mysql_native_password`), ამიტომ Bitrix ორივე შემთხვევაში ერთნაირად მუშაობს.
+
+```bash
+# ინტერაქტიული არჩევანი (ნაგულისხმევად MySQL)
+bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Percona Server 8.4 LTS, კითხვების გარეშე
+DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+
+# Oracle MySQL 8.4 LTS, კითხვების გარეშე
+DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+**შემოწმებულია სუფთა Debian 13 (trixie), amd64-ზე:** PHP 8.3.36 (სისტემაში PHP-ის ერთადერთი განშტოება), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; ყველა სერვისი აქტიურია; საიტის შექმნა `full` და `link` რეჟიმებში მუშაობს.
 
 ---
 

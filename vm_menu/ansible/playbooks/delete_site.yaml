@@ -41,6 +41,16 @@
       command: mv "{{ path_nginx_sites_conf }}/{{ site }}.conf" "{{ path_nginx_sites_conf }}/{{ site }}.conf_DELETE_SITE"
       ignore_errors: yes
 
+    - name: Removing Nginx site settings directory
+      file:
+        path: "/etc/{{ service_nginx_name }}/custom_conf.d/site_settings/{{ site }}"
+        state: absent
+
+    - name: Removing Nginx SSL config for the site
+      file:
+        path: "/etc/{{ service_nginx_name }}/ssl_conf/ssl_{{ site }}.conf"
+        state: absent
+
     - name: Rename Apache config {{ site }}.conf
       command: mv "{{ path_apache_sites_conf }}/{{ site }}.conf" "{{ path_apache_sites_conf }}/{{ site }}.conf_DELETE_SITE"
       ignore_errors: yes
