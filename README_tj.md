@@ -113,8 +113,6 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 ---
 
 # **Навсозӣ ва имкониятҳои нав**
-![Навсозӣ](images/new_version.png)
-
 Меню **баромадани версияҳои навро ба таври худкор хабар медиҳад**.  
 Онро бо фармони зерин навсозӣ кардан мумкин аст:
 ```bash

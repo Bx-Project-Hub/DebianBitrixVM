@@ -113,8 +113,6 @@ By default, everything is pre-configured, but you can adjust the environment as 
 ---
 
 # **Updates and New Features**
-![Update](images/new_version.png)
-
 The menu automatically **notifies about new versions**.  
 Update it with the command:
 ```bash

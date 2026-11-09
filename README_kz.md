@@ -113,8 +113,6 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 ---
 
 # **Жаңартулар және жаңа мүмкіндіктер**
-![Жаңарту](images/new_version.png)
-
 Мәзір **жаңа нұсқалар туралы автоматты түрде хабарлайды**.  
 Оны келесі пәрменмен жаңартуға болады:
 ```bash

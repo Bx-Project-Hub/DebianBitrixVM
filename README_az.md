@@ -113,8 +113,6 @@ Varsayılan olaraq hər şey optimal şəkildə tənzimlənib, lakin ehtiyac yar
 ---
 
 # **Yeniləmələr və yeni imkanlar**
-![Yeniləmə](images/new_version.png)
-
 Menyu **yeni versiyalar barədə avtomatik məlumat verir**.  
 Aşağıdakı əmr ilə onu yeniləyə bilərsiniz:
 ```bash

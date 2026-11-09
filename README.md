@@ -339,8 +339,6 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 ---
 
 # **Обновления и новые возможности**
-![Обновление](images/new_version.png)
-
 Меню автоматически **информирует о выходе новых версий**.  
 Обновление можно выполнить командой:
 ```bash

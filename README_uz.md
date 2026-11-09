@@ -113,8 +113,6 @@ Standart holatda barcha sozlamalar optimal, ammo zarurat bo‘lsa, muhitni o‘z
 ---
 
 # **Yangilanishlar va yangi imkoniyatlar**
-![Yangilanish](images/new_version.png)
-
 Menyu avtomatik ravishda **yangi versiyalar haqida xabar beradi**.  
 Uni quyidagi buyruq bilan yangilash mumkin:
 ```bash

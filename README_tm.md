@@ -113,8 +113,6 @@ Asyl ýagdaýda ähli zat öňünden gurlan, ýöne gerek bolsa, gurşawy özü�
 ---
 
 # **Täzelenmeler we täze aýratynlyklar**
-![Täzelenme](images/new_version.png)
-
 Menýu awtomatiki **täze wersiýalar barada habar berýär**.  
 Ony şu buýruk bilen täzeläp bolýar:
 ```bash
