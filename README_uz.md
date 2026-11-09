@@ -1,4 +1,7 @@
 # **Asosiy menyu**
+
+**Til:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · **UZ** · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
+
 ![Asosiy menyu](images/main_menu.png)
 
 # **Ma'lumot**

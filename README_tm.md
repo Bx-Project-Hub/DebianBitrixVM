@@ -1,4 +1,7 @@
 # **Baş menyu**
+
+**Dil:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · **TM** · [TJ](README_tj.md) · [KA](README_ka.md)
+
 ![Baş menyu](images/main_menu.png)
 
 # **Maglumat**

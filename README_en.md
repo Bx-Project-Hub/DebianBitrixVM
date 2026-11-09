@@ -1,4 +1,7 @@
 # **Main Menu**
+
+**Language:** [RU](README.md) · **EN** · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
+
 ![Main Menu](images/main_menu.png)
 
 # **Information**

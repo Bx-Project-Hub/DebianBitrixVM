@@ -1,4 +1,7 @@
 # **Менюи асосӣ**
+
+**Забон:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · **TJ** · [KA](README_ka.md)
+
 ![Менюи асосӣ](images/main_menu.png)
 
 # **Маълумот**

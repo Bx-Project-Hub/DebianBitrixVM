@@ -1,4 +1,7 @@
 # **Негізгі мәзір**
+
+**Тіл:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · **KZ** · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
+
 ![Негізгі мәзір](images/main_menu.png)
 
 # **Ақпарат**
