@@ -68,6 +68,36 @@ DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub
 
 **Verified on a clean Debian 13 (trixie), amd64:** PHP 8.3.36 (the only PHP branch in the system), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; all services are active; site creation in `full` and `link` modes works.
 
+## MySQL/Percona presets by the amount of RAM
+
+During installation, database parameters are selected automatically by the amount of RAM (`MemTotal` from `/proc/meminfo`).
+
+| RAM, GB | Buffer pool | Temp tables | Redo log | Log buffer |
+|-----|-----|-----|-----|-----|
+| <3 | 768M | 64M | 512M | 32M |
+| 3&#8209;6 | 1536M | 96M | 768M | 64M |
+| 6&#8209;12 | 3072M | 128M | 1G | 96M |
+| 12&#8209;24 | 6144M | 128M | 2G | 128M |
+| 24&#8209;48 | 12288M | 256M | 4G | 256M |
+| ≥48 | 24576M | 256M | 8G | 256M |
+
+| RAM, GB | Connections | Table cache | Thread cache | IO |
+|-----|-----|-----|-----|-----|
+| <3 | 40 | 2000 | 64 | 400&nbsp;/&nbsp;800 |
+| 3&#8209;6 | 60 | 4000 | 96 | 600&nbsp;/&nbsp;1200 |
+| 6&#8209;12 | 80 | 8000 | 128 | 1000&nbsp;/&nbsp;2000 |
+| 12&#8209;24 | 85 | 14336 | 128 | 2000&nbsp;/&nbsp;4000 |
+| 24&#8209;48 | 200 | 20000 | 256 | 3000&nbsp;/&nbsp;6000 |
+| ≥48 | 300 | 32768 | 256 | 4000&nbsp;/&nbsp;8000 |
+
+The preset is chosen by the first matching threshold; it can be forced with a variable:
+
+```bash
+MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+Allowed values: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (default — `auto`). The parameters are written to `/etc/mysql/conf.d/10-bitrix-memory.cnf`.
+
 ---
 
 # **Menu Update**

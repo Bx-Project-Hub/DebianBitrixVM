@@ -12,17 +12,17 @@
 
 # **Состав окружения**
 
-| Компонент | Версия | Источник / примечание |
-|-----------|--------|----------------------|
-| Debian | 13 (trixie), поддерживается также 12 (bookworm) | — |
-| PHP | **8.3** по умолчанию (8.2 и 8.4 — переключаются из меню) | репозиторий deb.sury.org |
-| MySQL | **8.4 LTS** на Debian 13, 8.0 — на Debian 12 | официальный APT-репозиторий Oracle |
-| Percona Server | **8.4 LTS** (альтернатива MySQL) | репозиторий `repo.percona.com/ps-84-lts` |
+| Компонент | Версия | Примечание |
+|-----------|--------|------------|
+| Debian | 13 (trixie) | поддерживается также 12 (bookworm) |
+| PHP | 8.3 | смена на 8.2 / 8.4 из меню (deb.sury.org) |
+| MySQL | 8.4 LTS | на Debian 12 — 8.0 (APT-репозиторий Oracle) |
+| Percona Server | 8.4 LTS | альтернатива MySQL |
 | Nginx | 1.26 | Debian + модули Brotli, zip, zstd |
-| Apache | 2.4 + mod_php | Debian |
+| Apache | 2.4 | + mod_php |
 | Redis | 8.0 | Debian |
-| Node.js / push-server | Node.js 20 + push-server 0.4.0 | Bitrix |
-| Sphinx | 2.2.11 | Debian (устанавливается из меню) |
+| Node.js | 20 | + push-server 0.4.0 |
+| Sphinx | 2.2.11 | устанавливается из меню |
 | Почта | exim4 + msmtp | Debian |
 | Firewall | nftables | Debian |
 
@@ -55,16 +55,42 @@ DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub
 ## Пресеты конфигурации MySQL/Percona под объём RAM
 
 При установке параметры сервера БД подбираются автоматически по объёму оперативной памяти
-(`MemTotal` из `/proc/meminfo`). Готовые пресеты:
+(`MemTotal` из `/proc/meminfo`).
 
-| RAM | `innodb_buffer_pool_size` | `max_connections` | `table_open_cache` | `thread_cache_size` | `tmp_table_size` | `innodb_redo_log_capacity` | `innodb_io_capacity` |
-|-----|---------------------------|-------------------|--------------------|--------------------|------------------|----------------------------|----------------------|
-| до 3 ГБ | 768M | 40 | 2000 | 64 | 64M | 512M | 400 / 800 |
-| 3–6 ГБ | 1536M | 60 | 4000 | 96 | 96M | 768M | 600 / 1200 |
-| 6–12 ГБ | 3072M | 80 | 8000 | 128 | 128M | 1G | 1000 / 2000 |
-| 12–24 ГБ | 6144M | 85 | 14336 | 128 | 128M | 2G | 2000 / 4000 |
-| 24–48 ГБ | 12288M | 200 | 20000 | 256 | 256M | 4G | 3000 / 6000 |
-| от 48 ГБ | 24576M | 300 | 32768 | 256 | 256M | 8G | 4000 / 8000 |
+**Буферы и журналы**
+
+| RAM,&nbsp;ГБ | Буферный пул | Temp-таблицы | Redo-журнал | Лог-буфер |
+|---------|--------------|--------------|-------------|-----------|
+| <3 | 768M | 64M | 512M | 32M |
+| 3&#8209;6 | 1536M | 96M | 768M | 64M |
+| 6&#8209;12 | 3072M | 128M | 1G | 96M |
+| 12&#8209;24 | 6144M | 128M | 2G | 128M |
+| 24&#8209;48 | 12288M | 256M | 4G | 256M |
+| ≥48 | 24576M | 256M | 8G | 256M |
+
+**Соединения и кеши**
+
+| RAM,&nbsp;ГБ | Соединений | Кеш таблиц | Кеш потоков | IO |
+|---------|------------|------------|-------------|----|
+| <3 | 40 | 2000 | 64 | 400&nbsp;/&nbsp;800 |
+| 3&#8209;6 | 60 | 4000 | 96 | 600&nbsp;/&nbsp;1200 |
+| 6&#8209;12 | 80 | 8000 | 128 | 1000&nbsp;/&nbsp;2000 |
+| 12&#8209;24 | 85 | 14336 | 128 | 2000&nbsp;/&nbsp;4000 |
+| 24&#8209;48 | 200 | 20000 | 256 | 3000&nbsp;/&nbsp;6000 |
+| ≥48 | 300 | 32768 | 256 | 4000&nbsp;/&nbsp;8000 |
+
+Соответствие столбцов параметрам MySQL:
+
+- **Буферный пул** — `innodb_buffer_pool_size` (и `innodb_buffer_pool_instances`);
+- **Temp-таблицы** — `tmp_table_size` = `max_heap_table_size`;
+- **Redo-журнал** — `innodb_redo_log_capacity`;
+- **Лог-буфер** — `innodb_log_buffer_size`;
+- **Соединений** — `max_connections`;
+- **Кеш таблиц** — `table_open_cache` (и `table_definition_cache`);
+- **Кеш потоков** — `thread_cache_size`;
+- **IO** — `innodb_io_capacity` / `innodb_io_capacity_max`;
+- **Прочие буферы** — `sort_buffer_size`, `join_buffer_size`, `read_buffer_size`,
+  `read_rnd_buffer_size`, `key_buffer_size`.
 
 Пресет выбирается по первому подходящему порогу; принудительно задаётся переменной:
 
@@ -77,11 +103,12 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash custom_bitrix_setup.sh
 
 ### Какие файлы пишутся
 
-| Файл | Содержимое |
-|------|------------|
-| `/etc/mysql/conf.d/10-bitrix-memory.cnf` | параметры, зависящие от RAM (буферный пул, соединения, кеши, temp-таблицы, redo, IO) |
-| `/etc/mysql/conf.d/20-bitrix-logging.cnf` | `log-error`, отключение `general_log` / `slow_query_log`, `sync_binlog` |
-| `/etc/mysql/conf.d/99-bitrix.cnf` | статичная база: `bind-address`, `skip-name-resolve`, движок, `sql_mode`, `character-set-server`, аутентификация |
+Все файлы лежат в `/etc/mysql/conf.d/`:
+
+- `10-bitrix-memory.cnf` — буферный пул, соединения, кеши, temp-таблицы, redo, IO;
+- `20-bitrix-logging.cnf` — `log-error`, `general_log`, `slow_query_log`, `sync_binlog`;
+- `99-bitrix.cnf` — `bind-address`, `skip-name-resolve`, движок, `sql_mode`, charset,
+  аутентификация.
 
 Файлы читаются по алфавиту, поэтому пресет (`10-`) применяется раньше базы (`99-`),
 и параметры не дублируются между файлами.
@@ -114,17 +141,32 @@ MySQL: применён минимальный набор параметров. 
 
 | Проверка | Результат |
 |----------|-----------|
-| Версия ОС | Debian GNU/Linux 13 (trixie) |
-| PHP `php -v` | 8.3.36 — **единственная** ветка PHP в системе, `/usr/bin/php → /usr/bin/php8.3` |
-| СУБД | Percona Server 8.4.11-11, `authentication_policy=mysql_native_password` |
-| Конфигурация MySQL | `/etc/mysql/my.cnf → mysql.cnf`, настройки Bitrix в `/etc/mysql/conf.d/99-bitrix.cnf` |
-| Nginx / Apache | 1.26.3 / 2.4.69 + `php8.3` (mpm_prefork) |
-| Node.js / push-server | 20.19.2 / 0.4.0 (`push-server` единый сервис pub+sub) |
-| Сервисы | `mysql`, `nginx`, `apache2`, `redis-server`, `push-server`, `exim4`, `nftables` — **active** |
-| Ansible-плейбуки | `install_new_full_environment` — `ok=52 failed=0`; остальные 8 — `--syntax-check` OK |
-| Сайт (режим full) | создан сайт `example.ru`: каталог, nginx+apache конфиги, БД `example_ru`, `.settings.php`, `dbconn.php`, `bitrixsetup.php` отдаёт `200` |
-| Сайт (режим link) | создан сайт `shop.example.ru` в режиме `link`: симлинк `bitrix → ../example.ru/bitrix`, отдельные конфиги; страница отдаёт `500`, пока на основном сайте не установлено ядро Bitrix (ожидаемо) |
-| Пункты меню | список сайтов, версии PHP, SMTP, справка — работают; смена версии PHP и Let's Encrypt требуют внешней сети и на стенде не запускались |
+| ОС | Debian 13 (trixie), amd64 |
+| PHP | 8.3.36, одна ветка |
+| СУБД | Percona 8.4.11 |
+| Конфиг MySQL | `my.cnf` → `mysql.cnf` |
+| Nginx / Apache | 1.26.3 / 2.4.69 |
+| Node.js / push | 20.19.2 / 0.4.0 |
+| Сервисы | все 7 — **active** |
+| Ansible | `ok=52 failed=0` |
+| Сайт `full` | `example.ru` → `200` |
+| Сайт `link` | `shop.example.ru` → `500` |
+| Меню | сайты, PHP, SMTP — ОК |
+
+Детали:
+
+- Проверено `php -v`: **единственная** ветка PHP в системе, `/usr/bin/php → /usr/bin/php8.3`.
+- СУБД: Percona Server 8.4.11-11, `authentication_policy=mysql_native_password`;
+  `/etc/mysql/my.cnf → mysql.cnf`, настройки Bitrix — в `/etc/mysql/conf.d/99-bitrix.cnf`.
+- Apache работает с `php8.3` в режиме `mpm_prefork`; push-server — единый сервис pub+sub.
+- Сервисы `mysql`, `nginx`, `apache2`, `redis-server`, `push-server`, `exim4`, `nftables` — **active**.
+- Ansible: `install_new_full_environment` — `ok=52 failed=0`; остальные 8 плейбуков — `--syntax-check` OK.
+- Сайт `full` (`example.ru`): каталог, конфиги nginx+apache, БД, `.settings.php`, `dbconn.php`;
+  `bitrixsetup.php` отдаёт `200`.
+- Сайт `link` (`shop.example.ru`): симлинк `bitrix → ../example.ru/bitrix`, отдельные конфиги;
+  страница отдаёт `500`, пока на основном сайте не установлено ядро Bitrix (ожидаемо).
+- Меню: список сайтов, версии PHP, SMTP, справка — работают; смена версии PHP и Let's Encrypt
+  требуют внешней сети и на стенде не запускались.
 
 ---
 
@@ -228,21 +270,26 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 
 Ключевые параметры:
 
-| Параметр | Значение по умолчанию | Назначение |
-|----------|-----------------------|-----------|
+| Параметр | По умолчанию | Назначение |
+|----------|--------------|------------|
 | `BS_PATH_SITES` | `/var/www/html` | каталог сайтов |
-| `BS_DEFAULT_SITE_NAME` | `bx-site` | сайт-источник ядра для режима `link` |
+| `BS_DEFAULT_SITE_NAME` | `bx-site` | сайт-источник ядра для `link` |
 | `BS_USER_SERVER_SITES` | `www-data` | пользователь сайтов |
 | `BS_PHP_VERSION_DEFAULT` | `8.3` | версия PHP по умолчанию |
-| `BS_MYSQL_VERSION_DEFAULT` | `8.4` | версия MySQL (на Debian 13 — 8.4 LTS) |
-| `BS_PUSH_SERVER_VERSION` | `0.4.0` | версия push-server Bitrix |
-| `BS_SHOW_IP_CURRENT_SERVER_IN_MENU` | `true` | показывать интерфейсы и IP в шапке меню |
-| `BS_STATUS_PANEL` | `true` | панель «Состояние сервера» в шапке |
-| `BS_STATUS_PANEL_SITES` | `true` | панель «Установлено» (сайты, SSL, push&pull, дополнения) |
-| `BS_STATUS_MAX_SITES` | `5` | сколько сайтов перечислять (остальные — «и ещё N») |
-| `BS_STATUS_PANEL_WIDTH` | `52` | ширина панелей в символах |
-| `BS_CPU_SAMPLE_MS` | `200` | окно замера загрузки CPU, мс (`0` — не замерять) |
-| `BS_USE_COLOR` | `true` | цветное оформление (отключается и переменной `NO_COLOR=1`) |
+| `BS_MYSQL_VERSION_DEFAULT` | `8.4` | версия MySQL |
+| `BS_PUSH_SERVER_VERSION` | `0.4.0` | версия push-server |
+
+Оформление шапки и панелей:
+
+| Параметр | По умолчанию | Назначение |
+|----------|--------------|------------|
+| `BS_SHOW_IP_CURRENT_SERVER_IN_MENU` | `true` | интерфейсы и IP в шапке |
+| `BS_STATUS_PANEL` | `true` | панель «Состояние сервера» |
+| `BS_STATUS_PANEL_SITES` | `true` | панель «Установлено» |
+| `BS_STATUS_MAX_SITES` | `5` | сколько сайтов перечислять |
+| `BS_STATUS_PANEL_WIDTH` | `52` | ширина панелей, символов |
+| `BS_CPU_SAMPLE_MS` | `200` | окно замера CPU, мс |
+| `BS_USE_COLOR` | `true` | цвета (или `NO_COLOR=1`) |
 
 ### Панель «Состояние сервера»
 

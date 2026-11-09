@@ -68,6 +68,36 @@ DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub
 
 **Toza Debian 13 (trixie), amd64 da tekshirildi:** PHP 8.3.36 (tizimdagi yagona PHP tarmog‘i), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; barcha xizmatlar faol; sayt yaratish `full` va `link` rejimlarida ishlaydi.
 
+## RAM hajmiga qarab MySQL/Percona konfiguratsiya presetlari
+
+O‘rnatish paytida ma’lumotlar bazasi parametrlari operativ xotira hajmiga qarab avtomatik tanlanadi (`MemTotal`, `/proc/meminfo`).
+
+| RAM, GB | Bufer puli | Temp jadvallar | Redo jurnal | Log buferi |
+|-----|-----|-----|-----|-----|
+| <3 | 768M | 64M | 512M | 32M |
+| 3&#8209;6 | 1536M | 96M | 768M | 64M |
+| 6&#8209;12 | 3072M | 128M | 1G | 96M |
+| 12&#8209;24 | 6144M | 128M | 2G | 128M |
+| 24&#8209;48 | 12288M | 256M | 4G | 256M |
+| ≥48 | 24576M | 256M | 8G | 256M |
+
+| RAM, GB | Ulanishlar | Jadval keshi | Oqim keshi | IO |
+|-----|-----|-----|-----|-----|
+| <3 | 40 | 2000 | 64 | 400&nbsp;/&nbsp;800 |
+| 3&#8209;6 | 60 | 4000 | 96 | 600&nbsp;/&nbsp;1200 |
+| 6&#8209;12 | 80 | 8000 | 128 | 1000&nbsp;/&nbsp;2000 |
+| 12&#8209;24 | 85 | 14336 | 128 | 2000&nbsp;/&nbsp;4000 |
+| 24&#8209;48 | 200 | 20000 | 256 | 3000&nbsp;/&nbsp;6000 |
+| ≥48 | 300 | 32768 | 256 | 4000&nbsp;/&nbsp;8000 |
+
+Preset birinchi mos chegaraga qarab tanlanadi; o‘zgaruvchi bilan majburan belgilash mumkin:
+
+```bash
+MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/install_full_environment.sh)
+```
+
+Ruxsat etilgan qiymatlar: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (standart — `auto`). Parametrlar `/etc/mysql/conf.d/10-bitrix-memory.cnf` fayliga yoziladi.
+
 ---
 
 # **Menyuni yangilash**
