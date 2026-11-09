@@ -138,6 +138,86 @@ MySQL: применён минимальный набор параметров. 
 
 ---
 
+## PostgreSQL для портала Bitrix
+
+PostgreSQL ставится отдельно из меню: **пункт `8` → «Дополнительные компоненты» → `4`**.
+MySQL при этом продолжает работать — портал сам выбирает СУБД при установке.
+
+Что делает установка (по [официальной документации 1С-Битрикс](https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32&LESSON_ID=32926&LESSON_PATH=3903.4862.20866.32912.32926)):
+
+- ставит пакеты `postgresql`, `postgresql-contrib` (на Debian 13 это **PostgreSQL 17**) и
+  расширение PHP `pgsql` + `pdo_pgsql` для активной версии PHP;
+- переключает `/etc/postgresql/<версия>/main/pg_hba.conf` на парольную аутентификацию:
+  `peer` и `scram-sha-256` → `password` (локальные и `host`-подключения, включая `::1/128`);
+- задаёт пароль суперпользователя `postgres` и сохраняет его в `/root/.pgpass` (права `0600`);
+- создаёт базу `bitrix` с `LC_CTYPE='C.UTF-8' TEMPLATE template0`, пользователя `bitrix`,
+  выдаёт `GRANT ALL PRIVILEGES ON DATABASE` и `GRANT CREATE ON SCHEMA public`
+  (на PostgreSQL 15+ схема `public` больше не даёт права на создание таблиц по умолчанию);
+- включает расширение `pgcrypto` в базе портала;
+- проверяет вход по паролю и наличие `pgcrypto`, печатает параметры для установщика Bitrix.
+
+Параметры подключения для установщика портала:
+
+| Параметр | Значение |
+|---|---|
+| Хост | `127.0.0.1` |
+| Порт | `5432` |
+| База | `bitrix` |
+| Пользователь | `bitrix` |
+| Пароль | выводится при установке, хранится в `/root/.postgres_bitrix_password` |
+
+### Пресеты PostgreSQL под объём RAM
+
+Как и для MySQL, `postgresql.conf` настраивается по `MemTotal` — пресеты `2g`…`64g`.
+
+**Память**
+
+| RAM,&nbsp;ГБ | Буферный пул | Кеш планировщика | work_mem | Обслуживание |
+|---|---|---|---|---|
+| <3 | 512MB | 1536MB | 4MB | 128MB |
+| 3&#8209;6 | 1GB | 3GB | 6MB | 256MB |
+| 6&#8209;12 | 2GB | 6GB | 8MB | 512MB |
+| 12&#8209;24 | 4GB | 12GB | 12MB | 1GB |
+| 24&#8209;48 | 8GB | 24GB | 16MB | 1GB |
+| ≥48 | 16GB | 48GB | 24MB | 2GB |
+
+**Соединения и буферы WAL**
+
+| RAM,&nbsp;ГБ | Соединений | WAL-буфер | Temp-буфер |
+|---|---|---|---|
+| <3 | 40 | 16MB | 8MB |
+| 3&#8209;6 | 60 | 16MB | 8MB |
+| 6&#8209;12 | 80 | 16MB | 16MB |
+| 12&#8209;24 | 85 | 16MB | 24MB |
+| 24&#8209;48 | 200 | 16MB | 32MB |
+| ≥48 | 300 | 16MB | 48MB |
+
+Полные имена параметров: буферный пул — `shared_buffers`, кеш планировщика — `effective_cache_size`, обслуживание — `maintenance_work_mem`, соединения — `max_connections`, WAL-буфер — `wal_buffers`, temp-буфер — `temp_buffers`.
+
+Постоянные параметры для всех пресетов: `checkpoint_completion_target=0.9`,
+`random_page_cost=1.1` и `effective_io_concurrency=200` (SSD), `default_statistics_target=100`,
+`log_min_duration_statement=1000`, `log_checkpoints=on`, `autovacuum=on`, `jit=off`,
+`max_worker_processes` = число vCPU.
+
+Пороги выбора пресета те же, что у MySQL: `<3`, `3–6`, `6–12`, `12–24`, `24–48`, `≥48` ГБ.
+Принудительно — переменной `BS_POSTGRES_PRESET` в `config.sh` (`auto` | `2g` … `64g`):
+
+```bash
+# в файле /root/vm_menu/bash_scripts/config.sh
+BS_POSTGRES_PRESET="8g"
+BS_POSTGRES_DATABASE="bitrix"
+BS_POSTGRES_USER="bitrix"
+```
+
+Файлы на сервере: параметры — `/etc/postgresql/<версия>/main/conf.d/99-bitrix.conf`,
+пароли — `/root/.pgpass`, `/root/.postgres_superuser_password`, `/root/.postgres_bitrix_password`.
+
+Удаление (пункт `8` → `4` → `2`) останавливает службу и удаляет пакеты `postgresql*`,
+данные `/var/lib/postgresql`, конфигурацию `/etc/postgresql`, логи и сохранённые пароли.
+**Вместе с PostgreSQL удаляются все его базы данных**, поэтому меню показывает предупреждение.
+
+---
+
 ## Проверено на реальном сервере Debian 13
 
 Установка прогнана на чистой Debian 13 (trixie), amd64, 4 vCPU / 5.8 ГБ RAM. Выбран `DB_ENGINE=percona`.
@@ -152,6 +232,7 @@ MySQL: применён минимальный набор параметров. 
 | Node.js / push | 20.19.2 / 0.4.0 |
 | Сервисы | все 7 — **active** |
 | Ansible | `ok=52 failed=0` |
+| PostgreSQL | 17.11: установка и удаление из меню — `ok=26` / `ok=12`, `failed=0` |
 | Сайт `full` | `example.ru` → `200` |
 | Сайт `link` | `shop.example.ru` → `500` |
 | Меню | сайты, PHP, SMTP — ОК |
@@ -193,7 +274,7 @@ MySQL: применён минимальный набор параметров. 
 - Управление редиректом **HTTP → HTTPS**.
 - **Изменение версий PHP** (8.2 / 8.3 / 8.4).
 - **Настройка SMTP** (общий аккаунт `default` и отдельный аккаунт для каждого сайта).
-- **Установка и удаление дополнений**: Sphinx, сервер конвертации файлов, Netdata.
+- **Установка и удаление дополнений**: Sphinx, сервер конвертации файлов, Netdata, **PostgreSQL** (с пресетами под объём RAM).
 - **Обновление, перезагрузка и выключение сервера** через меню.
 - Информирование о выходе новой версии меню.
 - **Панель «Состояние сервера»** в шапке: load average, загрузка CPU, память, диск, аптайм
@@ -279,6 +360,9 @@ bash <(wget -qO- https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM
 | Параметр | По умолчанию | Назначение |
 |----------|--------------|------------|
 | `BS_MENU_LANG` | `auto` | язык интерфейса: `auto`, `ru`, `en` |
+| `BS_POSTGRES_PRESET` | `auto` | пресет PostgreSQL: `auto`, `2g`…`64g` |
+| `BS_POSTGRES_DATABASE` | `bitrix` | имя базы PostgreSQL для портала |
+| `BS_POSTGRES_USER` | `bitrix` | пользователь базы PostgreSQL |
 | `BS_PATH_SITES` | `/var/www/html` | каталог сайтов |
 | `BS_DEFAULT_SITE_NAME` | `bx-site` | сайт-источник ядра для `link` |
 | `BS_USER_SERVER_SITES` | `www-data` | пользователь сайтов |

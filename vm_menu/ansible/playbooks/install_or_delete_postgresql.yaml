@@ -1,0 +1,9 @@
+---
+- name: "PostgreSQL: install or delete (Bitrix portal)"
+  hosts: localhost
+  connection: local
+  become: yes
+  # Нужны факты о памяти и CPU: по ним выбирается пресет postgresql.conf.
+  gather_facts: yes
+  roles:
+    - role: install_or_delete_postgresql

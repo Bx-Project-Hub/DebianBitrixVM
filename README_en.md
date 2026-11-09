@@ -38,6 +38,7 @@ Based on the project [(YogSottot) bitrix-gt](https://github.com/YogSottot/bitrix
   update_menu
   ```
 - **Two interface languages — Russian and English** — selected automatically from the system locale (`ru_*` → Russian, any other → English); can be forced with the `BS_MENU_LANG` variable.
+- **PostgreSQL for Bitrix** — installed and removed from the add-ons menu, with `postgresql.conf` presets selected by the amount of RAM.
 
 ---
 
@@ -101,6 +102,34 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 ```
 
 Allowed values: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (default — `auto`). The parameters are written to `/etc/mysql/conf.d/10-bitrix-memory.cnf`.
+
+## PostgreSQL for a Bitrix portal
+
+PostgreSQL is installed from the menu: item `8` → «Additional components» → `4`. MySQL keeps working — the portal chooses the DBMS during installation.
+
+| RAM, GB | Buffer pool | Planner cache | work_mem | Maintenance |
+|---|---|---|---|---|
+| <3 | 512MB | 1536MB | 4MB | 128MB |
+| 3&#8209;6 | 1GB | 3GB | 6MB | 256MB |
+| 6&#8209;12 | 2GB | 6GB | 8MB | 512MB |
+| 12&#8209;24 | 4GB | 12GB | 12MB | 1GB |
+| 24&#8209;48 | 8GB | 24GB | 16MB | 1GB |
+| ≥48 | 16GB | 48GB | 24MB | 2GB |
+
+| RAM, GB | Connections | WAL buffer | Temp buffer |
+|---|---|---|---|
+| <3 | 40 | 16MB | 8MB |
+| 3&#8209;6 | 60 | 16MB | 8MB |
+| 6&#8209;12 | 80 | 16MB | 16MB |
+| 12&#8209;24 | 85 | 16MB | 24MB |
+| 24&#8209;48 | 200 | 16MB | 32MB |
+| ≥48 | 300 | 16MB | 48MB |
+
+Full parameter names: buffer pool — `shared_buffers`, planner cache — `effective_cache_size`, maintenance — `maintenance_work_mem`, connections — `max_connections`, WAL buffer — `wal_buffers`, temp buffer — `temp_buffers`.
+
+Created automatically: database `bitrix` (`LC_CTYPE='C.UTF-8' TEMPLATE template0`), user `bitrix`, `GRANT CREATE` on schema `public`, extension `pgcrypto`, password authentication in `pg_hba.conf`.
+
+The preset is chosen by the first matching threshold; it can be forced with `BS_POSTGRES_PRESET` in `config.sh`.
 
 ---
 

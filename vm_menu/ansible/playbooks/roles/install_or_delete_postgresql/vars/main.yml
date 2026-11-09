@@ -1,0 +1,61 @@
+---
+# Пресеты postgresql.conf под объём оперативной памяти.
+# Значения подобраны под нагрузку портала Bitrix (OLTP, много коротких запросов):
+#   shared_buffers        ≈ 25% RAM
+#   effective_cache_size  ≈ 75% RAM (подсказка планировщику, память не резервирует)
+#   maintenance_work_mem  5–10% RAM, не более 2 ГБ
+#   work_mem              ограничено так, чтобы max_connections соединений
+#                         не могли выбрать всю память
+#   wal_buffers           16MB (достаточно для любого объёма RAM)
+# Выбор пресета — по MemTotal, как у MySQL: <3, 3–6, 6–12, 12–24, 24–48, ≥48 ГБ.
+# Переопределяется переменной postgres_preset (2g|4g|8g|16g|32g|64g|auto).
+
+postgres_presets:
+  2g:
+    shared_buffers: "512MB"
+    effective_cache_size: "1536MB"
+    maintenance_work_mem: "128MB"
+    work_mem: "4MB"
+    max_connections: 40
+    wal_buffers: "16MB"
+    temp_buffers: "8MB"
+  4g:
+    shared_buffers: "1GB"
+    effective_cache_size: "3GB"
+    maintenance_work_mem: "256MB"
+    work_mem: "6MB"
+    max_connections: 60
+    wal_buffers: "16MB"
+    temp_buffers: "8MB"
+  8g:
+    shared_buffers: "2GB"
+    effective_cache_size: "6GB"
+    maintenance_work_mem: "512MB"
+    work_mem: "8MB"
+    max_connections: 80
+    wal_buffers: "16MB"
+    temp_buffers: "16MB"
+  16g:
+    shared_buffers: "4GB"
+    effective_cache_size: "12GB"
+    maintenance_work_mem: "1GB"
+    work_mem: "12MB"
+    max_connections: 85
+    wal_buffers: "16MB"
+    temp_buffers: "24MB"
+  32g:
+    shared_buffers: "8GB"
+    effective_cache_size: "24GB"
+    maintenance_work_mem: "1GB"
+    work_mem: "16MB"
+    max_connections: 200
+    wal_buffers: "16MB"
+    temp_buffers: "32MB"
+  64g:
+    shared_buffers: "16GB"
+    effective_cache_size: "48GB"
+    maintenance_work_mem: "2GB"
+    work_mem: "24MB"
+    max_connections: 300
+    wal_buffers: "16MB"
+    temp_buffers: "48MB"

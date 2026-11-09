@@ -122,6 +122,7 @@ menu_install_extensions(){
     echo "     1) $(t ext.sphinx "${BS_SPHINX_PACKAGE}")"
     echo "     2) $(t ext.converter)"
     echo "     3) $(t ext.netdata)"
+    echo "     4) $(t ext.postgres)"
     echo "     0) $(t common.back_main)"
     echo ""
     echo -n "   $(t common.enter_command) "
@@ -131,6 +132,7 @@ menu_install_extensions(){
      "1") install_sphinx ;;
      "2") install_file_conversion_server ;;
      "3") install_netdata ;;
+     "4") install_postgres ;;
      0|z|q) return ;;
      *) echo "   $(t common.unknown_command_short)"; sleep 2 ;;
     esac
@@ -566,6 +568,34 @@ function smtp_configure_account() {
     fi
 
     action_settings_smtp_site
+}
+
+function install_postgres() {
+    clear
+    echo -e "\n   $(t postgres.title)\n"
+    echo "   $(t postgres.note)"
+    echo "   $(t postgres.preset_note)"
+    echo ""
+    echo "     1) $(t postgres.install)"
+    echo "     2) $(t postgres.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
+    local command
+    read -r command
+
+    case "$command" in
+        1)
+            if confirm_action "$(t postgres.confirm_install "${BS_POSTGRES_DATABASE}")"; then
+                action_install_or_delete_postgresql install
+            fi
+            ;;
+        2)
+            echo -e "\n   ${C_RED}$(t postgres.delete_warning)${C_RESET}"
+            if confirm_action "$(t postgres.confirm_delete)"; then
+                action_install_or_delete_postgresql delete
+            fi
+            ;;
+    esac
 }
 
 function install_sphinx() {

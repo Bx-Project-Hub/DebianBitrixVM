@@ -38,6 +38,7 @@ Bitrix muhiti boshqaruvi uchun menyu, **Debian 12 / Debian 13** uchun moslashtir
   update_menu
   ```
 - **Ikki interfeys tili — rus va ingliz** — tizim lokaliga qarab avtomatik tanlanadi (`ru_*` → rus tili, boshqalari → ingliz tili); `BS_MENU_LANG` o‘zgaruvchisi bilan majburan belgilash mumkin.
+- **Bitrix uchun PostgreSQL** — qo‘shimchalar menyusidan o‘rnatish va o‘chirish, `postgresql.conf` presetlari RAM hajmiga qarab tanlanadi.
 
 ---
 
@@ -101,6 +102,34 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 ```
 
 Ruxsat etilgan qiymatlar: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (standart — `auto`). Parametrlar `/etc/mysql/conf.d/10-bitrix-memory.cnf` fayliga yoziladi.
+
+## Bitrix portali uchun PostgreSQL
+
+Menyudan o‘rnatiladi: `8` → «Qo‘shimcha komponentlar» → `4`. MySQL ishlashda davom etadi — MB tanlovi portal o‘rnatishda amalga oshiriladi.
+
+| RAM, GB | Bufer puli | Rejalashtiruvchi keshi | work_mem | Xizmat ko‘rsatish |
+|---|---|---|---|---|
+| <3 | 512MB | 1536MB | 4MB | 128MB |
+| 3&#8209;6 | 1GB | 3GB | 6MB | 256MB |
+| 6&#8209;12 | 2GB | 6GB | 8MB | 512MB |
+| 12&#8209;24 | 4GB | 12GB | 12MB | 1GB |
+| 24&#8209;48 | 8GB | 24GB | 16MB | 1GB |
+| ≥48 | 16GB | 48GB | 24MB | 2GB |
+
+| RAM, GB | Ulanishlar | WAL buferi | Temp buferi |
+|---|---|---|---|
+| <3 | 40 | 16MB | 8MB |
+| 3&#8209;6 | 60 | 16MB | 8MB |
+| 6&#8209;12 | 80 | 16MB | 16MB |
+| 12&#8209;24 | 85 | 16MB | 24MB |
+| 24&#8209;48 | 200 | 16MB | 32MB |
+| ≥48 | 300 | 16MB | 48MB |
+
+Parametrlarning to‘liq nomlari: bufer puli — `shared_buffers`, rejalashtiruvchi keshi — `effective_cache_size`, xizmat ko‘rsatish — `maintenance_work_mem`, ulanishlar — `max_connections`, WAL buferi — `wal_buffers`, temp buferi — `temp_buffers`.
+
+Avtomatik yaratiladi: `bitrix` bazasi (`LC_CTYPE='C.UTF-8' TEMPLATE template0`), `bitrix` foydalanuvchisi, `public` sxemasiga `GRANT CREATE`, `pgcrypto` kengaytmasi, `pg_hba.conf` da parol autentifikatsiyasi.
+
+Preset birinchi mos chegaraga qarab tanlanadi; majburan — `config.sh` dagi `BS_POSTGRES_PRESET`.
 
 ---
 

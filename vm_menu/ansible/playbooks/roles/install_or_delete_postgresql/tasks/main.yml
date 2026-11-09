@@ -1,0 +1,285 @@
+---
+# tasks file for install_or_delete_postgresql
+#
+# Установка PostgreSQL для портала Bitrix по официальной документации
+# 1С-Битрикс («Конфигурация PostgreSQL» для Debian):
+#   * pg_hba.conf: локальные и host-подключения по паролю (password),
+#   * база с lc_ctype='C.UTF-8' template template0,
+#   * отдельный пользователь с правами на базу и CREATE в схеме public,
+#   * расширение pgcrypto,
+#   * параметры postgresql.conf под объём RAM (пресеты 2g…64g).
+
+- block:
+    - name: Installing PostgreSQL packages
+      apt:
+        name: "{{ postgres_packages }}"
+        state: present
+        update_cache: yes
+
+    - name: Detecting installed PostgreSQL version
+      shell: |
+        set -e
+        ls -1 "{{ postgres_etc_dir }}" | sort -V | tail -n1
+      register: pg_version_raw
+      changed_when: false
+
+    - name: Defining PostgreSQL version
+      set_fact:
+        postgres_version: "{{ pg_version_raw.stdout | trim }}"
+        postgres_conf_dir: "{{ postgres_etc_dir }}/{{ pg_version_raw.stdout | trim }}/main"
+
+    - name: Detecting active PHP version
+      shell: php -r 'echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;'
+      register: php_version_raw
+      changed_when: false
+      when: php_version is not defined or php_version | length == 0
+
+    - name: Defining PHP version for the pgsql extension
+      set_fact:
+        postgres_php_version: "{{ php_version if (php_version is defined and php_version | length > 0) else php_version_raw.stdout | trim }}"
+
+    - name: Installing PHP pgsql extension
+      apt:
+        name: "php{{ postgres_php_version }}-pgsql"
+        state: present
+
+    - name: Enabling pgsql extension for Apache and CLI
+      shell: phpenmod -v {{ postgres_php_version }} -s ALL pgsql
+      changed_when: false
+      failed_when: false
+
+    # --- пресет под объём RAM -------------------------------------------
+    - name: Selecting PostgreSQL preset by RAM
+      set_fact:
+        postgres_preset_selected: >-
+          {%- if postgres_preset != 'auto' -%}
+          {{ postgres_preset }}
+          {%- elif ansible_memtotal_mb < 3072 -%}2g
+          {%- elif ansible_memtotal_mb < 6144 -%}4g
+          {%- elif ansible_memtotal_mb < 12288 -%}8g
+          {%- elif ansible_memtotal_mb < 24576 -%}16g
+          {%- elif ansible_memtotal_mb < 49152 -%}32g
+          {%- else -%}64g
+          {%- endif -%}
+
+    - name: Validating preset name
+      assert:
+        that: postgres_preset_selected in postgres_presets
+        fail_msg: "Unknown PostgreSQL preset: {{ postgres_preset_selected }} (allowed: {{ postgres_presets.keys() | list | join(', ') }})"
+
+    - name: Defining preset settings
+      set_fact:
+        postgres_settings: "{{ postgres_presets[postgres_preset_selected] }}"
+
+    # --- пароли ---------------------------------------------------------
+    - name: Generating PostgreSQL superuser password
+      set_fact:
+        postgres_superuser_password: "{{ lookup('password', '/root/.postgres_superuser_password length=24 chars=ascii_letters,digits') }}"
+      no_log: true
+
+    - name: Generating Bitrix database user password
+      set_fact:
+        postgres_user_password: "{{ lookup('password', '/root/.postgres_bitrix_password length=24 chars=ascii_letters,digits') }}"
+      no_log: true
+
+    - name: Writing /root/.pgpass for the postgres superuser
+      copy:
+        dest: /root/.pgpass
+        content: "*:*:*:postgres:{{ postgres_superuser_password }}\n"
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+
+    # Пароль задаётся до правки pg_hba.conf: тогда ещё действует peer-аутентификация.
+    - name: Checking pg_hba.conf for peer authentication
+      shell: grep -qE '^local\s+all\s+all\s+peer' "{{ postgres_conf_dir }}/pg_hba.conf" && echo yes || echo no
+      register: pg_peer_present
+      changed_when: false
+
+    - name: Setting postgres superuser password (peer authentication is active)
+      shell: |
+        set -e
+        su - postgres -c "psql -v ON_ERROR_STOP=1 -c \"ALTER USER postgres PASSWORD '{{ postgres_superuser_password }}';\""
+      no_log: true
+      when: pg_peer_present.stdout == 'yes'
+
+    # --- аутентификация по паролю, как в документации Bitrix -------------
+    - name: Switching local and host authentication to password
+      replace:
+        path: "{{ postgres_conf_dir }}/pg_hba.conf"
+        regexp: "^(\\s*(local|host)\\s+.*?)\\s+(peer|scram-sha-256|md5)\\s*$"
+        replace: '\1 password'
+      register: pg_hba_changed
+
+    - name: Ensuring ::1/128 entry exists in pg_hba.conf
+      lineinfile:
+        path: "{{ postgres_conf_dir }}/pg_hba.conf"
+        regexp: '^host\s+all\s+all\s+::1/128\s+'
+        line: 'host    all             all             ::1/128                 password'
+        insertafter: '^host\s+all\s+all\s+127\.0\.0\.1/32\s+'
+
+    # --- параметры ------------------------------------------------------
+    - name: Writing Bitrix tuning for PostgreSQL
+      copy:
+        dest: "{{ postgres_conf_dir }}/conf.d/99-bitrix.conf"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+        content: |
+          # Сгенерировано Debian BitrixVM: пресет {{ postgres_preset_selected }} (RAM: {{ ansible_memtotal_mb }} МБ).
+          # Переопределить: postgres_preset=2g|4g|8g|16g|32g|64g при запуске плейбука.
+          {% for key, value in (postgres_common_settings | combine(postgres_settings)).items() %}
+          {{ key }} = {{ value }}
+          {% endfor %}
+          max_worker_processes = {{ ansible_processor_vcpus | default(2) }}
+
+    - name: Ensuring include_dir is enabled in postgresql.conf
+      lineinfile:
+        path: "{{ postgres_conf_dir }}/postgresql.conf"
+        regexp: '^#?\s*include_dir\s*='
+        line: "include_dir = 'conf.d'"
+
+    # shared_buffers/max_connections/wal_buffers меняются только рестартом
+    - name: Restarting PostgreSQL
+      systemd:
+        name: postgresql
+        state: restarted
+        enabled: yes
+
+    - name: Verifying password authentication
+      shell: |
+        set -e
+        PGPASSWORD='{{ postgres_superuser_password }}' psql -h 127.0.0.1 -U postgres -tAc "SELECT 1"
+      register: pg_auth_check
+      changed_when: false
+      no_log: true
+
+    # --- база, пользователь, расширение ---------------------------------
+    - name: Creating Bitrix database and user
+      shell: |
+        set -e
+        export PGPASSWORD='{{ postgres_superuser_password }}'
+        psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -tAc \
+          "SELECT 1 FROM pg_roles WHERE rolname='{{ postgres_user }}'" | grep -q 1 || \
+          psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c \
+          "CREATE USER {{ postgres_user }} WITH PASSWORD '{{ postgres_user_password }}'"
+        psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -tAc \
+          "SELECT 1 FROM pg_database WHERE datname='{{ postgres_database }}'" | grep -q 1 || \
+          psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c \
+          "CREATE DATABASE {{ postgres_database }} LC_CTYPE='C.UTF-8' TEMPLATE template0 OWNER {{ postgres_user }}"
+      no_log: true
+
+    - name: Granting privileges on the Bitrix database
+      shell: |
+        set -e
+        export PGPASSWORD='{{ postgres_superuser_password }}'
+        psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c \
+          "GRANT ALL PRIVILEGES ON DATABASE {{ postgres_database }} TO {{ postgres_user }}"
+        psql -h 127.0.0.1 -U postgres -d {{ postgres_database }} -v ON_ERROR_STOP=1 -c \
+          "GRANT CREATE ON SCHEMA public TO {{ postgres_user }}"
+        psql -h 127.0.0.1 -U postgres -d {{ postgres_database }} -v ON_ERROR_STOP=1 -c \
+          "CREATE EXTENSION IF NOT EXISTS pgcrypto"
+      no_log: true
+
+    - name: Verifying Bitrix user connection and pgcrypto
+      shell: |
+        set -e
+        PGPASSWORD='{{ postgres_user_password }}' psql -h 127.0.0.1 -U {{ postgres_user }} -d {{ postgres_database }} \
+          -tAc "SELECT extname FROM pg_extension WHERE extname='pgcrypto'"
+      register: pg_user_check
+      changed_when: false
+      no_log: true
+
+    - name: Restarting Apache to apply the pgsql extension
+      systemd:
+        name: "{{ service_apache_name | default('apache2') }}"
+        state: restarted
+
+    - name: Showing PostgreSQL installation summary
+      debug:
+        msg:
+          - "{{ postgres_messages[menu_lang | default('ru')].installed }}"
+          - "{{ postgres_messages[menu_lang | default('ru')].tuning }}"
+          - "{{ postgres_messages[menu_lang | default('ru')].connection }}"
+          - "{{ postgres_messages[menu_lang | default('ru')].superuser }}"
+          - "{{ postgres_messages[menu_lang | default('ru')].php_ext }}"
+      no_log: false
+
+  when: postgres_action == 'INSTALL'
+
+- block:
+    - name: Stopping PostgreSQL service
+      systemd:
+        name: postgresql
+        state: stopped
+      failed_when: false
+
+    - name: Finding installed PostgreSQL packages
+      shell: dpkg-query -W -f='${Package}\n' 'postgresql*' 2>/dev/null || true
+      register: pg_installed_packages
+      changed_when: false
+
+    - name: Deleting PostgreSQL packages
+      apt:
+        name: "{{ pg_installed_packages.stdout_lines }}"
+        state: absent
+        purge: yes
+        autoremove: yes
+      when: pg_installed_packages.stdout_lines | length > 0
+
+    - name: Deleting leftover PostgreSQL packages if any
+      shell: |
+        set -e
+        for pkg in $(dpkg-query -W -f='${Package}\n' 'postgresql*' 2>/dev/null); do
+          dpkg --purge --force-all "$pkg" || true
+        done
+      changed_when: false
+      failed_when: false
+
+    - name: Checking package database consistency
+      command: dpkg --configure -a
+      changed_when: false
+      failed_when: false
+
+    - name: Deleting PostgreSQL configuration, data and logs
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ postgres_etc_dir }}"
+        - "{{ postgres_data_dir }}"
+        - "{{ postgres_log_dir }}"
+
+    - name: Deleting PostgreSQL credentials
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /root/.pgpass
+        - /root/.postgres_superuser_password
+        - /root/.postgres_bitrix_password
+
+    - name: Removing PHP pgsql extension packages
+      shell: dpkg-query -W -f='${Package}\n' 'php*-pgsql' 2>/dev/null || true
+      register: php_pgsql_packages
+      changed_when: false
+
+    - name: Deleting PHP pgsql extension packages
+      apt:
+        name: "{{ php_pgsql_packages.stdout_lines }}"
+        state: absent
+        purge: yes
+      when: php_pgsql_packages.stdout_lines | length > 0
+
+    - name: Restarting Apache after removing the pgsql extension
+      systemd:
+        name: "{{ service_apache_name | default('apache2') }}"
+        state: restarted
+      failed_when: false
+
+    - name: Showing PostgreSQL removal summary
+      debug:
+        msg: "{{ postgres_messages[menu_lang | default('ru')].removed }}"
+
+  when: postgres_action == 'DELETE'

@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.4.1"
+BS_VERSION_MENU="2.5.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -104,6 +104,7 @@ BS_ANSIBLE_PB_INSTALL_OR_DELETE_NETDATA="install_or_delete_netdata.yaml"
 BS_ANSIBLE_PB_INSTALL_OR_DELETE_SPHINX="install_or_delete_sphinx.yaml"
 BS_ANSIBLE_PB_INSTALL_OR_DELETE_FILE_CONVERSION_SERVER="install_or_delete_file_conversion_server.yaml"
 BS_ANSIBLE_PB_DELETE_SITE="delete_site.yaml"
+BS_ANSIBLE_PB_INSTALL_OR_DELETE_POSTGRESQL="install_or_delete_postgresql.yaml"
 
 # MySQL settings
 # На Debian 13 (trixie) Oracle поставляет только MySQL 8.4 LTS (mysql-8.4-lts):
@@ -179,6 +180,12 @@ BS_MYSQL_CMD="mysql"
 BS_PUSH_SERVER_VERSION="0.4.0"
 BS_PUSH_SERVER_CONFIG="/etc/sysconfig/push-server-multi"
 BS_PUSH_SERVER_SERVICE_NAME="push-server"
+
+# PostgreSQL settings (дополнение «PostgreSQL» в меню)
+# Пресет конфигурации: auto — по объёму RAM, либо 2g|4g|8g|16g|32g|64g.
+BS_POSTGRES_PRESET="auto"
+BS_POSTGRES_DATABASE="bitrix"
+BS_POSTGRES_USER="bitrix"
 
 # Sphinx settings
 BS_SPHINX_PACKAGE="sphinxsearch"

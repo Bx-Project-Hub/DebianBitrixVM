@@ -350,6 +350,30 @@ action_install_or_delete_file_conversion_server(){
   press_any_key_to_return_menu;
 }
 
+# PostgreSQL: action = install | delete
+action_install_or_delete_postgresql(){
+  local postgres_action="${1:-}"
+  local pb
+  pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_INSTALL_OR_DELETE_POSTGRESQL}")
+
+  case "$postgres_action" in
+    install) postgres_action="INSTALL" ;;
+    delete)  postgres_action="DELETE" ;;
+    *) echo "$(t action.unknown_postgres "${postgres_action}")" >&2; return 1 ;;
+  esac
+
+  ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
+  -e "postgres_action=${postgres_action} \
+  postgres_preset=${BS_POSTGRES_PRESET} \
+  postgres_database=${BS_POSTGRES_DATABASE} \
+  postgres_user=${BS_POSTGRES_USER} \
+  php_version=${CURRENT_PHP_VERSION:-} \
+  service_apache_name=${BS_SERVICE_APACHE_NAME} \
+  menu_lang=${BS_MENU_LANG_CURRENT:-ru}"
+
+  press_any_key_to_return_menu;
+}
+
 # Настройка SMTP-аккаунта в общем /var/www/html/.msmtprc
 # Переменные: account_name, smtp_host, smtp_port, email_from, is_auth,
 # authentication_method, login, password, enable_TLS

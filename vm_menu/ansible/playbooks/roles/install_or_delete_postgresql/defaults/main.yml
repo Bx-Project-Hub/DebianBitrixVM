@@ -1,0 +1,54 @@
+---
+# defaults file for install_or_delete_postgresql
+#
+# Параметры можно переопределить через -e при запуске плейбука
+# (меню передаёт их само).
+
+# Пакеты PostgreSQL. На Debian 13 (trixie) это PostgreSQL 17.
+postgres_packages:
+  - postgresql
+  - postgresql-contrib
+
+# Пресет конфигурации: auto (по объёму RAM) либо 2g|4g|8g|16g|32g|64g.
+postgres_preset: auto
+
+# База и пользователь для портала Bitrix (аналог настроек из документации 1С-Битрикс).
+postgres_database: bitrix
+postgres_user: bitrix
+
+# Служебные пути Debian
+postgres_etc_dir: /etc/postgresql
+postgres_log_dir: /var/log/postgresql
+postgres_data_dir: /var/lib/postgresql
+
+# Параметры, не зависящие от объёма RAM (одинаковы для всех пресетов)
+postgres_common_settings:
+  listen_addresses: "localhost"
+  checkpoint_completion_target: "0.9"
+  random_page_cost: "1.1"
+  effective_io_concurrency: "200"
+  default_statistics_target: "100"
+  log_min_duration_statement: "1000"
+  log_checkpoints: "on"
+  autovacuum: "on"
+  jit: "off"
+
+# Язык вывода сообщений: ru | en (меню передаёт текущий язык интерфейса)
+menu_lang: ru
+
+# Сообщения, которые печатаются в конце установки
+postgres_messages:
+  ru:
+    installed: "PostgreSQL установлен. Версия: {{ postgres_version }}, пресет: {{ postgres_preset_selected }}"
+    connection: "Параметры подключения Bitrix: хост 127.0.0.1, порт 5432, база {{ postgres_database }}, пользователь {{ postgres_user }}, пароль {{ postgres_user_password }}"
+    superuser: "Пароль суперпользователя postgres: {{ postgres_superuser_password }} (сохранён в /root/.pgpass)"
+    php_ext: "PHP-расширение pgsql подключено для версии {{ postgres_php_version }}"
+    tuning: "Параметры: shared_buffers={{ postgres_settings.shared_buffers }}, effective_cache_size={{ postgres_settings.effective_cache_size }}, max_connections={{ postgres_settings.max_connections }}, work_mem={{ postgres_settings.work_mem }}"
+    removed: "PostgreSQL удалён: пакеты, базы данных и конфигурация удалены."
+  en:
+    installed: "PostgreSQL installed. Version: {{ postgres_version }}, preset: {{ postgres_preset_selected }}"
+    connection: "Bitrix connection settings: host 127.0.0.1, port 5432, database {{ postgres_database }}, user {{ postgres_user }}, password {{ postgres_user_password }}"
+    superuser: "PostgreSQL superuser password: {{ postgres_superuser_password }} (saved to /root/.pgpass)"
+    php_ext: "PHP pgsql extension enabled for version {{ postgres_php_version }}"
+    tuning: "Settings: shared_buffers={{ postgres_settings.shared_buffers }}, effective_cache_size={{ postgres_settings.effective_cache_size }}, max_connections={{ postgres_settings.max_connections }}, work_mem={{ postgres_settings.work_mem }}"
+    removed: "PostgreSQL removed: packages, databases and configuration deleted."

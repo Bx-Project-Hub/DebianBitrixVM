@@ -38,6 +38,7 @@ Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 12 / Debian 13** üçin uý
   update_menu
   ```
 - **Iki interfeýs dili — rus we iňlis** — ulgam lokalyna görä awtomatik saýlanýar (`ru_*` → rus dili, beýlekiler → iňlis dili); `BS_MENU_LANG` üýtgeýjisi bilen mejbury bellemek bolýar.
+- **Bitrix üçin PostgreSQL** — goşmaçalar menýusyndan gurmak we aýyrmak, `postgresql.conf` presetleri RAM göwrümine görä saýlanýar.
 
 ---
 
@@ -101,6 +102,34 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 ```
 
 Rugsat berilýän bahalar: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (deslapky — `auto`). Parametrler `/etc/mysql/conf.d/10-bitrix-memory.cnf` faýlyna ýazylýar.
+
+## Bitrix portaly üçin PostgreSQL
+
+Menýudan gurnalýar: `8` → «Goşmaça komponentler» → `4`. MySQL işlemegini dowam edýär — MBD saýlawy portal gurnalanda amala aşyrylýar.
+
+| RAM, GB | Bufer howzy | Meýilleşdiriji keşi | work_mem | Hyzmat |
+|---|---|---|---|---|
+| <3 | 512MB | 1536MB | 4MB | 128MB |
+| 3&#8209;6 | 1GB | 3GB | 6MB | 256MB |
+| 6&#8209;12 | 2GB | 6GB | 8MB | 512MB |
+| 12&#8209;24 | 4GB | 12GB | 12MB | 1GB |
+| 24&#8209;48 | 8GB | 24GB | 16MB | 1GB |
+| ≥48 | 16GB | 48GB | 24MB | 2GB |
+
+| RAM, GB | Baglanyşyklar | WAL buferi | Temp buferi |
+|---|---|---|---|
+| <3 | 40 | 16MB | 8MB |
+| 3&#8209;6 | 60 | 16MB | 8MB |
+| 6&#8209;12 | 80 | 16MB | 16MB |
+| 12&#8209;24 | 85 | 16MB | 24MB |
+| 24&#8209;48 | 200 | 16MB | 32MB |
+| ≥48 | 300 | 16MB | 48MB |
+
+Parametrleriň doly atlary: bufer howzy — `shared_buffers`, meýilleşdiriji keşi — `effective_cache_size`, hyzmat — `maintenance_work_mem`, baglanyşyklar — `max_connections`, WAL buferi — `wal_buffers`, temp buferi — `temp_buffers`.
+
+Awtomatik döredilýär: `bitrix` bazasy (`LC_CTYPE='C.UTF-8' TEMPLATE template0`), `bitrix` ulanyjysy, `public` shemasyna `GRANT CREATE`, `pgcrypto` giňeltmesi, `pg_hba.conf`-da parol autentifikasiýasy.
+
+Preset ilkinji laýyk çäge görä saýlanýar; mejbury — `config.sh`-daky `BS_POSTGRES_PRESET`.
 
 ---
 

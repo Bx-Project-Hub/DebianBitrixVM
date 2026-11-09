@@ -256,6 +256,15 @@ declare -A MSG_RU=(
     [conv.action_install]="установку"
     [conv.action_delete]="удаление"
     [conv.confirm]="Выполнить «%s» сервера конвертации для %s?"
+    [ext.postgres]="PostgreSQL — база данных для портала Bitrix (пресеты под объём RAM)"
+    [postgres.title]="Меню → PostgreSQL"
+    [postgres.note]="Ставится PostgreSQL из репозитория Debian и расширение pgsql для PHP. База создаётся с LC_CTYPE=C.UTF-8 (TEMPLATE template0), включается pgcrypto, вход — по паролю."
+    [postgres.preset_note]="Параметры postgresql.conf подбираются по объёму RAM: shared_buffers ≈ 25%, effective_cache_size ≈ 75%, work_mem — с учётом max_connections."
+    [postgres.install]="Установить PostgreSQL"
+    [postgres.delete]="Удалить PostgreSQL"
+    [postgres.delete_warning]="Внимание: при удалении пропадут ВСЕ базы данных PostgreSQL, включая созданные вручную."
+    [postgres.confirm_install]="Установить PostgreSQL и создать базу %s для портала?"
+    [postgres.confirm_delete]="Удалить PostgreSQL вместе со всеми базами данных?"
 
     # Сервер, обновления
     [upd.confirm_pkgs]="Обновить пакеты системы (apt update && apt upgrade)?"
@@ -269,6 +278,7 @@ declare -A MSG_RU=(
     [action.unknown_sphinx]="Ошибка: неизвестное действие для Sphinx: %s"
     [action.unknown_netdata]="Ошибка: неизвестное действие для Netdata: %s"
     [action.unknown_conv]="Ошибка: неизвестное действие для сервера конвертации: %s"
+    [action.unknown_postgres]="Ошибка: неизвестное действие для PostgreSQL: %s"
     [server.confirm_reboot]="Вы действительно хотите ПЕРЕЗАГРУЗИТЬ сервер? (Y/N): "
     [server.confirm_poweroff]="Вы действительно хотите ВЫКЛЮЧИТЬ сервер? (Y/N): "
     [server.enter_yn]="Введите Y или N."
@@ -494,6 +504,15 @@ declare -A MSG_EN=(
     [conv.action_install]="install"
     [conv.action_delete]="removal"
     [conv.confirm]="Perform the «%s» of the conversion server for %s?"
+    [ext.postgres]="PostgreSQL — database for a Bitrix portal (RAM-based presets)"
+    [postgres.title]="Menu → PostgreSQL"
+    [postgres.note]="Installs PostgreSQL from the Debian repository and the PHP pgsql extension. The database is created with LC_CTYPE=C.UTF-8 (TEMPLATE template0), pgcrypto is enabled, authentication is password-based."
+    [postgres.preset_note]="postgresql.conf settings are selected by the amount of RAM: shared_buffers ≈ 25%, effective_cache_size ≈ 75%, work_mem is balanced against max_connections."
+    [postgres.install]="Install PostgreSQL"
+    [postgres.delete]="Remove PostgreSQL"
+    [postgres.delete_warning]="Warning: removing PostgreSQL deletes ALL PostgreSQL databases, including manually created ones."
+    [postgres.confirm_install]="Install PostgreSQL and create the %s database for the portal?"
+    [postgres.confirm_delete]="Remove PostgreSQL together with all its databases?"
 
     [upd.confirm_pkgs]="Update system packages (apt update && apt upgrade)?"
     [upd.confirm_menu]="Update the menu (the current version will be backed up to /root/backup_vm_menu)?"
@@ -506,6 +525,7 @@ declare -A MSG_EN=(
     [action.unknown_sphinx]="Error: unknown action for Sphinx: %s"
     [action.unknown_netdata]="Error: unknown action for Netdata: %s"
     [action.unknown_conv]="Error: unknown action for the conversion server: %s"
+    [action.unknown_postgres]="Error: unknown action for PostgreSQL: %s"
     [server.confirm_reboot]="Do you really want to RESTART the server? (Y/N): "
     [server.confirm_poweroff]="Do you really want to SHUT DOWN the server? (Y/N): "
     [server.enter_yn]="Please enter Y or N."
@@ -561,7 +581,7 @@ function i18n_help_text() {
    7) SMTP — аккаунты в /var/www/html/.msmtprc. Apache передаёт имя аккаунта
       в msmtp-wrapper (обычно это домен сайта). Аккаунт default используется,
       если аккаунт сайта не найден.
-   8) Дополнения — Sphinx, сервер конвертации файлов, Netdata.
+   8) Дополнения — Sphinx, сервер конвертации файлов, Netdata, PostgreSQL.
    9) Эмуляция BitrixVM — переменная BITRIX_VA_VER в /etc/apache2/envvars
       (нужна некоторым решениям маркетплейса).
 
@@ -632,7 +652,7 @@ HELP
    7) SMTP — accounts in /var/www/html/.msmtprc. Apache passes the account name to
       msmtp-wrapper (usually the site domain). The default account is used when no
       account is found for the site.
-   8) Add-ons — Sphinx, file conversion server, Netdata.
+   8) Add-ons — Sphinx, file conversion server, Netdata, PostgreSQL.
    9) BitrixVM emulation — the BITRIX_VA_VER variable in /etc/apache2/envvars
       (required by some Marketplace solutions).
 

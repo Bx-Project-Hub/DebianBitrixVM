@@ -38,6 +38,7 @@ Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 12 / Debian 13** üç
   update_menu
   ```
 - **İki interfeys dili — rus və ingilis** — sistem lokalına görə avtomatik seçilir (`ru_*` → rus dili, digərləri → ingilis dili); `BS_MENU_LANG` dəyişəni ilə məcburi təyin etmək olar.
+- **Bitrix üçün PostgreSQL** — əlavələr menyusundan quraşdırma və silmə, `postgresql.conf` presetləri RAM həcminə görə seçilir.
 
 ---
 
@@ -101,6 +102,34 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 ```
 
 İcazə verilən dəyərlər: `2g`, `4g`, `8g`, `16g`, `32g`, `64g` (susmaya görə — `auto`). Parametrlər `/etc/mysql/conf.d/10-bitrix-memory.cnf` faylına yazılır.
+
+## Bitrix portalı üçün PostgreSQL
+
+Menyudan quraşdırılır: `8` → «Əlavə komponentlər» → `4`. MySQL işləməyə davam edir — VBİS portalın quraşdırılması zamanı seçilir.
+
+| RAM, GB | Bufer hovuzu | Planlaşdırıcı keşi | work_mem | Xidmət |
+|---|---|---|---|---|
+| <3 | 512MB | 1536MB | 4MB | 128MB |
+| 3&#8209;6 | 1GB | 3GB | 6MB | 256MB |
+| 6&#8209;12 | 2GB | 6GB | 8MB | 512MB |
+| 12&#8209;24 | 4GB | 12GB | 12MB | 1GB |
+| 24&#8209;48 | 8GB | 24GB | 16MB | 1GB |
+| ≥48 | 16GB | 48GB | 24MB | 2GB |
+
+| RAM, GB | Bağlantılar | WAL buferi | Temp buferi |
+|---|---|---|---|
+| <3 | 40 | 16MB | 8MB |
+| 3&#8209;6 | 60 | 16MB | 8MB |
+| 6&#8209;12 | 80 | 16MB | 16MB |
+| 12&#8209;24 | 85 | 16MB | 24MB |
+| 24&#8209;48 | 200 | 16MB | 32MB |
+| ≥48 | 300 | 16MB | 48MB |
+
+Parametrlərin tam adları: bufer hovuzu — `shared_buffers`, planlaşdırıcı keşi — `effective_cache_size`, xidmət — `maintenance_work_mem`, bağlantılar — `max_connections`, WAL buferi — `wal_buffers`, temp buferi — `temp_buffers`.
+
+Avtomatik yaradılır: `bitrix` bazası (`LC_CTYPE='C.UTF-8' TEMPLATE template0`), `bitrix` istifadəçisi, `public` sxeminə `GRANT CREATE`, `pgcrypto` genişlənməsi, `pg_hba.conf`-da parol autentifikasiyası.
+
+Preset ilk uyğun həddə görə seçilir; məcburi — `config.sh` faylındakı `BS_POSTGRES_PRESET`.
 
 ---
 
