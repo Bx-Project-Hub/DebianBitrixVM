@@ -142,7 +142,7 @@
     # .deb-пакеты лежат в проекте (vendor/deb) — установка не зависит от него.
     - name: Checking bundled nginx module packages
       stat:
-        path: "{{ vendor_dir | default('/root/vendor') }}/deb/{{ item }}"
+        path: "{{ vendor_dir | default('/root/vm_menu/vendor') }}/deb/{{ item }}"
       loop:
         - libnginx-mod-http-zip_1.3.0-2.gbp4aa963c~trixie_amd64.deb
         - libnginx-mod-http-zstd_0.1.1-2.gbp057a7d3~trixie_amd64.deb

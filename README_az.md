@@ -136,7 +136,7 @@ Preset ilk uyğun həddə görə seçilir; məcburi — `config.sh` faylındakı
 Əvvəllər yad saytlardan yüklənən hər şey repozitoridə — `vendor/`: nginx gzip/zstd modulları
 (Debian-da yoxdur), push&pull serveri, Bitrix-in PHP/Nginx/Apache konfiqurasiyaları, Bitrix
 quraşdırma skriptləri, Netdata quraşdırma skripti və repozitoriya açarları. Quraşdırıcı `vendor`
-qovluğunu `/root/vendor`-a köçürür, `vendor/CHECKSUMS.sha256` yoxlayır və faylları oradan götürür;
+qovluğunu `/root/vm_menu/vendor`-a köçürür, `vendor/CHECKSUMS.sha256` yoxlayır və faylları oradan götürür;
 şəbəkə yalnız lokal nüsxə olmadıqda istifadə olunur. Yeniləmə — `tools/vendor-fetch.sh`,
 yoxlama — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percona və Netdata
 repozitoriləri qəsdən xarici qalır: onlar paket və təhlükəsizlik yeniləmələrinin mənbəyidir,

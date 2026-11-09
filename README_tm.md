@@ -136,7 +136,7 @@ Preset ilkinji laýyk çäge görä saýlanýar; mejbury — `config.sh`-daky `B
 Öňler daşarky saýtlardan ýüklenýän zatlaryň ählisi repozitoriýada — `vendor/`: nginx gzip/zstd
 modullary (Debian-da ýok), push&pull serweri, Bitrix-iň PHP/Nginx/Apache konfigurasiýalary,
 Bitrix gurnama skriptleri, Netdata gurnama skripti we repozitoriýa açarlary. Gurnaýjy `vendor`
-katalogy `/root/vendor`-a göçürýär, `vendor/CHECKSUMS.sha256` barlaýar we faýllary şol ýerden
+katalogy `/root/vm_menu/vendor`-a göçürýär, `vendor/CHECKSUMS.sha256` barlaýar we faýllary şol ýerden
 alýar; tor diňe ýerli nusga ýok bolanda ulanylýar. Täzelemek — `tools/vendor-fetch.sh`,
 barlamak — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percona we Netdata
 repozitoriýalary bilgeşleýin daşarky galýar: olar paket we howpsuzlyk täzelenmeleriniň çeşmesi,

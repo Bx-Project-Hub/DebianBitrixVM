@@ -136,7 +136,7 @@ MYSQL_PRESET=8g DB_ENGINE=percona bash <(curl -sL https://raw.githubusercontent.
 ყველაფერი, რაც ადრე გარე საიტებიდან ჩამოიტვირთებოდა, რეპოზიტორიაშია — `vendor/`: nginx-ის
 gzip/zstd მოდულები (Debian-ში არ არის), push&pull სერვერი, Bitrix-ის PHP/Nginx/Apache
 კონფიგურაციები, Bitrix-ის ინსტალაციის სკრიპტები, Netdata-ს ინსტალაციის სკრიპტი და
-რეპოზიტორიების გასაღებები. ინსტალატორი `vendor`-ს `/root/vendor`-ში აკოპირებს, ამოწმებს
+რეპოზიტორიების გასაღებები. ინსტალატორი `vendor`-ს `/root/vm_menu/vendor`-ში აკოპირებს, ამოწმებს
 `vendor/CHECKSUMS.sha256`-ს და ფაილებს იქიდან იღებს; ქსელი მხოლოდ ლოკალური ასლის არარსებობისას
 გამოიყენება. განახლება — `tools/vendor-fetch.sh`, შემოწმება — `tools/vendor-fetch.sh --check`.
 Debian-ის, deb.sury.org-ის, MySQL/Percona-სა და Netdata-ს რეპოზიტორიები განზრახ გარე რჩება:

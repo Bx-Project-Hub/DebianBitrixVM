@@ -3,7 +3,7 @@
 - block:
     - name: Checking bundled Netdata kickstart script
       stat:
-        path: "{{ vendor_dir | default('/root/vendor') }}/scripts/netdata-kickstart.sh"
+        path: "{{ vendor_dir | default('/root/vm_menu/vendor') }}/scripts/netdata-kickstart.sh"
       register: netdata_kickstart
 
     - name: Installing Netdata (bundled kickstart)

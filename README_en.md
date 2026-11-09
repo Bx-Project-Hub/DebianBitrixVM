@@ -136,7 +136,7 @@ The preset is chosen by the first matching threshold; it can be forced with `BS_
 Everything that used to be downloaded from third-party sites is stored in the repository —
 `vendor/`: the nginx gzip/zstd modules (not shipped by Debian), the push&pull server, the
 Bitrix PHP/Nginx/Apache configs, the Bitrix setup scripts, the Netdata kickstart script and
-repository keys. The installer copies `vendor` to `/root/vendor`, verifies
+repository keys. The installer copies `vendor` to `/root/vm_menu/vendor`, verifies
 `vendor/CHECKSUMS.sha256` and takes the files from there; the network is used only when a
 local copy is missing. Refresh with `tools/vendor-fetch.sh`, verify with
 `tools/vendor-fetch.sh --check`. The Debian, deb.sury.org, MySQL/Percona and Netdata

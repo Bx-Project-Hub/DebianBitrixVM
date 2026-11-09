@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.6.0"
+BS_VERSION_MENU="2.6.1"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -94,7 +94,8 @@ BS_PATH_PHP_LOG="/var/log/php"
 
 # Ansible settings
 # Вендорные файлы: локальные копии внешних артефактов (см. vendor/ и tools/vendor-fetch.sh)
-BS_VENDOR_DIR="/root/vendor"
+# Каталог лежит рядом с меню и обновляется вместе с ним
+BS_VENDOR_DIR="/root/vm_menu/vendor"
 BS_VENDOR_RAW_BASE="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/vendor"
 
 BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS="-i localhost, -c local -e ansible_python_interpreter=/usr/bin/python3 -e vendor_dir=${BS_VENDOR_DIR}"

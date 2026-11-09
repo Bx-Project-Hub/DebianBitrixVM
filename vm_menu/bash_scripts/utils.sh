@@ -351,7 +351,7 @@ function get_uptime_short() {
 # иначе — из репозитория проекта (BS_VENDOR_RAW_BASE), а не с чужого сайта.
 function vendor_get() {  # vendor_get <путь внутри vendor> <куда; "-" = stdout>
     local rel="$1" dest="$2"
-    local src="${BS_VENDOR_DIR:-/root/vendor}/${rel}"
+    local src="${BS_VENDOR_DIR:-/root/vm_menu/vendor}/${rel}"
     if [ -f "$src" ]; then
         if [ "$dest" = "-" ]; then cat "$src"; else cp -f "$src" "$dest"; fi
         return 0

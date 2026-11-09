@@ -55,7 +55,7 @@ git clone --depth 1 --filter=blob:none --sparse --branch "$BRANCH" "$REPO_URL" "
     || fail "не удалось склонировать $REPO_URL"
 
 cd "$TMP_DIR/repo" || fail "не удалось перейти в каталог клона"
-git sparse-checkout set "$DIR_NAME_MENU" || fail "не удалось получить каталог $DIR_NAME_MENU"
+git sparse-checkout set "$DIR_NAME_MENU" vendor || fail "не удалось получить каталоги $DIR_NAME_MENU и vendor"
 
 # --- 2. Проверка скачанного меню --------------------------------------------
 [ -f "$TMP_DIR/repo/$DIR_NAME_MENU/menu.sh" ] \
@@ -102,6 +102,23 @@ if [ ! -f "$FULL_PATH_MENU_FILE" ]; then
         echo "Выполнен откат из backup: $full_path_backup_menu/$DIR_NAME_MENU" >&2
     fi
     fail "после установки файл $FULL_PATH_MENU_FILE не найден"
+fi
+
+# --- 5a. Вендорные файлы (локальные копии внешних артефактов) ---------------
+# Обновляем vm_menu/vendor из репозитория с проверкой контрольных сумм.
+# Ошибка здесь не должна ломать меню: при отсутствии vendor включается
+# резервный путь (скачивание из репозитория проекта).
+if [ -d "$TMP_DIR/repo/vendor" ]; then
+    if [ -f "$TMP_DIR/repo/vendor/CHECKSUMS.sha256" ] \
+       && ( cd "$TMP_DIR/repo/vendor" && sha256sum -c CHECKSUMS.sha256 --quiet ); then
+        mkdir -p "$DEST_DIR_MENU/$DIR_NAME_MENU/vendor"
+        rsync -a --delete "$TMP_DIR/repo/vendor/" "$DEST_DIR_MENU/$DIR_NAME_MENU/vendor/" \
+            && echo "Вендорные файлы обновлены: $DEST_DIR_MENU/$DIR_NAME_MENU/vendor"
+    else
+        echo "Предупреждение: контрольные суммы vendor не совпадают — файлы не обновлены." >&2
+    fi
+else
+    echo "Предупреждение: в репозитории нет каталога vendor." >&2
 fi
 
 # --- 6. Автозапуск по SSH и символическая ссылка ----------------------------

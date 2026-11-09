@@ -65,7 +65,7 @@
 
     - name: Checking bundled Bitrix install scripts
       stat:
-        path: "{{ vendor_dir | default('/root/vendor') }}/files/{{ item | basename }}"
+        path: "{{ vendor_dir | default('/root/vm_menu/vendor') }}/files/{{ item | basename }}"
       loop: "{{ urls }}"
       register: bitrix_scripts_bundled
 

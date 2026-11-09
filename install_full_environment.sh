@@ -141,13 +141,13 @@ export LC_ALL="ru_RU.UTF-8"
 
 # Доставляем на сервер скрипты установки, меню и вендорные файлы ДО запуска
 # custom_bitrix_setup.sh: тогда установка берёт push-server, конфиги PHP,
-# скрипты Bitrix и ключи репозиториев из локального каталога /root/vendor,
+# скрипты Bitrix и ключи репозиториев из локального каталога vm_menu/vendor,
 # а не с чужих сайтов.
-VENDOR_DIR_MENU="/root/vendor"
+VENDOR_DIR_MENU="$DEST_DIR_MENU/$DIR_NAME_MENU/vendor"
 
 if [[ -n "$LOCAL_SOURCE" && -d "$LOCAL_SOURCE/vm_menu" ]]; then
     echo "Локальный исходник: $LOCAL_SOURCE"
-    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU" "$VENDOR_DIR_MENU"
+    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU"
     rsync -a --delete "$LOCAL_SOURCE/vm_menu/" "$DEST_DIR_MENU/$DIR_NAME_MENU/"
     [[ -d "$LOCAL_SOURCE/vendor" ]] && rsync -a --delete "$LOCAL_SOURCE/vendor/" "$VENDOR_DIR_MENU/"
     SETUP_SCRIPT="$LOCAL_SOURCE/repositories/bitrix-gt/custom_bitrix_setup.sh"
@@ -157,8 +157,9 @@ else
     git clone --branch=$BRANCH --depth 1 --filter=blob:none --sparse $REPO_URL "$DEST_DIR_MENU/DebianBitrixVM"
     cd "$DEST_DIR_MENU/DebianBitrixVM"
     git sparse-checkout set "$DIR_NAME_MENU" "vendor" "repositories/bitrix-gt"
-    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU" "$VENDOR_DIR_MENU"
+    rm -rf "$DEST_DIR_MENU/$DIR_NAME_MENU"
     mv -f "$DIR_NAME_MENU" "$DEST_DIR_MENU"
+    rm -rf "$VENDOR_DIR_MENU"
     mv -f "vendor" "$VENDOR_DIR_MENU"
     SETUP_SCRIPT="$DEST_DIR_MENU/DebianBitrixVM/repositories/bitrix-gt/custom_bitrix_setup.sh"
 fi

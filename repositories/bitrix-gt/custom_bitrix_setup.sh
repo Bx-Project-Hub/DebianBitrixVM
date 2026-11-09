@@ -28,7 +28,7 @@ export DEBIAN_FRONTEND="noninteractive"
 # Локальная копия имеет приоритет; если её нет (устаревшая установка) — файл
 # скачивается из репозитория проекта, а не с чужого сайта.
 ###################################################################
-BS_VENDOR_DIR="${BS_VENDOR_DIR:-/root/vendor}"
+BS_VENDOR_DIR="${BS_VENDOR_DIR:-/root/vm_menu/vendor}"
 BS_VENDOR_RAW_BASE="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/vendor"
 
 vendor_get() {  # vendor_get <путь внутри vendor> <куда положить; "-" = stdout>
