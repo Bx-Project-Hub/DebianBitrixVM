@@ -271,19 +271,19 @@ function add_site() {
 
     echo ""
     echo "   $(t common.check_params)"
-    echo "     $(t add.param_domain)        ${domain}"
-    echo "     $(t add.param_mode)        ${mode}"
+    printf '     %s %s\n' "$(pad_right "$(t add.param_domain)" 16)" "${domain}"
+    printf '     %s %s\n' "$(pad_right "$(t add.param_mode)" 16)" "${mode}"
     if [[ "$mode" == "link" ]]; then
-        echo "     $(t add.param_core)   ${path_site_from_links}"
+        printf '     %s %s\n' "$(pad_right "$(t add.param_core)" 16)" "${path_site_from_links}"
     else
-        echo "     $(t add.param_db)  $(t add.param_db_value "${db_name}" "${db_user}")"
+        printf '     %s %s\n' "$(pad_right "$(t add.param_db)" 16)" "$(t add.param_db_value "${db_name}" "${db_user}")"
     fi
     if [[ -n "$ssl_lets_encrypt_email" ]]; then
-        echo "     $(t add.param_ssl) $(t add.param_ssl_value_full "${ssl_lets_encrypt}" "${ssl_lets_encrypt_email}" "${ssl_lets_encrypt_www}")"
+        printf '     %s %s\n' "$(pad_right "$(t add.param_ssl)" 16)" "$(t add.param_ssl_value_full "${ssl_lets_encrypt}" "${ssl_lets_encrypt_email}" "${ssl_lets_encrypt_www}")"
     else
-        echo "     $(t add.param_ssl) $(t add.param_ssl_value "${ssl_lets_encrypt}")"
+        printf '     %s %s\n' "$(pad_right "$(t add.param_ssl)" 16)" "$(t add.param_ssl_value "${ssl_lets_encrypt}")"
     fi
-    echo "     $(t add.param_redirect) ${redirect_to_https}"
+    printf '     %s %s\n' "$(pad_right "$(t add.param_redirect)" 16)" "${redirect_to_https}"
     echo ""
 
     if ! confirm_action "$(t add.confirm_create "${domain}")"; then
@@ -319,11 +319,11 @@ function delete_site() {
     fi
 
     echo ""
-    printf '   %-12s %s\n' "$(t del.param_site)" "$site"
-    printf '   %-12s %s\n' "$(t del.param_dir)" "$full_path_site"
-    printf '   %-12s %s\n' "$(t del.param_type)" "$type"
+    printf '   %s %s\n' "$(pad_right "$(t del.param_site)" 12)" "$site"
+    printf '   %s %s\n' "$(pad_right "$(t del.param_dir)" 12)" "$full_path_site"
+    printf '   %s %s\n' "$(pad_right "$(t del.param_type)" 12)" "$type"
     if [[ -n "$db_name" ]]; then
-        printf '   %-12s %s\n' "$(t del.param_db)" "$(t del.param_db_value "$db_name" "${db_user:-$(t common.unknown)}")"
+        printf '   %s %s\n' "$(pad_right "$(t del.param_db)" 12)" "$(t del.param_db_value "$db_name" "${db_user:-$(t common.unknown)}")"
     fi
     echo ""
     read -r -p "   $(t del.confirm_prompt "${site}")" confirm_text
@@ -548,15 +548,15 @@ function smtp_configure_account() {
 
     echo ""
     echo "   $(t common.check_params)"
-    printf '     %-14s %s\n' "$(t smtp.param_account)" "${account_name}"
-    printf '     %-14s %s\n' "$(t smtp.param_server)" "${smtp_host}:${smtp_port}"
-    printf '     %-14s %s\n' "$(t smtp.param_from)" "${email_from}"
+    printf '     %s %s\n' "$(pad_right "$(t smtp.param_account)" 14)" "${account_name}"
+    printf '     %s %s\n' "$(pad_right "$(t smtp.param_server)" 14)" "${smtp_host}:${smtp_port}"
+    printf '     %s %s\n' "$(pad_right "$(t smtp.param_from)" 14)" "${email_from}"
     if [[ "$is_auth" == "Y" ]]; then
-        printf '     %-14s %s\n' "$(t smtp.param_auth)" "$(t smtp.param_auth_on "${login}" "${authentication_method}")"
+        printf '     %s %s\n' "$(pad_right "$(t smtp.param_auth)" 14)" "$(t smtp.param_auth_on "${login}" "${authentication_method}")"
     else
-        printf '     %-14s %s\n' "$(t smtp.param_auth)" "$(t smtp.param_auth_off)"
+        printf '     %s %s\n' "$(pad_right "$(t smtp.param_auth)" 14)" "$(t smtp.param_auth_off)"
     fi
-    printf '     %-14s %s\n' "$(t smtp.param_tls)" "${enable_TLS}"
+    printf '     %s %s\n' "$(pad_right "$(t smtp.param_tls)" 14)" "${enable_TLS}"
     echo ""
 
     if ! confirm_action "$(t smtp.confirm_save)"; then

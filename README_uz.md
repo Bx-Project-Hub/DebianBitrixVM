@@ -2,7 +2,7 @@
 
 **Til:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · **UZ** · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Asosiy menyu](images/main_menu.png)
+![Asosiy menyu](images/main_menu_en.png)
 
 # **Ma'lumot**
 Bitrix muhiti boshqaruvi uchun menyu, **Debian 12 / Debian 13** uchun moslashtirilgan. Asosiy maqsad — Debian 13 (trixie): loyiha zamonaviy Debian mashinalarida CentOS 9 muhitini almashtiradi.  

@@ -2,7 +2,7 @@
 
 **Мова:** [RU](README.md) · [EN](README_en.md) · **UK** · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Головне меню](images/main_menu.png)
+![Головне меню](images/main_menu_en.png)
 
 # **Інформація**
 Меню для керування середовищем Bitrix, адаптоване для **Debian 12 / Debian 13**. Основна мета — Debian 13 (trixie): проєкт замінює середовище CentOS 9 на сучасних Debian-машинах.  

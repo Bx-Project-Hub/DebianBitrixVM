@@ -2,7 +2,7 @@
 
 **Тіл:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · **KZ** · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Негізгі мәзір](images/main_menu.png)
+![Негізгі мәзір](images/main_menu_en.png)
 
 # **Ақпарат**
 Bitrix ортасын басқаруға арналған мәзір, **Debian 12 / Debian 13** үшін бейімделген. Негізгі мақсат — Debian 13 (trixie): жоба заманауи Debian машиналарында CentOS 9 ортасын алмастырады.  

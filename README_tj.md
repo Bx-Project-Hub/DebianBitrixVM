@@ -2,7 +2,7 @@
 
 **Забон:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · **TJ** · [KA](README_ka.md)
 
-![Менюи асосӣ](images/main_menu.png)
+![Менюи асосӣ](images/main_menu_en.png)
 
 # **Маълумот**
 Меню барои идоракунии муҳити Bitrix, ки барои **Debian 12 / Debian 13** мутобиқ карда шудааст. Ҳадафи асосӣ — Debian 13 (trixie): лоиҳа муҳити CentOS 9-ро дар мошинҳои муосири Debian иваз мекунад.  

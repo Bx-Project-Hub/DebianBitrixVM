@@ -2,7 +2,7 @@
 
 **Dil:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · **AZ** · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Əsas menyu](images/main_menu.png)
+![Əsas menyu](images/main_menu_en.png)
 
 # **Məlumat**
 Bitrix mühitinin idarə edilməsi üçün menyu, **Debian 12 / Debian 13** üçün uyğunlaşdırılıb. Əsas hədəf — Debian 13 (trixie): layihə müasir Debian maşınlarında CentOS 9 mühitini əvəz edir.  

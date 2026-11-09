@@ -2,7 +2,7 @@
 
 **Language:** [RU](README.md) · **EN** · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Main Menu](images/main_menu.png)
+![Main Menu](images/main_menu_en.png)
 
 # **Information**
 A menu for managing the Bitrix environment, adapted for **Debian 12 / Debian 13**. Debian 13 (trixie) is the primary target: the project replaces the CentOS 9 environment on modern Debian machines.  

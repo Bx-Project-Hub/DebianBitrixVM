@@ -2,7 +2,7 @@
 
 **ენა:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · [TM](README_tm.md) · [TJ](README_tj.md) · **KA**
 
-![მთავარი მენიუ](images/main_menu.png)
+![მთავარი მენიუ](images/main_menu_en.png)
 
 # **ინფორმაცია**
 მენიუ Bitrix-ის გარემოს სამართავად, ადაპტირებული **Debian 12 / Debian 13**-ისთვის. მთავარი სამიზნე — Debian 13 (trixie): პროექტი ცვლის CentOS 9 გარემოს თანამედროვე Debian მანქანებზე.  

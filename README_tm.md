@@ -2,7 +2,7 @@
 
 **Dil:** [RU](README.md) · [EN](README_en.md) · [UK](README_uk.md) · [KZ](README_kz.md) · [AZ](README_az.md) · [UZ](README_uz.md) · **TM** · [TJ](README_tj.md) · [KA](README_ka.md)
 
-![Baş menyu](images/main_menu.png)
+![Baş menyu](images/main_menu_en.png)
 
 # **Maglumat**
 Bitrix gurşawyny dolandyrmak üçin menyu, **Debian 12 / Debian 13** üçin uýgunlaşdyrylan. Esasy maksat — Debian 13 (trixie): taslama häzirki zaman Debian maşynlarynda CentOS 9 gurşawyny çalyşýar.  

@@ -145,17 +145,22 @@ list_sites(){
 
   print_table() {
     print_line
-    printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" "$(t sites.col_dir)" "$(t sites.col_type)" "$(t sites.col_default)" "$(t sites.col_https)" "$(t sites.col_docroot)"
+    printf "   | %s | %s | %s | %s | %s |\n" \
+      "$(pad_right "$(t sites.col_dir)" 26)" \
+      "$(pad_right "$(t sites.col_type)" 12)" \
+      "$(pad_right "$(t sites.col_default)" 10)" \
+      "$(pad_right "$(t sites.col_https)" 12)" \
+      "$(pad_right "$(t sites.col_docroot)" 44)"
     print_line
 
     local index=0
     while [[ -n "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]:-}" ]]; do
-      printf "   | %-26s | %-12s | %-10s | %-12s | %-44s |\n" \
-        "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,type]:-}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,is_default]:-}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,is_https]:-}" \
-        "${ARR_ALL_DIR_SITES_DATA[$index,doc_root]:-}"
+      printf "   | %s | %s | %s | %s | %s |\n" \
+        "$(pad_right "${ARR_ALL_DIR_SITES_DATA["${index}_dir"]}" 26)" \
+        "$(pad_right "${ARR_ALL_DIR_SITES_DATA[$index,type]:-}" 12)" \
+        "$(pad_right "${ARR_ALL_DIR_SITES_DATA[$index,is_default]:-}" 10)" \
+        "$(pad_right "${ARR_ALL_DIR_SITES_DATA[$index,is_https]:-}" 12)" \
+        "$(pad_right "${ARR_ALL_DIR_SITES_DATA[$index,doc_root]:-}" 44)"
       print_line
       ((index++))
     done
@@ -342,6 +347,16 @@ function get_uptime_short() {
     fi
 }
 
+# Дополнить строку справа пробелами до ширины в СИМВОЛАХ.
+# Нужно потому, что bash printf '%-Ns' считает БАЙТЫ: для кириллицы (2 байта
+# на букву) ширина «съедается» и колонки разъезжаются. ${#text} считает символы.
+function pad_right() {
+    local text="$1" width="${2:-0}"
+    local pad=$(( width - ${#text} ))
+    (( pad < 0 )) && pad=0
+    printf '%s%*s' "$text" "$pad" ""
+}
+
 # Повторить символ N раз (устойчиво к N=0 и к многобайтным символам вроде «─»)
 function repeat_char() {
     local n="${1:-0}" ch="${2:-─}" buf=""
@@ -370,11 +385,11 @@ function render_status_panel() {
     # Подписи выравниваются по ширине 11 символов: plain-строка нужна для расчёта
     # ширины панели, colored — тот же текст с ANSI-цветами.
     local l_load l_cpu l_mem l_disk l_uptime
-    printf -v l_load '%-11s' "$(t status.load)"
-    printf -v l_cpu '%-11s' "CPU"
-    printf -v l_mem '%-11s' "$(t status.mem)"
-    printf -v l_disk '%-11s' "$(t status.disk)"
-    printf -v l_uptime '%-11s' "$(t status.uptime)"
+    l_load="$(pad_right "$(t status.load)" 11)"
+    l_cpu="$(pad_right "CPU" 11)"
+    l_mem="$(pad_right "$(t status.mem)" 11)"
+    l_disk="$(pad_right "$(t status.disk)" 11)"
+    l_uptime="$(pad_right "$(t status.uptime)" 11)"
 
     local load_plain="${l_load}${STATUS_LOAD}   ${STATUS_CPU_COUNT} CPU"
     status_panel_row "$load_plain" \
