@@ -311,6 +311,16 @@ update_menu
 **Не уходят письма.**
 Проверьте `/var/www/html/.msmtprc`, журнал аккаунта (`/var/www/html/msmtp_<аккаунт>.log`) и тест: `echo test | msmtp -C /var/www/html/.msmtprc -a default`.
 
+**Дополнения: Sphinx, Netdata, конвертер файлов.**
+
+- *Sphinx* использует **RT-индекс** `bitrix`: `indexer` для него не нужен (сообщение «no indexes found» — норма).
+  Проверка: `mysql -h 127.0.0.1 -P 9306 -e "SHOW TABLES;"` → таблица `bitrix`.
+- *Netdata* ставится набором пакетов (`netdata`, `netdata-plugin-*`, `netdata-dashboard`), поэтому удаление
+  убирает их все — иначе `dpkg` зацикливается на взаимных зависимостях и повторная установка падает.
+- *Сервер конвертации*: служба `transformer` требует установленного **ядра Bitrix с модулем**
+  `transformercontroller`. Если ядра нет, служба создаётся, но не запускается — в выводе будет предупреждение.
+  После установки ядра через `bitrixsetup.php` повторите пункт `8 → 2`.
+
 **Sphinx не запускается.**
 `systemctl status sphinxsearch`, логи `/var/log/sphinxsearch/searchd.log`. Конфигурация — `/etc/sphinxsearch/sphinx.conf`.
 

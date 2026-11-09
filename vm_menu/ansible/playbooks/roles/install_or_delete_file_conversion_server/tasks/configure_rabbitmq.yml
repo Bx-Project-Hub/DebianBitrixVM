@@ -32,10 +32,12 @@
     name: rabbitmq-server
     state: restarted
 
+# Модули community.rabbitmq требуют отдельной коллекции, которой нет в базовой
+# поставке Debian. Используем штатные rabbitmq-plugins / rabbitmqctl.
 - name: Enable rabbitmq_management plugin
-  community.rabbitmq.rabbitmq_plugin:
-    names: rabbitmq_management
-    state: enabled
+  command: rabbitmq-plugins enable rabbitmq_management
+  register: rabbitmq_plugins_enable
+  changed_when: "'already' not in (rabbitmq_plugins_enable.stdout | lower)"
 
 # - name: Create user root
 #  community.rabbitmq.rabbitmq_user:
@@ -51,20 +53,18 @@
 #    login_user: guest
 #    login_password: guest
 
-- name: Create user for bitrix
-  community.rabbitmq.rabbitmq_user:
-    user: "{{ bx_transformer_rabbitmq_user }}"
-    password: "{{ bx_transformer_rabbitmq_password }}"
-    vhost: /
-    configure_priv: .*
-    read_priv: .*
-    write_priv: .*
-    force: true
-    update_password: always
-    tags: administrator
-    login_host: 127.0.0.1
-    login_user: guest
-    login_password: guest
+- name: Create or update user for bitrix
+  shell: |
+    set -e
+    if rabbitmqctl list_users | awk '{print $1}' | grep -qx "{{ bx_transformer_rabbitmq_user }}"; then
+      rabbitmqctl change_password "{{ bx_transformer_rabbitmq_user }}" "{{ bx_transformer_rabbitmq_password }}"
+    else
+      rabbitmqctl add_user "{{ bx_transformer_rabbitmq_user }}" "{{ bx_transformer_rabbitmq_password }}"
+    fi
+    rabbitmqctl set_user_tags "{{ bx_transformer_rabbitmq_user }}" administrator
+    rabbitmqctl set_permissions -p / "{{ bx_transformer_rabbitmq_user }}" ".*" ".*" ".*"
+  no_log: true
+  changed_when: true
 
 # - name: Delete guest
 #  community.rabbitmq.rabbitmq_user:

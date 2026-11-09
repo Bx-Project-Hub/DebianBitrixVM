@@ -51,11 +51,38 @@
   systemd_service:
     daemon_reload: true
 
+- name: Checking Bitrix transformer module presence
+  stat:
+    path: "{{ full_path_site }}/bitrix/modules/transformercontroller/tools/sys_workerd.php"
+  register: transformer_worker_script
+
+- name: Warning when Bitrix core is not installed
+  debug:
+    msg: >-
+      В {{ full_path_site }} нет модуля transformercontroller.
+      Сервис transformer создан, но НЕ запущен: сначала установите ядро Bitrix
+      и модуль конвертации, затем повторите установку сервера конвертации.
+  when: not transformer_worker_script.stat.exists
+
 - name: Start service
   service:
     name: transformer.service
     state: started
     enabled: true
+  when: transformer_worker_script.stat.exists
+
+- name: Disable service when Bitrix core is absent
+  service:
+    name: transformer.service
+    state: stopped
+    enabled: false
+  when: not transformer_worker_script.stat.exists
+
+- name: Reset failed state of transformer service
+  command: systemctl reset-failed transformer.service
+  changed_when: false
+  failed_when: false
+  when: not transformer_worker_script.stat.exists
 
 - name: Create bx_cleanup.sh
   copy:

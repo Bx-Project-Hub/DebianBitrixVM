@@ -2,7 +2,9 @@
 # tasks file for install_or_delete_netdata
 - block:
     - name: Installing Netdata
-      shell: wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --stable-channel --disable-telemetry
+      shell: wget -q -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --non-interactive --stable-channel --disable-telemetry
+      args:
+        creates: /usr/sbin/netdata
 
     - name: Copying nginx directory to /etc/{{ service_nginx_name }}
       copy:
@@ -14,11 +16,22 @@
         netdata_web_password: "{{ lookup('password', '/root/.netdata_web_password length=16 chars=ascii_letters,digits') }}"
       no_log: true
 
+    # htpasswd из apache2-utils (уже установлен) — чтобы не зависеть
+    # от коллекции community.general, которой нет в базовой поставке.
     - name: Creating htpasswd file for Netdata
-      community.general.htpasswd:
+      command:
+        argv:
+          - htpasswd
+          - -bc
+          - "/etc/{{ service_nginx_name }}/netdata_passwds"
+          - admin
+          - "{{ netdata_web_password }}"
+      no_log: true
+      changed_when: true
+
+    - name: Setting permissions on Netdata htpasswd file
+      file:
         path: "/etc/{{ service_nginx_name }}/netdata_passwds"
-        name: admin
-        password: "{{ netdata_web_password }}"
         owner: root
         group: "{{ group_user_server_sites | default('www-data') }}"
         mode: '0640'
@@ -57,17 +70,42 @@
       systemd:
         name: netdata
         state: stopped
+      failed_when: false
 
     - name: Disable Netdata service
       systemd:
         name: netdata
         enabled: no
+      failed_when: false
 
-    - name: Deleting Netdata package
+    # Netdata ставится набором пакетов (netdata + netdata-plugin-*, netdata-dashboard).
+    # Если удалить только netdata, плагины остаются и при повторной установке dpkg
+    # зацикливается на взаимных зависимостях ("netdata is not configured yet").
+    - name: Finding installed Netdata packages
+      shell: dpkg-query -W -f='${Package}\n' 'netdata*' 2>/dev/null || true
+      register: netdata_installed_packages
+      changed_when: false
+
+    - name: Deleting all Netdata packages
       apt:
-        name: netdata
+        name: "{{ netdata_installed_packages.stdout_lines }}"
         state: absent
         purge: yes
+      when: netdata_installed_packages.stdout_lines | length > 0
+
+    - name: Removing leftover Netdata packages if any
+      shell: |
+        set -e
+        for pkg in $(dpkg-query -W -f='${Package}\n' 'netdata*' 2>/dev/null); do
+          dpkg --purge --force-all "$pkg" || true
+        done
+      changed_when: false
+      failed_when: false
+
+    - name: Checking package database consistency
+      command: dpkg --configure -a
+      changed_when: false
+      failed_when: false
 
     - name: Deleting Netdata directory
       file:

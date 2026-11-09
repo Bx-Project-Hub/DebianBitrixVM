@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.2.0"
+BS_VERSION_MENU="2.2.1"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -85,7 +85,7 @@ BS_PATH_PHP="/etc/php"
 BS_PATH_PHP_LOG="/var/log/php"
 
 # Ansible settings
-BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS="-i localhost, -c local"
+BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS="-i localhost, -c local -e ansible_python_interpreter=/usr/bin/python3"
 BS_PATH_ANSIBLE_PLAYBOOKS="../ansible/playbooks"
 
 # Ansible playbooks

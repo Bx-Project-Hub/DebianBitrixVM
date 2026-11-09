@@ -13,7 +13,9 @@
 
 - name: Generate a random string
   set_fact:
-    random_str: "{{ lookup('community.general.random_string', length=4, upper=False, special=false, numbers=false) }}"
+    # Встроенный lookup 'password' с /dev/null даёт случайную строку и не пишет файл.
+    # Так не зависим от коллекции community.general (random_string).
+    random_str: "{{ lookup('password', '/dev/null length=4 chars=ascii_lowercase') }}"
 
 - name: Combine timestamp and random string to create unique id
   set_fact:

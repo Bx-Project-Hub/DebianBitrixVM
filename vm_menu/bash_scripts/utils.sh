@@ -465,8 +465,14 @@ function get_installed_addons() {
     if (( ${#addons[@]} == 0 )); then
         printf ''
     else
-        local IFS=', '
-        printf '%s' "${addons[*]}"
+        # Внимание: ${array[*]} с многосимвольным IFS склеивает только по первому
+        # символу (","), поэтому собираем строку вручную — с пробелом после запятой.
+        local out="" item
+        for item in "${addons[@]}"; do
+            [ -n "$out" ] && out+=", "
+            out+="$item"
+        done
+        printf '%s' "$out"
     fi
 }
 

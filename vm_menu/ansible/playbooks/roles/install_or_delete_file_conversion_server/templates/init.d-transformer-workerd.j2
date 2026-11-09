@@ -26,6 +26,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 start(){
     status -p $PID_FILE && exit $?
 
+    mkdir -p "$PID_DIR" "$LOG_DIR"
+
     echo -n $"Starting $PROGRAM_NAME: "
 
     /usr/bin/php -f $PROGRAM_DIR/$PROGRAM_NAME $CHILDREN \

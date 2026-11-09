@@ -2,10 +2,15 @@
 dir="$(dirname "$(readlink -f "$0")")"
 dir_helpers="$dir/helpers"
 
-# Меню должно работать в UTF-8 (русский интерфейс)
-if [[ -z "${LC_ALL:-}" ]]; then
-  export LC_ALL="C.UTF-8"
-fi
+# Меню должно работать в UTF-8 (русский интерфейс).
+# Ansible иначе падает с "locale encoding is not UTF-8".
+case "${LC_ALL:-${LANG:-}}" in
+  *UTF-8*|*utf8*|*utf-8*) ;;
+  *)
+    export LC_ALL="C.UTF-8"
+    export LANG="C.UTF-8"
+    ;;
+esac
 
 # clear(1) без TERM ругается — подставляем безопасное значение
 # (актуально при запуске из минимального окружения, cron, CI).
