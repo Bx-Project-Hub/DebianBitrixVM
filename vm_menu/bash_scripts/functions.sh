@@ -931,14 +931,28 @@ function push_set_domain() {
         return
     fi
 
+    # Сертификат: для домена публикации или указанный вручную
+    push_cert_path=""
+    push_key_path=""
+    if [ ! -f "${BS_PATH_NGINX}/ssl_conf/ssl_${push_domain}.conf" ]; then
+        echo ""
+        echo "   $(t push.cert_missing "$push_domain")"
+        read_by_def "   $(t push.cert_path_prompt "${BS_PATH_NGINX}/ssl/default.pem")" push_cert_path "${BS_PATH_NGINX}/ssl/default.pem"
+        read_by_def "   $(t push.key_path_prompt "${BS_PATH_NGINX}/ssl/default.key")" push_key_path "${BS_PATH_NGINX}/ssl/default.key"
+
+        if [ ! -f "$push_cert_path" ] || [ ! -f "$push_key_path" ]; then
+            echo -e "\n   $(t push.cert_invalid)"
+            press_any_key_to_return_menu
+            return
+        fi
+    fi
+
     if ! confirm_action "$(t push.domain_confirm "$push_domain")"; then
         echo "   $(t common.cancelled)"
         press_any_key_to_return_menu
         return
     fi
 
-    push_cert_path=""
-    push_key_path=""
     action_settings_push_server
 }
 
