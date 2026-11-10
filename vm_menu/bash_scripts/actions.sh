@@ -498,6 +498,7 @@ action_settings_smtp_site(){
 
   ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
   -e "is_actions_account=Y \
+  site=${site:-${account_name}} \
   account_name=${account_name} \
   smtp_host=${smtp_host} \
   smtp_port=${smtp_port} \

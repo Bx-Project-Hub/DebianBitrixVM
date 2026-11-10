@@ -12,7 +12,7 @@
 
   when: is_new_install_env is defined and is_new_install_env == 'Y'
 
-- name: Adding SMTP settings the site {{ site }}
+- name: Adding SMTP settings for the site
   block:
     - name: Installing MSMTP
       apt:
