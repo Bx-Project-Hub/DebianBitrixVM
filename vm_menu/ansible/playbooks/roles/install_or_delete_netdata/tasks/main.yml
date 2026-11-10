@@ -25,6 +25,11 @@
       changed_when: false
       failed_when: false
 
+    - name: Checking the nftables config file
+      stat:
+        path: "{{ nftables_config }}"
+      register: nft_config
+
     - name: Allowing the Netdata port in the nftables config
       blockinfile:
         path: "{{ nftables_config }}"
@@ -34,7 +39,7 @@
           tcp dport {{ netdata_port }} accept comment "netdata"
       when:
         - nft_bin.rc == 0
-        - nftables_config is file
+        - nft_config.stat.exists | default(false)
 
     - name: Applying the Netdata rule to the running ruleset
       shell: |
@@ -42,7 +47,9 @@
         if ! nft list chain inet filter input 2>/dev/null | grep -q "dport {{ netdata_port }}"; then
           nft add rule inet filter input tcp dport {{ netdata_port }} accept comment "netdata"
         fi
-      when: nft_bin.rc == 0
+      when:
+        - nft_bin.rc == 0
+        - nft_config.stat.exists | default(false)
       changed_when: true
 
     - name: Reporting the opened port
@@ -185,6 +192,11 @@
       changed_when: false
       failed_when: false
 
+    - name: Checking the nftables config file before removal
+      stat:
+        path: "{{ nftables_config }}"
+      register: nft_config_remove
+
     - name: Removing the Netdata rule from the nftables config
       blockinfile:
         path: "{{ nftables_config }}"
@@ -192,13 +204,13 @@
         state: absent
       when:
         - nft_bin_remove.rc == 0
-        - nftables_config is file
+        - nft_config_remove.stat.exists | default(false)
 
     - name: Reloading nftables without the Netdata rule
       command: nft -f {{ nftables_config }}
       when:
         - nft_bin_remove.rc == 0
-        - nftables_config is file
+        - nft_config_remove.stat.exists | default(false)
       changed_when: true
 
     - name: Restarting Nginx
