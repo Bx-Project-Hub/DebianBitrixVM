@@ -272,7 +272,9 @@ action_delete_site(){
   db_user=${db_user:-} \
   user_server_sites=${BS_USER_SERVER_SITES} \
   path_nginx_sites_conf=${BS_PATH_NGINX_SITES_CONF} \
+  path_nginx_sites_enabled=${BS_PATH_NGINX_SITES_ENABLED} \
   path_apache_sites_conf=${BS_PATH_APACHE_SITES_CONF} \
+  path_apache_sites_enabled=${BS_PATH_APACHE_SITES_ENABLED} \
   service_nginx_name=${BS_SERVICE_NGINX_NAME} \
   service_apache_name=${BS_SERVICE_APACHE_NAME}"
 

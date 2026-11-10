@@ -37,9 +37,17 @@
 
       when: type == "full"
 
-    - name: Rename Nginx config {{ site }}.conf
-      command: mv "{{ path_nginx_sites_conf }}/{{ site }}.conf" "{{ path_nginx_sites_conf }}/{{ site }}.conf_DELETE_SITE"
-      ignore_errors: yes
+    # Удаляем и симлинк в sites-enabled, и сам конфиг: иначе после удаления
+    # сайта остаётся битый симлинк, который мешает перезагрузке веб-сервера.
+    - name: Removing Nginx site config {{ site }}.conf
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ path_nginx_sites_enabled | default('/etc/' ~ service_nginx_name ~ '/sites-enabled') }}/{{ site }}.conf"
+        - "{{ path_nginx_sites_conf }}/{{ site }}.conf"
+        # остатки прежнего поведения (переименование вместо удаления)
+        - "{{ path_nginx_sites_conf }}/{{ site }}.conf_DELETE_SITE"
 
     - name: Removing Nginx site settings directory
       file:
@@ -51,9 +59,14 @@
         path: "/etc/{{ service_nginx_name }}/ssl_conf/ssl_{{ site }}.conf"
         state: absent
 
-    - name: Rename Apache config {{ site }}.conf
-      command: mv "{{ path_apache_sites_conf }}/{{ site }}.conf" "{{ path_apache_sites_conf }}/{{ site }}.conf_DELETE_SITE"
-      ignore_errors: yes
+    - name: Removing Apache site config {{ site }}.conf
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ path_apache_sites_enabled | default('/etc/' ~ service_apache_name ~ '/sites-enabled') }}/{{ site }}.conf"
+        - "{{ path_apache_sites_conf }}/{{ site }}.conf"
+        - "{{ path_apache_sites_conf }}/{{ site }}.conf_DELETE_SITE"
 
     - name: Restarting Nginx
       systemd:
