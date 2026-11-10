@@ -171,7 +171,8 @@ if [ ! -x /usr/local/bin/update_menu ]; then
 #!/bin/bash
 # Обновление меню Debian BitrixVM.
 # Запускает актуальный update_menu.sh с GitHub: bash update_menu [--auto]
-URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh"
+# Параметр t= обходит кэш CDN raw.githubusercontent.com (до 5 минут)
+URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh?t=$(date +%s)"
 tmp="$(mktemp)" || exit 1
 trap 'rm -f "$tmp"' EXIT
 curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" >&2; exit 1; }

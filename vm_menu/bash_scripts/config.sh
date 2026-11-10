@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.11.0"
+BS_VERSION_MENU="2.11.1"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
