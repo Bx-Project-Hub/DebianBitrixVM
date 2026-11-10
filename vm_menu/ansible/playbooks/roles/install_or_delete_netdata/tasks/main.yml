@@ -18,6 +18,39 @@
         creates: /usr/sbin/netdata
       when: not netdata_kickstart.stat.exists
 
+    # --- Firewall: open the Netdata port in nftables ---
+    - name: Checking nftables availability
+      command: command -v nft
+      register: nft_bin
+      changed_when: false
+      failed_when: false
+
+    - name: Allowing the Netdata port in the nftables config
+      blockinfile:
+        path: "{{ nftables_config }}"
+        marker: "    # {mark} netdata (port {{ netdata_port }})"
+        insertafter: "{{ nftables_anchor }}"
+        block: |
+          tcp dport {{ netdata_port }} accept comment "netdata"
+      when:
+        - nft_bin.rc == 0
+        - nftables_config is file
+
+    - name: Applying the Netdata rule to the running ruleset
+      shell: |
+        set -e
+        if ! nft list chain inet filter input 2>/dev/null | grep -q "dport {{ netdata_port }}"; then
+          nft add rule inet filter input tcp dport {{ netdata_port }} accept comment "netdata"
+        fi
+      when: nft_bin.rc == 0
+      changed_when: true
+
+    - name: Reporting the opened port
+      debug:
+        msg:
+          - "Порт {{ netdata_port }}/tcp открыт в nftables (http://<IP>:{{ netdata_port }})."
+          - "Прямая ссылка также выводится в меню под панелью «Установлено»."
+
     - name: Copying nginx directory to /etc/{{ service_nginx_name }}
       copy:
         src: "nginx/"
@@ -144,6 +177,29 @@
         name: netdata
         state: absent
       ignore_errors: yes
+
+    # --- Firewall: close the Netdata port ---
+    - name: Checking nftables availability before removal
+      command: command -v nft
+      register: nft_bin_remove
+      changed_when: false
+      failed_when: false
+
+    - name: Removing the Netdata rule from the nftables config
+      blockinfile:
+        path: "{{ nftables_config }}"
+        marker: "    # {mark} netdata (port {{ netdata_port }})"
+        state: absent
+      when:
+        - nft_bin_remove.rc == 0
+        - nftables_config is file
+
+    - name: Reloading nftables without the Netdata rule
+      command: nft -f {{ nftables_config }}
+      when:
+        - nft_bin_remove.rc == 0
+        - nftables_config is file
+      changed_when: true
 
     - name: Restarting Nginx
       systemd:

@@ -1,2 +1,10 @@
 ---
 # defaults file for install_or_delete_netdata
+#
+# Порт, на котором Netdata слушает напрямую (nginx проксирует его на
+# https://<домен>/netdata/). Порт открывается в nftables при установке
+# и закрывается при удалении.
+netdata_port: 19999
+nftables_config: /etc/nftables.conf
+# Строка, после которой вставляется правило (внутри chain input)
+nftables_anchor: '^\s*tcp dport 22 accept'
