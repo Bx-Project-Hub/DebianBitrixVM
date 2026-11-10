@@ -18,6 +18,7 @@ action_create_site(){
   db_character_set_server=${BS_DB_CHARACTER_SET_SERVER} \
   db_collation_server=${BS_DB_COLLATION} \
   path_site_from_links=${path_site_from_links} \
+  menu_lang=${BS_MENU_LANG_CURRENT:-ru} \
   ssl_lets_encrypt=${ssl_lets_encrypt} \
   ssl_lets_encrypt_www=${ssl_lets_encrypt_www} \
   ssl_lets_encrypt_email=${ssl_lets_encrypt_email} \
