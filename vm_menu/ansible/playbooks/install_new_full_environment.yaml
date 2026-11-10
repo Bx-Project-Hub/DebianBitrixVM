@@ -169,14 +169,34 @@
       when: item.stat.exists
 
     # Резервный путь для старых установок, где vendor/deb отсутствует.
-    - name: Add nginx modules repo key (no bundled packages)
+    - name: Checking bundled nginx modules repo key
+      stat:
+        path: "{{ vendor_dir | default('/root/vm_menu/vendor') }}/keys/yogsottot.asc"
+      register: nginx_repo_key_bundled
+      when: nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
+
+    - name: Add nginx modules repo key from bundled copy (no bundled packages)
+      copy:
+        src: "{{ nginx_repo_key_bundled.stat.path }}"
+        dest: /etc/apt/keyrings/yogsottot.asc
+        remote_src: yes
+        mode: "0644"
+        owner: root
+        group: root
+      when:
+        - nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
+        - nginx_repo_key_bundled.stat.exists | default(false)
+
+    - name: Add nginx modules repo key from network (no bundled key)
       get_url:
         url: https://yogsottot.github.io/ppa/yogsottot.asc
         dest: /etc/apt/keyrings/yogsottot.asc
         mode: "0644"
         owner: root
         group: root
-      when: nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
+      when:
+        - nginx_module_debs.results | rejectattr('stat.exists') | list | length > 0
+        - not (nginx_repo_key_bundled.stat.exists | default(false))
 
     - name: Add nginx modules repo (no bundled packages)
       apt_repository:

@@ -142,6 +142,20 @@ fayllarni o‘sha yerdan oladi; tarmoq faqat mahalliy nusxa bo‘lmaganda ishlat
 MySQL/Percona va Netdata repozitoriylari ataylab tashqi bo‘lib qoladi: ular paket va xavfsizlik
 yangilanishlari manbai, ichiga olingan nusxalar darhol eskirardi.
 
+### restore.php skripti — faqat so'rov bo'yicha
+
+`restore.php` serverda zaxira nusxa arxivini ochadi, shuning uchun uni sayt katalogida doimiy
+saqlash xavfli. `bitrixsetup.php`dan farqli ravishda u `vendor/`da **saqlanmaydi**, sayt
+yaratilganda **nusxalanmaydi** va faqat menyudan so'rov bo'yicha (`8` → `5` → `1`) rasmiy
+manzildan `https://www.1c-bitrix.ru/download/files/scripts/restore.php` joylashtiriladi
+(egasi — sayt foydalanuvchisi, huquqlar `0640`). Portal tiklanganidan keyin skript o'chirilishi
+kerak (`8` → `5` → `2`). Buni `manage_restore_script` roli (`PLACE` / `REMOVE`) va
+`manage_restore_script.yaml` pleybuki bajaradi.
+
+Rasmiy manbalar: push&pull serveri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+PHP/Nginx/Apache konfiguratsiyalari — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+o'rnatuvchi — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
+
 ### Butunlikni tekshirish (SHA256)
 
 Har bir skript, konfiguratsiya va paketning nazorat summasi bor. Manifestlar repozitoriyda:

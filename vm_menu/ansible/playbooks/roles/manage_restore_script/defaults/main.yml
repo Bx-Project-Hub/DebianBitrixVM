@@ -1,0 +1,38 @@
+---
+# defaults file for manage_restore_script
+#
+# restore.php — средство восстановления портала из резервной копии. Файл
+# опасен: он позволяет загрузить и развернуть архив на сервере. Поэтому он НЕ
+# хранится в проекте и НЕ копируется при создании сайта — администратор
+# размещает его из меню на время восстановления и удаляет после.
+
+# Официальный источник (документация 1С-Битрикс, «Восстановление портала»)
+restore_script_url: "https://www.1c-bitrix.ru/download/files/scripts/restore.php"
+
+# Домен сайта и каталог сайтов приходят из меню; restore_path вычисляется
+site: ""
+path_sites: /var/www/html
+restore_path: "{{ path_sites }}/{{ site }}"
+user_server_sites: www-data
+group_user_server_sites: www-data
+
+# Язык вывода: ru | en
+menu_lang: ru
+
+restore_messages:
+  ru:
+    placed: "Скрипт восстановления размещён: https://{{ site }}/restore.php"
+    warning: "ВАЖНО: после восстановления портала удалите restore.php (меню → Дополнения → 5 → 2). Файл принимает архивы и опасен, пока лежит на сервере."
+    sha: "SHA256 файла: {{ restore_sha256 }}"
+    absent: "Скрипт восстановления уже размещён: {{ restore_path }}"
+    removed: "Скрипт восстановления удалён: {{ restore_path }}"
+    not_found: "Скрипт восстановления не найден в каталоге сайта {{ site }}"
+    no_site: "Каталог сайта не найден: {{ restore_path }}"
+  en:
+    placed: "Restore script placed: https://{{ site }}/restore.php"
+    warning: "IMPORTANT: delete restore.php after the portal is restored (menu → Add-ons → 5 → 2). The file accepts archives and is dangerous while it stays on the server."
+    sha: "File SHA256: {{ restore_sha256 }}"
+    absent: "The restore script is already present: {{ restore_path }}"
+    removed: "Restore script removed: {{ restore_path }}"
+    not_found: "The restore script was not found in the site directory {{ site }}"
+    no_site: "Site directory not found: {{ restore_path }}"

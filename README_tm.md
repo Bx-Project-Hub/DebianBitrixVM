@@ -142,6 +142,20 @@ barlamak — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percon
 repozitoriýalary bilgeşleýin daşarky galýar: olar paket we howpsuzlyk täzelenmeleriniň çeşmesi,
 içine alnan nusgalar derrew könelerdi.
 
+### restore.php skripti — diňe haýyş boýunça
+
+`restore.php` серверде ätiýaçlyk nusganyň arhiwini açýar, şonuň üçin ony saýtyň katalogunda
+hemişelik saklamak howply. `bitrixsetup.php`-dan tapawutlylykda ol `vendor/`-da **saklanmaýar**,
+saýt döredilende **göçürilmeýär** we diňe menýudan haýyş boýunça (`8` → `5` → `1`) resmi
+salgydan `https://www.1c-bitrix.ru/download/files/scripts/restore.php` ýerleşdirilýär
+(eýesi — saýtyň ulanyjysy, hukuklar `0640`). Portal dikeldilenden soň skript pozulmaly
+(`8` → `5` → `2`). Muny `manage_restore_script` roly (`PLACE` / `REMOVE`) we
+`manage_restore_script.yaml` pleýbuky ýerine ýetirýär.
+
+Resmi çeşmeler: push&pull serweri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+PHP/Nginx/Apache konfigurasiýalary — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+gurnaýjy — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
+
 ### Bütewiligi barlamak (SHA256)
 
 Her skriptiň, konfigurasiýanyň we paketiň barlag jemi bar. Manifestler repozitoriýada:

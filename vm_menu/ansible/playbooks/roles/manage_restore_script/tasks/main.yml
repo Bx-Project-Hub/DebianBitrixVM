@@ -1,0 +1,70 @@
+---
+# tasks file for manage_restore_script
+#
+# restore.php размещается в каталоге сайта ТОЛЬКО по явному запросу
+# администратора и должен быть удалён после восстановления портала.
+
+- block:
+    - name: Checking the site directory exists
+      stat:
+        path: "{{ restore_path }}"
+      register: restore_site_dir
+
+    - name: Failing when the site directory is missing
+      fail:
+        msg: "{{ restore_messages[menu_lang | default('ru')].no_site }}"
+      when: not restore_site_dir.stat.isdir | default(false)
+
+    - name: Checking whether restore.php is already present
+      stat:
+        path: "{{ restore_path }}/restore.php"
+      register: restore_script_existing
+
+    - name: Downloading restore.php from the official source
+      get_url:
+        url: "{{ restore_script_url }}"
+        dest: "{{ restore_path }}/restore.php"
+        owner: "{{ user_server_sites }}"
+        group: "{{ group_user_server_sites }}"
+        # только владелец и группа сайта; остальным файл не нужен
+        mode: '0640'
+        force: no
+      when: not restore_script_existing.stat.exists
+
+    - name: Computing checksum of the placed script
+      stat:
+        path: "{{ restore_path }}/restore.php"
+        checksum_algorithm: sha256
+      register: restore_script_stat
+
+    - name: Reporting the placed script
+      debug:
+        msg:
+          - "{{ restore_messages[menu_lang | default('ru')].placed }}"
+          - "{{ restore_messages[menu_lang | default('ru')].sha }}"
+          - "{{ restore_messages[menu_lang | default('ru')].warning }}"
+      vars:
+        restore_sha256: "{{ restore_script_stat.stat.checksum }}"
+
+  when: restore_script_action == 'PLACE'
+
+- block:
+    - name: Checking whether restore.php exists
+      stat:
+        path: "{{ restore_path }}/restore.php"
+      register: restore_script_present
+
+    - name: Removing restore.php from the site directory
+      file:
+        path: "{{ restore_path }}/restore.php"
+        state: absent
+      when: restore_script_present.stat.exists
+
+    - name: Reporting the result
+      debug:
+        msg: >-
+          {{ restore_messages[menu_lang | default('ru')].removed
+             if restore_script_present.stat.exists
+             else restore_messages[menu_lang | default('ru')].not_found }}
+
+  when: restore_script_action == 'REMOVE'

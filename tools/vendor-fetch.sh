@@ -3,13 +3,17 @@
 # Обновление вендорных (локальных) копий внешних артефактов.
 #
 # Зачем: установка не должна зависеть от доступности чужих сайтов
-# (сторонний APT-репозиторий nginx-модулей, repo.bitrix.info, 1c-bitrix.ru,
+# (сторонний APT-репозиторий nginx-модулей, repo.bitrix24.tech, 1c-bitrix.ru,
 # get.netdata.cloud и т. д.). Все нужные файлы лежат в vendor/ и проверяются
 # по SHA256 перед использованием.
 #
 # Использование:
 #   tools/vendor-fetch.sh            # скачать/обновить все артефакты и пересчитать CHECKSUMS.sha256
 #   tools/vendor-fetch.sh --check    # только проверить контрольные суммы
+#
+# restore.php намеренно НЕ вендорится: скрипт восстановления опасен и размещается
+# в каталоге сайта только по явному запросу администратора (меню → дополнения),
+# после восстановления его нужно удалить. См. роль manage_restore_script.
 #
 # После обновления обязательно просмотрите diff vendor/ перед коммитом.
 
@@ -23,10 +27,9 @@ CHECKSUMS="$VENDOR/CHECKSUMS.sha256"
 ARTIFACTS=(
   "https://yogsottot.github.io/ppa/debian/pool/main/libn/libnginx-mod-http-zip/libnginx-mod-http-zip_1.3.0-2.gbp4aa963c~trixie_amd64.deb|deb/libnginx-mod-http-zip_1.3.0-2.gbp4aa963c~trixie_amd64.deb"
   "https://yogsottot.github.io/ppa/debian/pool/main/libn/libnginx-mod-http-zstd/libnginx-mod-http-zstd_0.1.1-2.gbp057a7d3~trixie_amd64.deb|deb/libnginx-mod-http-zstd_0.1.1-2.gbp057a7d3~trixie_amd64.deb"
-  "https://repo.bitrix.info/vm/push-server-0.4.0.tgz|files/push-server-0.4.0.tgz"
+  "https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz|files/push-server-0.4.0.tgz"
   "https://dev.1c-bitrix.ru/docs/chm_files/debian.zip|files/bitrix-php-configs-debian.zip"
   "https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php|files/bitrixsetup.php"
-  "https://www.1c-bitrix.ru/download/scripts/restore.php|files/restore.php"
   "https://get.netdata.cloud/kickstart.sh|scripts/netdata-kickstart.sh"
   "https://packages.sury.org/php/apt.gpg|keys/sury-php.gpg"
   "https://repo.mysql.com/RPM-GPG-KEY-mysql-2023|keys/RPM-GPG-KEY-mysql-2023"

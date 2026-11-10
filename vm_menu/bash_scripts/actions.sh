@@ -374,6 +374,31 @@ action_install_or_delete_postgresql(){
   press_any_key_to_return_menu;
 }
 
+# Скрипт восстановления restore.php: action = place | remove
+# Размещает файл в каталоге сайта только по запросу и удаляет после восстановления
+action_manage_restore_script(){
+  local restore_action="${1:-}"
+  local pb
+  pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_MANAGE_RESTORE_SCRIPT}")
+
+  case "$restore_action" in
+    place)  restore_action="PLACE" ;;
+    remove) restore_action="REMOVE" ;;
+    *) echo "$(t action.unknown_restore "${restore_action}")" >&2; return 1 ;;
+  esac
+
+  ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
+  -e "restore_script_action=${restore_action} \
+  site=${SELECTED_SITE} \
+  path_sites=${BS_PATH_SITES} \
+  user_server_sites=${BS_USER_SERVER_SITES} \
+  group_user_server_sites=${BS_GROUP_USER_SERVER_SITES} \
+  restore_script_url=${BS_RESTORE_SCRIPT_URL} \
+  menu_lang=${BS_MENU_LANG_CURRENT:-ru}"
+
+  press_any_key_to_return_menu;
+}
+
 # Настройка SMTP-аккаунта в общем /var/www/html/.msmtprc
 # Переменные: account_name, smtp_host, smtp_port, email_from, is_auth,
 # authentication_method, login, password, enable_TLS

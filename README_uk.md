@@ -142,6 +142,21 @@ nginx gzip/zstd (яких немає в Debian), push&pull-сервер, кон�
 deb.sury.org, MySQL/Percona та Netdata навмисно залишаються зовнішніми: це джерела пакетів
 і оновлень безпеки, вкладені копії застаріли б одразу.
 
+### Скрипт restore.php — лише за запитом
+
+`restore.php` розгортає на сервері архів резервної копії, тому постійно тримати його в каталозі
+сайту небезпечно. На відміну від `bitrixsetup.php` він **не зберігається** у `vendor/`, **не
+копіюється** під час створення сайту і розміщується **лише за запитом** з меню
+(`8` → `5` → `1`) безпосередньо з офіційної адреси
+`https://www.1c-bitrix.ru/download/files/scripts/restore.php` (власник — користувач сайту,
+права `0640`). Після відновлення порталу скрипт треба видалити (`8` → `5` → `2`).
+Реалізовано роллю `manage_restore_script` (`PLACE` / `REMOVE`) і плейбуком
+`manage_restore_script.yaml`.
+
+Офіційні джерела: сервер push&pull — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+конфігурації PHP/Nginx/Apache — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+інсталятор — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
+
 ### Контроль цілісності (SHA256)
 
 Кожен скрипт, конфіг і пакет має контрольну суму. Маніфести лежать у репозиторії:

@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.7.0"
+BS_VERSION_MENU="2.8.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -29,11 +29,16 @@ BS_EXCLUDED_DIRS_SITES=("temp" "tmp" "test" ".ssh")
 BS_SITE_LINKS_RESOURCES=("local" "bitrix" "upload" "images")
 
 # URLs for Bitrix setup files
+# Только установщик bitrixsetup.php. restore.php сюда НЕ входит: скрипт
+# восстановления опасен и размещается в каталоге сайта по явному запросу
+# администратора (меню → Дополнения → restore.php), после чего удаляется.
 BS_DOWNLOAD_BITRIX_INSTALL_FILES_NEW_SITE=(
   "https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php"
-  "https://www.1c-bitrix.ru/download/scripts/restore.php"
 )
 BS_TIMEOUT_DOWNLOAD_BITRIX_INSTALL_FILES_NEW_SITE=30
+
+# Скрипт восстановления: официальный источник (документация 1С-Битрикс)
+BS_RESTORE_SCRIPT_URL="https://www.1c-bitrix.ru/download/files/scripts/restore.php"
 BS_SHOW_IP_CURRENT_SERVER_IN_MENU=true
 
 # Язык интерфейса меню
@@ -112,6 +117,7 @@ BS_ANSIBLE_PB_INSTALL_OR_DELETE_SPHINX="install_or_delete_sphinx.yaml"
 BS_ANSIBLE_PB_INSTALL_OR_DELETE_FILE_CONVERSION_SERVER="install_or_delete_file_conversion_server.yaml"
 BS_ANSIBLE_PB_DELETE_SITE="delete_site.yaml"
 BS_ANSIBLE_PB_INSTALL_OR_DELETE_POSTGRESQL="install_or_delete_postgresql.yaml"
+BS_ANSIBLE_PB_MANAGE_RESTORE_SCRIPT="manage_restore_script.yaml"
 
 # MySQL settings
 # На Debian 13 (trixie) Oracle поставляет только MySQL 8.4 LTS (mysql-8.4-lts):

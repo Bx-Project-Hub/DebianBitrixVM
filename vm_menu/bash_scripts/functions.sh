@@ -123,6 +123,7 @@ menu_install_extensions(){
     echo "     2) $(t ext.converter)"
     echo "     3) $(t ext.netdata)"
     echo "     4) $(t ext.postgres)"
+    echo "     5) $(t ext.restore)"
     echo "     0) $(t common.back_main)"
     echo ""
     echo -n "   $(t common.enter_command) "
@@ -133,6 +134,7 @@ menu_install_extensions(){
      "2") install_file_conversion_server ;;
      "3") install_netdata ;;
      "4") install_postgres ;;
+     "5") manage_restore_script ;;
      0|z|q) return ;;
      *) echo "   $(t common.unknown_command_short)"; sleep 2 ;;
     esac
@@ -687,6 +689,49 @@ function install_file_conversion_server() {
     fi
 
     action_install_or_delete_file_conversion_server "$action"
+}
+
+# Скрипт восстановления restore.php: размещение/удаление только по запросу
+function manage_restore_script() {
+    clear
+    echo -e "\n   $(t restore.title)\n"
+    echo -e "   ${C_RED}$(t restore.note)${C_RESET}"
+    echo "   $(t restore.note2)"
+    echo ""
+    echo "     1) $(t restore.place)"
+    echo "     2) $(t restore.remove)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
+    local command
+    read -r command
+
+    local action=""
+    case "$command" in
+        1) action="place" ;;
+        2) action="remove" ;;
+        *) return ;;
+    esac
+
+    if ! choose_site "$(t restore.choose)"; then
+        press_any_key_to_return_menu
+        return
+    fi
+
+    if [ "$action" = "place" ]; then
+        if ! confirm_action "$(t restore.confirm_place "${SELECTED_SITE}")"; then
+            echo "   $(t common.cancelled)"
+            press_any_key_to_return_menu
+            return
+        fi
+    else
+        if ! confirm_action "$(t restore.confirm_remove "${SELECTED_SITE}")"; then
+            echo "   $(t common.cancelled)"
+            press_any_key_to_return_menu
+            return
+        fi
+    fi
+
+    action_manage_restore_script "$action"
 }
 
 function show_help() {

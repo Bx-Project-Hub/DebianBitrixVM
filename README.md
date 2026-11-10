@@ -46,7 +46,7 @@
 | `deb/libnginx-mod-http-zstd_*.deb` | модуль nginx для zstd (нет в Debian) |
 | `files/push-server-0.4.0.tgz` | push&pull-сервер Bitrix |
 | `files/bitrix-php-configs-debian.zip` | конфиги Nginx/Apache/PHP из документации Bitrix |
-| `files/bitrixsetup.php`, `files/restore.php` | скрипты установки портала |
+| `files/bitrixsetup.php` | установщик портала (мастер установки Bitrix) |
 | `scripts/netdata-kickstart.sh` | установщик Netdata |
 | `keys/*` | ключи репозиториев (deb.sury.org, MySQL, Percona) и `percona-release_latest` |
 
@@ -65,6 +65,31 @@
 tools/vendor-fetch.sh          # скачать актуальные версии и обновить CHECKSUMS.sha256
 tools/vendor-fetch.sh --check  # только проверить целостность
 ```
+
+Источники — официальные адреса из документации 1С-Битрикс:
+
+| Артефакт | Официальный источник |
+|---|---|
+| push&pull-сервер | `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz` |
+| конфиги Nginx/Apache/PHP | `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip` |
+| установщик портала | `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php` |
+
+### Скрипт восстановления `restore.php` — только по запросу
+
+`restore.php` разворачивает архив резервной копии на сервере: он принимает файл
+и перезаписывает портал. Постоянно держать такой скрипт в каталоге сайта нельзя,
+поэтому в отличие от `bitrixsetup.php` он:
+
+- **не хранится** в `vendor/` и не входит в дистрибутив;
+- **не копируется** при создании сайта (`create_site` кладёт только `bitrixsetup.php`);
+- **размещается по запросу** из меню (`8` → `5` → `1`) напрямую с официального адреса
+  `https://www.1c-bitrix.ru/download/files/scripts/restore.php` с правами `0640`
+  и владельцем сайта;
+- **удаляется** после восстановления (`8` → `5` → `2`).
+
+Роль, которая это делает, — `manage_restore_script` (действия `PLACE` и `REMOVE`),
+плейбук `manage_restore_script.yaml`. В выводе размещения печатаются адрес
+`https://<домен>/restore.php`, SHA256 файла и напоминание удалить скрипт.
 
 ### Контроль целостности (SHA256)
 
@@ -303,7 +328,7 @@ BS_POSTGRES_USER="bitrix"
 | Сервисы | все 7 — **active** |
 | Ansible | `ok=52 failed=0` |
 | PostgreSQL | 17.11: установка и удаление из меню — `ok=26` / `ok=12`, `failed=0` |
-| Вендорные файлы | nginx zip/zstd из локальных `.deb` без стороннего репозитория; сайт создан с `bitrixsetup.php`/`restore.php` из `vendor` (SHA256 совпадает) |
+| Вендорные файлы | nginx zip/zstd из локальных `.deb` без стороннего репозитория; сайт создан с `bitrixsetup.php` из `vendor` (SHA256 совпадает), `restore.php` в каталоге сайта нет |
 | Сайт `full` | `example.ru` → `200` |
 | Сайт `link` | `shop.example.ru` → `500` |
 | Меню | сайты, PHP, SMTP — ОК |

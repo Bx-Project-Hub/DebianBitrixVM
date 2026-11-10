@@ -142,6 +142,20 @@ yoxlama — `tools/vendor-fetch.sh --check`. Debian, deb.sury.org, MySQL/Percona
 repozitoriləri qəsdən xarici qalır: onlar paket və təhlükəsizlik yeniləmələrinin mənbəyidir,
 daxil edilmiş nüsxələr dərhal köhnələrdi.
 
+### restore.php skripti — yalnız tələb əsasında
+
+`restore.php` serverdə ehtiyat nüsxə arxivini açır, buna görə onu sayt qovluğunda daimi saxlamaq
+təhlükəlidir. `bitrixsetup.php`-dən fərqli olaraq o, `vendor/`-a **daxil edilmir**, sayt
+yaradılarkən **kopyalanmır** və yalnız menyudan tələb əsasında (`8` → `5` → `1`) rəsmi ünvandan
+`https://www.1c-bitrix.ru/download/files/scripts/restore.php` yerləşdirilir (sahibi — sayt
+istifadəçisi, hüquqlar `0640`). Portal bərpa olunduqdan sonra skript silinməlidir
+(`8` → `5` → `2`). Bunu `manage_restore_script` rolu (`PLACE` / `REMOVE`) və
+`manage_restore_script.yaml` pleybuku edir.
+
+Rəsmi mənbələr: push&pull serveri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+PHP/Nginx/Apache konfiqurasiyaları — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+quraşdırıcı — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
+
 ### Bütövlüyün yoxlanması (SHA256)
 
 Hər skript, konfiqurasiya və paketin yoxlama cəmi var. Manifestlər repozitoridədir:

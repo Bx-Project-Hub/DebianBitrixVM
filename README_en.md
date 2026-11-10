@@ -135,13 +135,28 @@ The preset is chosen by the first matching threshold; it can be forced with `BS_
 
 Everything that used to be downloaded from third-party sites is stored in the repository —
 `vendor/`: the nginx gzip/zstd modules (not shipped by Debian), the push&pull server, the
-Bitrix PHP/Nginx/Apache configs, the Bitrix setup scripts, the Netdata kickstart script and
+Bitrix PHP/Nginx/Apache configs, the Bitrix setup script, the Netdata kickstart script and
 repository keys. The installer copies `vendor` to `/root/vm_menu/vendor`, verifies
 `vendor/CHECKSUMS.sha256` and takes the files from there; the network is used only when a
 local copy is missing. Refresh with `tools/vendor-fetch.sh`, verify with
 `tools/vendor-fetch.sh --check`. The Debian, deb.sury.org, MySQL/Percona and Netdata
 repositories stay external on purpose: they are package and security-update sources, and
 bundled copies would be outdated immediately.
+
+### restore.php script — on demand only
+
+`restore.php` deploys a backup archive on the server, so keeping it in a site directory
+permanently is unsafe. Unlike `bitrixsetup.php` it is **not** bundled in `vendor/`, is **not**
+copied when a site is created, and is placed **only on demand** from the menu
+(`8` → `5` → `1`) straight from the official URL
+`https://www.1c-bitrix.ru/download/files/scripts/restore.php` (owner — the site user,
+mode `0640`). After the portal is restored the script must be removed
+(`8` → `5` → `2`). Implemented by the `manage_restore_script` role
+(`PLACE` / `REMOVE`) and the `manage_restore_script.yaml` playbook.
+
+Official artifact sources: push&pull server — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+PHP/Nginx/Apache configs — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+installer — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
 
 ### Integrity checks (SHA256)
 

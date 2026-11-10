@@ -992,7 +992,8 @@ deployConfig() {
 deployInstaller() {
     cd /var/www/html/bx-site || exit 1
     vendor_get files/bitrixsetup.php bitrixsetup.php || echo "Предупреждение: не удалось получить bitrixsetup.php"
-    vendor_get files/restore.php restore.php || echo "Предупреждение: не удалось получить restore.php"
+    # restore.php намеренно не размещается: скрипт восстановления опасен и
+    # добавляется в каталог сайта только по запросу из меню (Дополнения → 5).
 
     mkdir -p bitrix/php_interface
     dbconn > bitrix/php_interface/dbconn.php

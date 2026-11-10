@@ -142,6 +142,20 @@ gzip/zstd მოდულები (Debian-ში არ არის), push&pul
 Debian-ის, deb.sury.org-ის, MySQL/Percona-სა და Netdata-ს რეპოზიტორიები განზრახ გარე რჩება:
 ისინი პაკეტებისა და უსაფრთხოების განახლებების წყაროა, ჩაშენებული ასლები მყისიერად მოძველდებოდა.
 
+### სკრიპტი restore.php — მხოლოდ მოთხოვნით
+
+`restore.php` სერვერზე ხსნის სარეზერვო ასლის არქივს, ამიტომ მისი მუდმივად საიტის კატალოგში
+შენახვა საშიშია. `bitrixsetup.php`-ისგან განსხვავებით ის **არ** ინახება `vendor/`-ში, **არ**
+კოპირდება საიტის შექმნისას და განთავსდება მხოლოდ მენიუდან მოთხოვნით (`8` → `5` → `1`)
+ოფიციალური მისამართიდან `https://www.1c-bitrix.ru/download/files/scripts/restore.php`
+(მფლობელი — საიტის მომხმარებელი, უფლებები `0640`). პორტალის აღდგენის შემდეგ სკრიპტი
+უნდა წაიშალოს (`8` → `5` → `2`). ამას აკეთებს როლი `manage_restore_script`
+(`PLACE` / `REMOVE`) და `manage_restore_script.yaml` playbook.
+
+ოფიციალური წყაროები: push&pull სერვერი — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
+PHP/Nginx/Apache კონფიგურაციები — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
+ინსტალატორი — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
+
 ### მთლიანობის კონტროლი (SHA256)
 
 ყველა სკრიპტს, კონფიგურაციასა და პაკეტს აქვს საკონტროლო ჯამი. მანიფესტები რეპოზიტორიაშია:

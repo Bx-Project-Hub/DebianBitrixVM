@@ -265,6 +265,17 @@ declare -A MSG_RU=(
     [postgres.delete_warning]="Внимание: при удалении пропадут ВСЕ базы данных PostgreSQL, включая созданные вручную."
     [postgres.confirm_install]="Установить PostgreSQL и создать базу %s для портала?"
     [postgres.confirm_delete]="Удалить PostgreSQL вместе со всеми базами данных?"
+    [ext.restore]="Скрипт восстановления restore.php (разместить по запросу / удалить)"
+    [restore.title]="Меню → Скрипт восстановления портала (restore.php)"
+    [restore.note]="restore.php разворачивает архив резервной копии на сервере и поэтому опасен."
+    [restore.note2]="В проекте он не хранится и при создании сайта не копируется: размещайте его только на время восстановления и сразу удаляйте после."
+    [restore.place]="Разместить restore.php в каталоге сайта"
+    [restore.remove]="Удалить restore.php из каталога сайта"
+    [restore.choose]="Для какого сайта выполнить действие"
+    [restore.confirm_place]="Разместить restore.php в каталоге сайта %s? После восстановления его нужно удалить!"
+    [restore.confirm_remove]="Удалить restore.php из каталога сайта %s?"
+    [restore.action_place]="размещение"
+    [restore.action_remove]="удаление"
 
     # Сервер, обновления
     [upd.confirm_pkgs]="Обновить пакеты системы (apt update && apt upgrade)?"
@@ -279,6 +290,7 @@ declare -A MSG_RU=(
     [action.unknown_netdata]="Ошибка: неизвестное действие для Netdata: %s"
     [action.unknown_conv]="Ошибка: неизвестное действие для сервера конвертации: %s"
     [action.unknown_postgres]="Ошибка: неизвестное действие для PostgreSQL: %s"
+    [action.unknown_restore]="Ошибка: неизвестное действие со скриптом восстановления: %s"
     [server.confirm_reboot]="Вы действительно хотите ПЕРЕЗАГРУЗИТЬ сервер? (Y/N): "
     [server.confirm_poweroff]="Вы действительно хотите ВЫКЛЮЧИТЬ сервер? (Y/N): "
     [server.enter_yn]="Введите Y или N."
@@ -513,6 +525,17 @@ declare -A MSG_EN=(
     [postgres.delete_warning]="Warning: removing PostgreSQL deletes ALL PostgreSQL databases, including manually created ones."
     [postgres.confirm_install]="Install PostgreSQL and create the %s database for the portal?"
     [postgres.confirm_delete]="Remove PostgreSQL together with all its databases?"
+    [ext.restore]="Restore script restore.php (place on demand / remove)"
+    [restore.title]="Menu → Portal restore script (restore.php)"
+    [restore.note]="restore.php deploys a backup archive on the server, which makes it dangerous."
+    [restore.note2]="It is not stored in the project and is not copied when a site is created: place it only for the duration of a restore and delete it right after."
+    [restore.place]="Place restore.php into the site directory"
+    [restore.remove]="Remove restore.php from the site directory"
+    [restore.choose]="For which site to perform the action"
+    [restore.confirm_place]="Place restore.php into the site directory %s? It must be deleted after the restore!"
+    [restore.confirm_remove]="Remove restore.php from the site directory %s?"
+    [restore.action_place]="placement"
+    [restore.action_remove]="removal"
 
     [upd.confirm_pkgs]="Update system packages (apt update && apt upgrade)?"
     [upd.confirm_menu]="Update the menu (the current version will be backed up to /root/backup_vm_menu)?"
@@ -526,6 +549,7 @@ declare -A MSG_EN=(
     [action.unknown_netdata]="Error: unknown action for Netdata: %s"
     [action.unknown_conv]="Error: unknown action for the conversion server: %s"
     [action.unknown_postgres]="Error: unknown action for PostgreSQL: %s"
+    [action.unknown_restore]="Error: unknown action for the restore script: %s"
     [server.confirm_reboot]="Do you really want to RESTART the server? (Y/N): "
     [server.confirm_poweroff]="Do you really want to SHUT DOWN the server? (Y/N): "
     [server.enter_yn]="Please enter Y or N."
@@ -581,7 +605,14 @@ function i18n_help_text() {
    7) SMTP — аккаунты в /var/www/html/.msmtprc. Apache передаёт имя аккаунта
       в msmtp-wrapper (обычно это домен сайта). Аккаунт default используется,
       если аккаунт сайта не найден.
-   8) Дополнения — Sphinx, сервер конвертации файлов, Netdata, PostgreSQL.
+   8) Дополнения — Sphinx, сервер конвертации файлов, Netdata, PostgreSQL,
+      restore.php (разместить по запросу / удалить).
+
+   СКРИПТ ВОССТАНОВЛЕНИЯ restore.php
+   Хранить restore.php в каталоге сайта постоянно нельзя: он разворачивает
+   архив резервной копии. В проекте файла нет, при создании сайта он не
+   копируется. Порядок: 8 → 5 → 1 (разместить) → восстановление портала →
+   8 → 5 → 2 (удалить).
    9) Эмуляция BitrixVM — переменная BITRIX_VA_VER в /etc/apache2/envvars
       (нужна некоторым решениям маркетплейса).
 
@@ -652,7 +683,14 @@ HELP
    7) SMTP — accounts in /var/www/html/.msmtprc. Apache passes the account name to
       msmtp-wrapper (usually the site domain). The default account is used when no
       account is found for the site.
-   8) Add-ons — Sphinx, file conversion server, Netdata, PostgreSQL.
+   8) Add-ons — Sphinx, file conversion server, Netdata, PostgreSQL,
+      restore.php (place on demand / remove).
+
+   RESTORE SCRIPT restore.php
+   restore.php must not stay in a site directory permanently: it deploys a
+   backup archive. The project does not ship the file and does not copy it
+   on site creation. Workflow: 8 → 5 → 1 (place) → restore the portal →
+   8 → 5 → 2 (remove).
    9) BitrixVM emulation — the BITRIX_VA_VER variable in /etc/apache2/envvars
       (required by some Marketplace solutions).
 
