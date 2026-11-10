@@ -34,10 +34,9 @@
     - name: Allowing the Netdata port in the nftables config
       blockinfile:
         path: "{{ nftables_config }}"
-        marker: "    # {mark} netdata (port {{ netdata_port }})"
+        marker: "        # {mark} netdata (port {{ netdata_port }})"
         insertafter: "{{ nftables_anchor }}"
-        block: |
-          tcp dport {{ netdata_port }} accept comment "netdata"
+        block: "        tcp dport {{ netdata_port }} accept comment \"netdata\""
       when:
         - nft_bin.stat.exists
         - nft_config.stat.exists | default(false)
@@ -200,7 +199,7 @@
     - name: Removing the Netdata rule from the nftables config
       blockinfile:
         path: "{{ nftables_config }}"
-        marker: "    # {mark} netdata (port {{ netdata_port }})"
+        marker: "        # {mark} netdata (port {{ netdata_port }})"
         state: absent
       when:
         - nft_bin_remove.stat.exists
