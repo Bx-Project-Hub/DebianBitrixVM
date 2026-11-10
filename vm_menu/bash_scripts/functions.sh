@@ -874,10 +874,18 @@ function push_check_publication() {
     local domain="$SELECTED_SITE" path code
     for path in "$BS_PUSH_SERVER_PUB_PATH" "$BS_PUSH_SERVER_SUBWS_PATH"; do
         echo ""
-        echo "   $(t push.checking "$domain" "$path")"
         code="$(curl -sk -o /dev/null -m 10 -w '%{http_code}' "https://${domain}${path}" 2>/dev/null)"
-        echo "   $(t push.result "$domain" "$path" "${code:-?}")"
+        case "${code:-000}" in
+            200|400|404|426)
+                echo "   $(t push.result_ok "${domain}${path}" "${code}")"
+                ;;
+            *)
+                echo "   $(t push.result_fail "${domain}${path}" "${code:-000}")"
+                ;;
+        esac
     done
+    echo ""
+    echo "   $(t push.result_note)"
 
     press_any_key_to_return_menu
 }
