@@ -1,0 +1,13 @@
+---
+- name: "Applications for Bitrix CMS / Bitrix24 (install or delete)"
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+  vars:
+    apps_packages: []
+    apps_action: INSTALL
+    apps_group: cms
+    menu_lang: ru
+  roles:
+    - role: install_or_delete_apps

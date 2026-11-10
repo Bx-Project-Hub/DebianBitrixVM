@@ -672,7 +672,57 @@ installPkg(){
         "php${PHP_VERSION}-imap" "php${PHP_VERSION}-ssh2" \
         apache2 nginx nodejs npm redis exim4 exim4-config \
         libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static \
+        zip p7zip-full composer jq msmtp \
         sudo
+}
+
+###################################################################
+# Почта: обёртка msmtp для PHP и sendmail_path в zbx-bitrix.ini
+###################################################################
+dplMail(){
+    # Обёртка выбирает аккаунт из /var/www/html/.msmtprc (настраивается в меню,
+    # пункт 7). Apache передаёт домен сайта как аргумент, CLI — аккаунт default.
+    cat > /usr/local/bin/msmtp_wrapper.sh <<'WRAPPER'
+#!/bin/bash
+
+# Path to config file from sites
+CONFIG_FILE="/var/www/html/.msmtprc"
+
+# Account name
+ACCOUNT="$1"
+
+if command -v msmtp >/dev/null 2>&1; then
+    if grep -q "^[^#]*account\s\+$ACCOUNT" "$CONFIG_FILE" 2>/dev/null; then
+        # If the account found, use it
+        /usr/bin/msmtp -C "$CONFIG_FILE" -a "$ACCOUNT" -t
+    else
+        # If the account not found, use default account
+        /usr/bin/msmtp -C "$CONFIG_FILE" -a default -t
+    fi
+else
+    # If msmtp is not installed, use standard sendmail
+    /usr/sbin/sendmail -t
+fi
+WRAPPER
+    chown www-data:www-data /usr/local/bin/msmtp_wrapper.sh 2>/dev/null
+    chmod 0755 /usr/local/bin/msmtp_wrapper.sh
+
+    if [ ! -f /var/www/html/.msmtprc ]; then
+        printf '%s\n' "# SMTP accounts are managed by the menu (item 7)" > /var/www/html/.msmtprc
+    fi
+    chown www-data:www-data /var/www/html/.msmtprc 2>/dev/null
+    chmod 0600 /var/www/html/.msmtprc
+
+    # PHP CLI (cron-агенты Bitrix) отправляет почту через обёртку с аккаунтом default.
+    # Для сайтов аккаунт подставляется в vhost Apache (sendmail_path ... <домен>).
+    local ini_file="/etc/php/${PHP_VERSION}/mods-available/zbx-bitrix.ini"
+    if [ -f "$ini_file" ] && ! grep -qE '^[[:space:]]*sendmail_path' "$ini_file"; then
+        cat >> "$ini_file" <<'INI'
+
+; Mail: send via msmtp with the account configured in the menu (item 7)
+sendmail_path = /usr/local/bin/msmtp_wrapper.sh default
+INI
+    fi
 }
 
 ###################################################################
@@ -986,6 +1036,7 @@ deployConfig() {
 
     nfTabl
     dplApache
+    dplMail
     dplNginx
     dplRedis
     dplPush

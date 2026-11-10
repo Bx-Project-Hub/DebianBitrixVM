@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.9.4"
+BS_VERSION_MENU="2.10.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -99,6 +99,23 @@ BS_PHP_INSTALL_TEMPLATE=(
 )
 # Расширения, которые включаются явно (phpenmod) для CLI и Apache
 BS_PHP_EXTRA_MODULES=("intl" "soap" "bcmath" "imap" "ssh2")
+
+# ---------------------------------------------------------------------------
+# Приложения из стандартного репозитория Debian (меню → Дополнения).
+# Формат элемента "a|b": ставится первый пакет, который есть в репозитории
+# (wkhtmltopdf удалён из Debian 13, поэтому вместо него предлагается weasyprint).
+# Устанавливаются только доступные пакеты — отсутствующие пропускаются.
+# ---------------------------------------------------------------------------
+# CMS Bitrix: подготовка контента и документов
+BS_APPS_BITRIX_CMS=("pandoc" "wkhtmltopdf|weasyprint")
+# CRM / Битрикс24: те же документы + OCR для сканов и счетов
+BS_APPS_BITRIX24=("pandoc" "wkhtmltopdf|weasyprint" "tesseract-ocr" "tesseract-ocr-rus")
+# memcached: сервер кэша + PHP-расширение для активной версии PHP
+BS_MEMCACHED_PACKAGE="memcached"
+BS_MEMCACHED_PHP_EXTENSION="memcached"
+
+# Обязательные утилиты окружения (ставятся установщиком)
+BS_REQUIRED_PACKAGES=("zip" "p7zip-full" "composer" "jq" "msmtp")
 BS_DOWNLOAD_BITRIX_CONFIGS="https://dev.1c-bitrix.ru/docs/chm_files/debian.zip"
 # Локальная копия в vendor (приоритетнее URL)
 BS_VENDOR_BITRIX_CONFIGS="files/bitrix-php-configs-debian.zip"
@@ -126,6 +143,8 @@ BS_ANSIBLE_PB_INSTALL_OR_DELETE_FILE_CONVERSION_SERVER="install_or_delete_file_c
 BS_ANSIBLE_PB_DELETE_SITE="delete_site.yaml"
 BS_ANSIBLE_PB_INSTALL_OR_DELETE_POSTGRESQL="install_or_delete_postgresql.yaml"
 BS_ANSIBLE_PB_MANAGE_RESTORE_SCRIPT="manage_restore_script.yaml"
+BS_ANSIBLE_PB_INSTALL_OR_DELETE_APPS="install_or_delete_apps.yaml"
+BS_ANSIBLE_PB_INSTALL_OR_DELETE_MEMCACHED="install_or_delete_memcached.yaml"
 
 # MySQL settings
 # На Debian 13 (trixie) Oracle поставляет только MySQL 8.4 LTS (mysql-8.4-lts):

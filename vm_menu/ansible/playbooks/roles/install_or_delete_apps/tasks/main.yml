@@ -1,0 +1,40 @@
+---
+# tasks file for install_or_delete_apps
+
+- block:
+    - name: Checking that the package list is not empty
+      fail:
+        msg: "{{ apps_messages[menu_lang | default('ru')].nothing }}"
+      when: apps_packages | length == 0
+
+    - name: Installing applications from the Debian repository
+      apt:
+        name: "{{ apps_packages }}"
+        state: present
+        update_cache: yes
+
+    - name: Collecting versions of installed applications
+      command: dpkg-query -W -f='${Package} ${Version}\n' {{ apps_packages | join(' ') }}
+      register: apps_versions
+      changed_when: false
+      failed_when: false
+
+    - name: Showing what was installed
+      debug:
+        msg: "{{ apps_versions.stdout_lines | default([]) }}"
+
+  when: apps_action == 'INSTALL'
+
+- block:
+    - name: Removing applications
+      apt:
+        name: "{{ apps_packages }}"
+        state: absent
+        purge: yes
+        autoremove: yes
+
+    - name: Reporting the removal
+      debug:
+        msg: "{{ apps_messages[menu_lang | default('ru')].removed }}"
+
+  when: apps_action == 'DELETE'

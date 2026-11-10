@@ -1,0 +1,12 @@
+---
+- name: "memcached server and PHP extension (install or delete)"
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+  vars:
+    memcached_action: INSTALL
+    php_version: ""
+    menu_lang: ru
+  roles:
+    - role: install_or_delete_memcached

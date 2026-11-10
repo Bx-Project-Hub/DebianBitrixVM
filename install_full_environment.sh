@@ -128,7 +128,7 @@ FULL_PATH_MENU_FILE="$DEST_DIR_MENU/$DIR_NAME_MENU/menu.sh"
 
 apt update -y
 apt upgrade -y
-apt install -y perl wget curl ansible python3-apt python3-cryptography git ssl-cert cron locales locales-all poppler-utils catdoc libreoffice-nogui imagemagick debconf-utils lsb-release ca-certificates apt-transport-https gnupg2 unzip rsync nftables pwgen make build-essential certbot python3-certbot-dns-cloudflare sudo
+apt install -y perl wget curl ansible python3-apt python3-cryptography git ssl-cert cron locales locales-all poppler-utils catdoc libreoffice-nogui imagemagick debconf-utils lsb-release ca-certificates apt-transport-https gnupg2 unzip rsync nftables pwgen make build-essential certbot python3-certbot-dns-cloudflare sudo zip p7zip-full composer jq msmtp
 
 # Set locales
 locale-gen ru_RU.UTF-8

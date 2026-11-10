@@ -59,6 +59,11 @@ main_menu(){
     render_status_panel
     echo ""
     render_environment_panel
+    local netdata_hint
+    netdata_hint="$(netdata_stats_hint)"
+    if [ -n "$netdata_hint" ]; then
+      echo -e "   ${C_GREY}${netdata_hint}${C_RESET}"
+    fi
     echo ""
     echo -e "   ${C_GREY}$(t menu.services)${C_RESET} $(service_badge "$BS_SERVICE_NGINX_NAME")  $(service_badge "$BS_SERVICE_APACHE_NAME")  $(service_badge "$BS_MYSQL_SERVICE_NAME")"
     echo -e "             $(service_badge "$BS_REDIS_SERVICE_NAME")  $(service_badge "$BS_PUSH_SERVER_SERVICE_NAME")\n"
@@ -131,6 +136,9 @@ menu_install_extensions(){
     echo "     3) $(t ext.netdata)"
     echo "     4) $(t ext.postgres)"
     echo "     5) $(t ext.restore)"
+    echo "     6) $(t ext.apps_cms)"
+    echo "     7) $(t ext.apps_b24)"
+    echo "     8) $(t ext.memcached)"
     echo "     0) $(t common.back_main)"
     echo ""
     echo -n "   $(t common.enter_command) "
@@ -142,6 +150,9 @@ menu_install_extensions(){
      "3") install_netdata ;;
      "4") install_postgres ;;
      "5") manage_restore_script ;;
+     "6") apps_menu cms ;;
+     "7") apps_menu b24 ;;
+     "8") install_memcached ;;
      0|z|q) return ;;
      *) echo "   $(t common.unknown_command_short)"; sleep 2 ;;
     esac
@@ -696,6 +707,72 @@ function install_file_conversion_server() {
     fi
 
     action_install_or_delete_file_conversion_server "$action"
+}
+
+# Приложения из стандартного репозитория: группа cms (CMS Bitrix) или b24 (CRM/Битрикс24)
+function apps_menu() {
+    local group="${1:-cms}"
+    local title list_key group_key
+    case "$group" in
+        cms) title="$(t apps.title_cms)"; list_key="apps.cms_list"; group_key="apps.group_cms" ;;
+        b24) title="$(t apps.title_b24)"; list_key="apps.b24_list"; group_key="apps.group_b24" ;;
+        *) return ;;
+    esac
+
+    clear
+    echo -e "\n   ${title}\n"
+    echo "   $(t apps.note)"
+    echo "   $(t "$list_key")"
+    echo ""
+    echo "     1) $(t apps.install)"
+    echo "     2) $(t apps.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
+    local command
+    read -r command
+
+    case "$command" in
+        1)
+            if confirm_action "$(t apps.confirm_install "$(t "$group_key")")"; then
+                action_install_or_delete_apps "$group" install
+            fi
+            ;;
+        2)
+            if confirm_action "$(t apps.confirm_delete "$(t "$group_key")")"; then
+                action_install_or_delete_apps "$group" delete
+            fi
+            ;;
+        *) return ;;
+    esac
+}
+
+# memcached: сервер кэша + PHP-расширение
+function install_memcached() {
+    clear
+    echo -e "\n   $(t memcached.title)\n"
+    echo "   $(t memcached.note)"
+    echo "   $(t memcached.listening)"
+    echo ""
+    echo "     1) $(t memcached.install)"
+    echo "     2) $(t memcached.delete)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
+    local command
+    read -r command
+
+    case "$command" in
+        1)
+            if confirm_action "$(t memcached.confirm_install)"; then
+                action_install_or_delete_memcached install
+            fi
+            ;;
+        2)
+            if confirm_action "$(t memcached.confirm_delete)"; then
+                action_install_or_delete_memcached delete
+            fi
+            ;;
+        *) return ;;
+    esac
 }
 
 # Скрипт восстановления restore.php: размещение/удаление только по запросу

@@ -540,6 +540,20 @@ function get_installed_addons() {
     fi
 }
 
+# Подсказка-ссылка на панель Netdata. Пустая строка, если Netdata не установлен
+# или не запущен — тогда строка в меню не выводится.
+function netdata_stats_hint() {
+    systemctl is-active --quiet netdata 2>/dev/null || return 0
+
+    local host="${CURRENT_SERVER_IP:-}"
+    if [ -z "$host" ]; then
+        host="$(hostname -I 2>/dev/null | awk '{print $1}')"
+    fi
+    [ -n "$host" ] || return 0
+
+    printf '%s' "$(t env.netdata_stats "http://${host}:19999")"
+}
+
 # Собираем данные панели «Установлено»
 function collect_environment_panel() {
     [ "${BS_STATUS_PANEL_SITES:-true}" = true ] || return 0

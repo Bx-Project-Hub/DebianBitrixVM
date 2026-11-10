@@ -1,0 +1,31 @@
+---
+# defaults file for install_or_delete_memcached
+#
+# memcached + PHP-расширение memcached для активной версии PHP.
+# Ставится/удаляется из меню: Дополнения → 8.
+
+# INSTALL | DELETE
+memcached_action: INSTALL
+# Версия PHP, для которой включается расширение (8.2 / 8.3 / 8.4)
+php_version: ""
+memcached_package: memcached
+memcached_php_package: "php{{ php_version }}-memcached"
+memcached_extension: memcached
+memcached_service: memcached
+memcached_port: 11211
+service_apache_name: apache2
+menu_lang: ru
+
+memcached_messages:
+  ru:
+    installed: "memcached установлен и запущен, расширение PHP memcached включено для PHP {{ php_version }}."
+    listening: "memcached слушает 127.0.0.1:{{ memcached_port }} (проверка: printf 'version\\r\\n' | nc 127.0.0.1 {{ memcached_port }})."
+    removed: "memcached и расширение PHP memcached удалены."
+    already_absent: "memcached не был установлен."
+    no_php: "Не удалось определить версию PHP — расширение не включено."
+  en:
+    installed: "memcached is installed and running, PHP extension memcached is enabled for PHP {{ php_version }}."
+    listening: "memcached listens on 127.0.0.1:{{ memcached_port }} (check: printf 'version\\r\\n' | nc 127.0.0.1 {{ memcached_port }})."
+    removed: "memcached and the PHP memcached extension have been removed."
+    already_absent: "memcached was not installed."
+    no_php: "Could not detect the PHP version — the extension was not enabled."

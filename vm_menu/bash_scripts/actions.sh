@@ -384,6 +384,86 @@ action_install_or_delete_postgresql(){
   press_any_key_to_return_menu;
 }
 
+# Приложения Bitrix CMS / Битрикс24: action = install | delete, group = cms | b24
+# Ставятся только пакеты, реально присутствующие в подключённых репозиториях
+# (в элементе списка допустимы альтернативы через «|»: "wkhtmltopdf|weasyprint").
+action_install_or_delete_apps(){
+  local apps_group="${1:-cms}"
+  local apps_action="${2:-install}"
+  local pb
+  pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_INSTALL_OR_DELETE_APPS}")
+
+  local -a items=()
+  case "$apps_group" in
+    cms) items=("${BS_APPS_BITRIX_CMS[@]}") ;;
+    b24) items=("${BS_APPS_BITRIX24[@]}") ;;
+    *) echo "$(t apps.unknown_group "${apps_group}")" >&2; return 1 ;;
+  esac
+
+  local -a packages=()
+  local -a candidates=()
+  local item candidate
+  for item in "${items[@]}"; do
+    IFS='|' read -r -a candidates <<< "$item"
+    for candidate in "${candidates[@]}"; do
+      # apt-cache show печатает карточку пакета только если он есть в репозиториях
+      if apt-cache show "$candidate" 2>/dev/null | grep -q '^Package:'; then
+        packages+=("$candidate")
+        break
+      fi
+      # при удалении помним и недоступные варианты — apt их просто пропустит
+      [ "$apps_action" = "delete" ] && packages+=("$candidate")
+    done
+  done
+
+  if ((${#packages[@]} == 0)); then
+    echo ""
+    echo "   $(t apps.nothing_found)"
+    press_any_key_to_return_menu
+    return 1
+  fi
+
+  local json_packages="" p
+  for p in "${packages[@]}"; do
+    json_packages+="\"${p}\","
+  done
+  json_packages="[${json_packages%,}]"
+
+  local apps_action_upper="INSTALL"
+  [ "$apps_action" = "delete" ] && apps_action_upper="DELETE"
+
+  ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
+  -e "{\"apps_packages\": ${json_packages}, \
+\"apps_action\": \"${apps_action_upper}\", \
+\"apps_group\": \"${apps_group}\", \
+\"menu_lang\": \"${BS_MENU_LANG_CURRENT:-ru}\"}"
+
+  press_any_key_to_return_menu;
+}
+
+# memcached + PHP-расширение memcached: action = install | delete
+action_install_or_delete_memcached(){
+  local memcached_action="${1:-install}"
+  local pb
+  pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_INSTALL_OR_DELETE_MEMCACHED}")
+
+  case "$memcached_action" in
+    install) memcached_action="INSTALL" ;;
+    delete)  memcached_action="DELETE" ;;
+    *) echo "$(t action.unknown_memcached "${memcached_action}")" >&2; return 1 ;;
+  esac
+
+  ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
+  -e "memcached_action=${memcached_action} \
+  php_version=${CURRENT_PHP_VERSION:-} \
+  memcached_package=${BS_MEMCACHED_PACKAGE} \
+  memcached_extension=${BS_MEMCACHED_PHP_EXTENSION} \
+  service_apache_name=${BS_SERVICE_APACHE_NAME} \
+  menu_lang=${BS_MENU_LANG_CURRENT:-ru}"
+
+  press_any_key_to_return_menu;
+}
+
 # Скрипт восстановления restore.php: action = place | remove
 # Размещает файл в каталоге сайта только по запросу и удаляет после восстановления
 action_manage_restore_script(){

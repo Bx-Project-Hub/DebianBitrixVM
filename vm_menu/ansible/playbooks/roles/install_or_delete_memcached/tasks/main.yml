@@ -1,0 +1,75 @@
+---
+# tasks file for install_or_delete_memcached
+
+- block:
+    - name: Verifying that the PHP version is known
+      fail:
+        msg: "{{ memcached_messages[menu_lang | default('ru')].no_php }}"
+      when: php_version | length == 0
+
+    - name: Installing memcached and the PHP extension
+      apt:
+        name:
+          - "{{ memcached_package }}"
+          - "{{ memcached_php_package }}"
+        state: present
+        update_cache: yes
+
+    - name: Enabling and starting memcached
+      systemd:
+        name: "{{ memcached_service }}"
+        enabled: yes
+        state: started
+
+    # Расширение должно быть доступно и в CLI (cron-агенты Bitrix), и в Apache
+    - name: Enabling the PHP memcached extension
+      command: phpenmod -v {{ php_version }} {{ memcached_extension }}
+      changed_when: false
+      failed_when: false
+
+    - name: Restarting Apache to load the extension
+      systemd:
+        name: "{{ service_apache_name }}"
+        state: restarted
+
+    - name: Checking that the module is loaded in CLI
+      command: "php -r 'exit(extension_loaded(\"{{ memcached_extension }}\") ? 0 : 1);'"
+      register: memcached_cli_check
+      changed_when: false
+      failed_when: false
+
+    - name: Reporting the result
+      debug:
+        msg:
+          - "{{ memcached_messages[menu_lang | default('ru')].installed }}"
+          - "{{ memcached_messages[menu_lang | default('ru')].listening }}"
+          - "CLI extension_loaded('{{ memcached_extension }}') = {{ 'true' if memcached_cli_check.rc == 0 else 'false' }}"
+
+  when: memcached_action == 'INSTALL'
+
+- block:
+    - name: Removing memcached and the PHP extension
+      apt:
+        name:
+          - "{{ memcached_package }}"
+          - "{{ memcached_php_package }}"
+        state: absent
+        purge: yes
+        autoremove: yes
+
+    - name: Disabling the PHP memcached extension
+      command: phpdismod -v {{ php_version }} {{ memcached_extension }}
+      changed_when: false
+      failed_when: false
+      when: php_version | length > 0
+
+    - name: Restarting Apache after removal
+      systemd:
+        name: "{{ service_apache_name }}"
+        state: restarted
+
+    - name: Reporting the removal
+      debug:
+        msg: "{{ memcached_messages[menu_lang | default('ru')].removed }}"
+
+  when: memcached_action == 'DELETE'

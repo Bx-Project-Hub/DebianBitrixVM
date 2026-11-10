@@ -1,0 +1,30 @@
+---
+# defaults file for install_or_delete_apps
+#
+# Установка/удаление приложений из стандартного репозитория Debian.
+# Список пакетов формирует меню (action_install_or_delete_apps): в него попадают
+# только те пакеты, которые реально есть в подключённых репозиториях, поэтому
+# роль не пытается ставить отсутствующее (например, wkhtmltopdf в Debian 13 нет).
+
+apps_packages: []
+# INSTALL | DELETE
+apps_action: INSTALL
+# cms | b24 — только для текста сообщений
+apps_group: cms
+menu_lang: ru
+
+apps_messages:
+  ru:
+    nothing: "Список приложений пуст: в подключённых репозиториях ничего не найдено."
+    installed: "Установлено приложений: {{ apps_installed_count }}"
+    skipped: "Пропущено (нет в репозитории): {{ apps_skipped | join(', ') }}"
+    removed: "Удалены приложения: {{ apps_packages | join(', ') }}"
+    removed_none: "Ни одно из приложений не было установлено."
+    use_hint: "Дополнительно можно поставить memcached (пункт 8) и Sphinx (пункт 1)."
+  en:
+    nothing: "The application list is empty: nothing suitable found in the configured repositories."
+    installed: "Applications installed: {{ apps_installed_count }}"
+    skipped: "Skipped (not in the repository): {{ apps_skipped | join(', ') }}"
+    removed: "Applications removed: {{ apps_packages | join(', ') }}"
+    removed_none: "None of the applications were installed."
+    use_hint: "You can also install memcached (item 8) and Sphinx (item 1)."

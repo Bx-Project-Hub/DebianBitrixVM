@@ -1,0 +1,15 @@
+galaxy_info:
+  author: Bx-Project-Hub
+  description: Install or remove memcached with the PHP extension
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - bitrix
+    - memcached
+
+dependencies: []
