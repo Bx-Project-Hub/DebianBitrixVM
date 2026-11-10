@@ -152,6 +152,10 @@ salgydan `https://www.1c-bitrix.ru/download/files/scripts/restore.php` ýerleşd
 (`8` → `5` → `2`). Muny `manage_restore_script` roly (`PLACE` / `REMOVE`) we
 `manage_restore_script.yaml` pleýbuky ýerine ýetirýär.
 
+Täze saýtyň sahypasy (`index.html`) `site_full_tpl/index.j2` şablonyndan döredilýär:
+gurnama ädimleri we master düwmesi; `restore.php` sahypasyna salgylanma ýok — diňe skripti
+menýudan ýerleşdirmek we dikeldişden soň pozmak barada ýatlatma.
+
 Resmi çeşmeler: push&pull serweri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache konfigurasiýalary — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 gurnaýjy — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

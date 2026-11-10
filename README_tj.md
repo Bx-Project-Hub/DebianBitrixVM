@@ -153,6 +153,10 @@ PHP/Nginx/Apache, скриптҳои насби Bitrix, скрипти насб�
 шавад (`8` → `5` → `2`). Инро нақши `manage_restore_script` (`PLACE` / `REMOVE`) ва
 плейбуки `manage_restore_script.yaml` иҷро мекунад.
 
+Саҳифаи сайти нав (`index.html`) аз қолаби `site_full_tpl/index.j2` сохта мешавад:
+қадамҳои насб ва тугмаи мастер; ба `restore.php` пайванд нест — танҳо ёдоварӣ дар бораи
+ҷойгир кардани скрипт аз меню ва нест кардани он пас аз барқарорсозӣ.
+
 Сарчашмаҳои расмӣ: сервери push&pull — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 конфигуратсияҳои PHP/Nginx/Apache — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 насбкунанда — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

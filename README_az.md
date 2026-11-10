@@ -152,6 +152,10 @@ istifadəçisi, hüquqlar `0640`). Portal bərpa olunduqdan sonra skript silinm�
 (`8` → `5` → `2`). Bunu `manage_restore_script` rolu (`PLACE` / `REMOVE`) və
 `manage_restore_script.yaml` pleybuku edir.
 
+Yeni saytın səhifəsi (`index.html`) `site_full_tpl/index.j2` şablonundan yaradılır:
+quraşdırma addımları və master düyməsi; `restore.php`-ə keçid yoxdur — yalnız skripti
+menyudan yerləşdirmək və bərpadan sonra silmək barədə xatırlatma.
+
 Rəsmi mənbələr: push&pull serveri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache konfiqurasiyaları — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 quraşdırıcı — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

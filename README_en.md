@@ -154,6 +154,10 @@ mode `0640`). After the portal is restored the script must be removed
 (`8` → `5` → `2`). Implemented by the `manage_restore_script` role
 (`PLACE` / `REMOVE`) and the `manage_restore_script.yaml` playbook.
 
+The new-site landing page (`index.html`) is rendered from `site_full_tpl/index.j2`: an
+install-steps card with the wizard button. It contains no link to `restore.php` — only a
+reminder on how to place the script from the menu and delete it after the restore.
+
 Official artifact sources: push&pull server — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache configs — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 installer — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

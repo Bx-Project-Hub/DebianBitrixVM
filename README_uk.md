@@ -153,6 +153,10 @@ deb.sury.org, MySQL/Percona та Netdata навмисно залишаються
 Реалізовано роллю `manage_restore_script` (`PLACE` / `REMOVE`) і плейбуком
 `manage_restore_script.yaml`.
 
+Сторінка нового сайту (`index.html`) генерується шаблоном `site_full_tpl/index.j2`:
+картка з кроками встановлення та кнопкою майстра; посилання на `restore.php` немає —
+лише нагадування, як розмістити скрипт із меню та видалити після відновлення.
+
 Офіційні джерела: сервер push&pull — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 конфігурації PHP/Nginx/Apache — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 інсталятор — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

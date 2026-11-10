@@ -152,6 +152,10 @@ MySQL/Percona және Netdata репозиторийлері әдейі сыр�
 жойылуы керек (`8` → `5` → `2`). Мұны `manage_restore_script` рөлі (`PLACE` / `REMOVE`) және
 `manage_restore_script.yaml` плейбукі орындайды.
 
+Жаңа сайттың беті (`index.html`) `site_full_tpl/index.j2` шаблонынан жасалады: орнату
+қадамдары мен шебер батырмасы; `restore.php` сілтемесі жоқ — тек скриптті мәзірден
+орналастыру және қалпына келтіргеннен кейін жою туралы еске салу.
+
 Ресми көздер: push&pull сервері — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache конфигурациялары — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 орнатушы — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

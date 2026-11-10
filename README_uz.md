@@ -152,6 +152,10 @@ manzildan `https://www.1c-bitrix.ru/download/files/scripts/restore.php` joylasht
 kerak (`8` → `5` → `2`). Buni `manage_restore_script` roli (`PLACE` / `REMOVE`) va
 `manage_restore_script.yaml` pleybuki bajaradi.
 
+Yangi sayt sahifasi (`index.html`) `site_full_tpl/index.j2` shablonidan yaratiladi:
+o'rnatish qadamlari va master tugmasi; `restore.php` ga havola yo'q — faqat skriptni
+menyudan joylashtirish va tiklashdan keyin o'chirish haqida eslatma.
+
 Rasmiy manbalar: push&pull serveri — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache konfiguratsiyalari — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 o'rnatuvchi — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.

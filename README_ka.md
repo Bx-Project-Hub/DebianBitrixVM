@@ -152,6 +152,10 @@ Debian-ის, deb.sury.org-ის, MySQL/Percona-სა და Netdata-ს რ�
 უნდა წაიშალოს (`8` → `5` → `2`). ამას აკეთებს როლი `manage_restore_script`
 (`PLACE` / `REMOVE`) და `manage_restore_script.yaml` playbook.
 
+ახალი საიტის გვერდი (`index.html`) გენერირდება შაბლონიდან `site_full_tpl/index.j2`:
+ინსტალაციის ნაბიჯები და ოსტატის ღილაკი; ბმული `restore.php`-ზე არ არის — მხოლოდ
+შეხსენება, როგორ განათავსოთ სკრიპტი მენიუდან და წაშალოთ აღდგენის შემდეგ.
+
 ოფიციალური წყაროები: push&pull სერვერი — `https://repo.bitrix24.tech/vm/push-server-0.4.0.tgz`,
 PHP/Nginx/Apache კონფიგურაციები — `https://dev.1c-bitrix.ru/docs/chm_files/debian.zip`,
 ინსტალატორი — `https://www.1c-bitrix.ru/download/scripts/bitrixsetup.php`.
