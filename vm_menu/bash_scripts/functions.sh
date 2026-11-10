@@ -877,10 +877,10 @@ function push_check_publication() {
         code="$(curl -sk -o /dev/null -m 10 -w '%{http_code}' "https://${domain}${path}" 2>/dev/null)"
         case "${code:-000}" in
             200|400|404|426)
-                echo "   $(t push.result_ok "${domain}${path}" "${code}")"
+                echo "   $(t push.result_ok "${domain}" "${path}" "${code}")"
                 ;;
             *)
-                echo "   $(t push.result_fail "${domain}${path}" "${code:-000}")"
+                echo "   $(t push.result_fail "${domain}" "${path}" "${code:-000}")"
                 ;;
         esac
     done
