@@ -36,11 +36,18 @@ main_menu(){
 
     local msg_new_version_menu=""
     local update_menu_action=""
+    local nv=""
     if [ -f "/tmp/new_version_menu.tmp" ]; then
-      local nv
-      nv=$(cat /tmp/new_version_menu.tmp)
-      msg_new_version_menu="$(t menu.new_version "$BS_VERSION_MENU" "$nv" "$BS_REPOSITORY_URL" "$BS_REPOSITORY_URL")"
-      update_menu_action="$(t menu.update_action)"
+      read -r nv < /tmp/new_version_menu.tmp || nv=""
+      # Показываем уведомление, только если предложенная версия СТРОГО новее
+      # текущей. Защита от залипшего файла после откатов и даунгрейдов.
+      if [[ -n "$nv" ]] && version_is_newer "$nv" "$BS_VERSION_MENU"; then
+        msg_new_version_menu="$(t menu.new_version "$BS_VERSION_MENU" "$nv" "$BS_REPOSITORY_URL" "$BS_REPOSITORY_URL")"
+        update_menu_action="$(t menu.update_action)"
+      else
+        rm -f /tmp/new_version_menu.tmp
+        nv=""
+      fi
     fi
 
     echo ""
@@ -76,7 +83,7 @@ main_menu(){
     echo -e "     ${C_YELLOW}A)${C_RESET} $(t menu.item_update_pkgs) ${C_GREY}$(t menu.item_update_pkgs_hint)${C_RESET}"
     echo -e "     ${C_YELLOW}R)${C_RESET} $(t menu.item_reboot)"
     echo -e "     ${C_YELLOW}P)${C_RESET} $(t menu.item_poweroff)"
-    if [ -f "/tmp/new_version_menu.tmp" ]; then
+    if [[ -n "$nv" ]]; then
       echo -e "     ${C_YELLOW}U)${C_RESET} $(t menu.item_menu_new)"
     else
       echo -e "     ${C_YELLOW}U)${C_RESET} $(t menu.item_menu_current) ${C_GREY}$(t menu.item_menu_current_hint)${C_RESET}"

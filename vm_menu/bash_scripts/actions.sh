@@ -84,11 +84,9 @@ action_check_new_version_menu(){
   fi
 
   # Обновление предлагаем только если версия в репозитории СТРОГО НОВЕЕ локальной.
-  # Сравнение «на равенство» недостаточно: если в репозитории лежит более старая
-  # версия (например, локально 2.0.0, а в master 1.0.0), меню предлагало
-  # «обновление» на понижение версии.
-  if [[ ${new_version} == ${BS_VERSION_MENU} ]] || \
-     [[ "$(printf '%s\n%s\n' "${BS_VERSION_MENU}" "${new_version}" | sort -V | tail -n1)" != "${new_version}" ]]; then
+  # Иначе меню предлагало «обновление» на более старую версию (например, локально
+  # 2.9.1, а в репозитории 2.9.0) — понижение версии недопустимо.
+  if ! version_is_newer "${new_version}" "${BS_VERSION_MENU}"; then
     rm -f "${file_new_version}"
     return;
   fi
@@ -122,6 +120,8 @@ function action_update_menu() {
     # Не выходим в шелл: перезапускаем меню уже из обновлённой версии.
     echo ""
     echo "   $(t upd.restarting)"
+    # Уведомление о новой версии и кэш проверки больше не актуальны
+    rm -f /tmp/new_version_menu.tmp /tmp/configs.tmp
     sleep 1
     exec "$menu_file"
 }

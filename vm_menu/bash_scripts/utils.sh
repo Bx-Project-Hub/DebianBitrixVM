@@ -497,7 +497,17 @@ function ssl_days_color() {
     fi
 }
 
-# Версия push-server из package.json установленного пакета
+# Сравнение версий вида 2.9.1 / v2.9.1 / 2.10.0-rc1
+# Возвращает 0, только если $1 СТРОГО новее $2.
+version_is_newer() {
+    local candidate="${1#v}" current="${2#v}"
+    [[ -z "$candidate" || -z "$current" ]] && return 1
+    [[ "$candidate" == "$current" ]] && return 1
+    # sort -V -C: 0, если текущая версия не больше предлагаемой (список уже отсортирован)
+    printf '%s\n%s\n' "$current" "$candidate" | sort -V -C
+}
+
+
 function get_push_server_version() {
     local f="/opt/push-server/package.json"
     [ -r "$f" ] || return 0
