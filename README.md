@@ -32,6 +32,7 @@
 | Sphinx | 2.2.11 | устанавливается из меню |
 | Почта | exim4 + msmtp | Debian |
 | Firewall | nftables | Debian |
+| Утилиты администрирования | `sudo`, `pwgen`, `rsync`, `unzip`, `debconf-utils` | ставятся установщиком |
 
 > **Важно про MySQL.** Для Debian 13 (trixie) Oracle публикует только ветку **8.4 LTS** — пакетов `mysql-8.0` для trixie нет. Окружение настраивает `mysql_native_password` для совместимости Bitrix и резервного копирования.
 

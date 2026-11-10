@@ -669,7 +669,8 @@ installPkg(){
         "php${PHP_VERSION}-http" \
         "php${PHP_VERSION}-redis" "php${PHP_VERSION}-igbinary" \
         apache2 nginx nodejs npm redis exim4 exim4-config \
-        libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static
+        libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static \
+        sudo
 }
 
 ###################################################################
