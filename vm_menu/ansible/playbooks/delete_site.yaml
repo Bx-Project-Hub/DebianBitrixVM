@@ -16,17 +16,19 @@
             name: python3-pymysql
             state: present
 
+        # Подключение по unix-сокету: при skip_name_resolve=ON (настройка окружения)
+        # подключение к 127.0.0.1 отклоняется, и удаление молча не выполнялось.
         - name: Deliting data base {{ db_name }}
           mysql_db:
             name: "{{ db_name }}"
             state: absent
-          ignore_errors: yes
+            login_unix_socket: "{{ mysql_socket | default('/var/run/mysqld/mysqld.sock') }}"
 
         - name: Deliting database user {{ db_user }}
           mysql_user:
             name: "{{ db_user }}"
             state: absent
-          ignore_errors: yes
+            login_unix_socket: "{{ mysql_socket | default('/var/run/mysqld/mysqld.sock') }}"
 
         - name: Deliting cron task
           cron:
