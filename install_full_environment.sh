@@ -235,11 +235,15 @@ cat > /usr/local/bin/update_menu <<'LAUNCHER'
 #!/bin/bash
 # Обновление меню Debian BitrixVM.
 # Запускает актуальный update_menu.sh с GitHub: update_menu [--auto]
-# Параметр t= обходит кэш CDN raw.githubusercontent.com (до 5 минут)
-URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh?t=$(date +%s)"
+# raw.githubusercontent.com кэширует master до ~5 минут, поэтому основной
+# источник — GitHub API (contents + Accept: raw); raw используется как резерв.
+API_URL="https://api.github.com/repos/Bx-Project-Hub/DebianBitrixVM/contents/update_menu.sh?ref=master"
+RAW_URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh?t=$(date +%s)"
 tmp="$(mktemp)" || exit 1
 trap 'rm -f "$tmp"' EXIT
-curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" >&2; exit 1; }
+if ! curl -fsSL -H "Accept: application/vnd.github.raw" "$API_URL" -o "$tmp" 2>/dev/null; then
+  curl -fsSL "$RAW_URL" -o "$tmp" || { echo "Не удалось скачать update_menu.sh" >&2; exit 1; }
+fi
 exec bash "$tmp" "$@"
 LAUNCHER
 chmod 0755 /usr/local/bin/update_menu
