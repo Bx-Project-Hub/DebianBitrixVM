@@ -692,12 +692,13 @@ CONFIG_FILE="/var/www/html/.msmtprc"
 ACCOUNT="$1"
 
 if command -v msmtp >/dev/null 2>&1; then
-    if grep -q "^[^#]*account\s\+$ACCOUNT" "$CONFIG_FILE" 2>/dev/null; then
+    if [ -n "$ACCOUNT" ] && grep -q "^[^#]*account\s\+$ACCOUNT" "$CONFIG_FILE" 2>/dev/null; then
         # If the account found, use it
         /usr/bin/msmtp -C "$CONFIG_FILE" -a "$ACCOUNT" -t
     else
-        # If the account not found, use default account
-        /usr/bin/msmtp -C "$CONFIG_FILE" -a default -t
+        # Account not found or not passed (CLI): msmtp uses the first account
+        # declared in the config file — this is the default account by msmtp rules
+        /usr/bin/msmtp -C "$CONFIG_FILE" -t
     fi
 else
     # If msmtp is not installed, use standard sendmail
@@ -713,14 +714,15 @@ WRAPPER
     chown www-data:www-data /var/www/html/.msmtprc 2>/dev/null
     chmod 0600 /var/www/html/.msmtprc
 
-    # PHP CLI (cron-агенты Bitrix) отправляет почту через обёртку с аккаунтом default.
+    # PHP CLI (cron-агенты Bitrix) отправляет почту через обёртку без аргумента:
+    # обёртка берёт первый аккаунт из .msmtprc (для msmtp это аккаунт default).
     # Для сайтов аккаунт подставляется в vhost Apache (sendmail_path ... <домен>).
     local ini_file="/etc/php/${PHP_VERSION}/mods-available/zbx-bitrix.ini"
     if [ -f "$ini_file" ] && ! grep -qE '^[[:space:]]*sendmail_path' "$ini_file"; then
         cat >> "$ini_file" <<'INI'
 
 ; Mail: send via msmtp with the account configured in the menu (item 7)
-sendmail_path = /usr/local/bin/msmtp_wrapper.sh default
+sendmail_path = /usr/local/bin/msmtp_wrapper.sh
 INI
     fi
 }
