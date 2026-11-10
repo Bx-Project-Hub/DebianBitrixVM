@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.9.3"
+BS_VERSION_MENU="2.9.4"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -90,7 +90,15 @@ BS_PHP_INSTALL_TEMPLATE=(
   # php-geoip для PHP 8 не собирается вовсе (последний билд — 7.4).
   "phpVER#0.0-redis"
   "phpVER#0.0-igbinary"
+  # Расширения, которые нужны Bitrix и типовым интеграциям (1С, почта, SOAP, SSH)
+  "phpVER#0.0-intl"
+  "phpVER#0.0-soap"
+  "phpVER#0.0-bcmath"
+  "phpVER#0.0-imap"
+  "phpVER#0.0-ssh2"
 )
+# Расширения, которые включаются явно (phpenmod) для CLI и Apache
+BS_PHP_EXTRA_MODULES=("intl" "soap" "bcmath" "imap" "ssh2")
 BS_DOWNLOAD_BITRIX_CONFIGS="https://dev.1c-bitrix.ru/docs/chm_files/debian.zip"
 # Локальная копия в vendor (приоритетнее URL)
 BS_VENDOR_BITRIX_CONFIGS="files/bitrix-php-configs-debian.zip"

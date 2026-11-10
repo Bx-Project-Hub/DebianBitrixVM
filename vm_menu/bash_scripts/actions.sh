@@ -183,6 +183,13 @@ function action_change_php_version() {
     ln -sf "${path_php}/mods-available/zbx-bitrix.ini" "${path_php}/apache2/conf.d/99-bitrix.ini"
     ln -sf "${path_php}/mods-available/zbx-bitrix.ini" "${path_php}/cli/conf.d/99-bitrix.ini"
 
+    # Обязательные расширения Bitrix и типовых интеграций (intl, soap, bcmath,
+    # imap, ssh2): включаем для CLI и Apache явно — пакеты версионных веток
+    # могут стоять без символических ссылок в conf.d.
+    if ((${#BS_PHP_EXTRA_MODULES[@]})); then
+        phpenmod -v "${new_version_php}" "${BS_PHP_EXTRA_MODULES[@]}" 2>/dev/null || true
+    fi
+
     # Отключаем все ранее включённые mod_php, включаем выбранную версию
     local module
     for module in "${BS_PATH_APACHE}"/mods-enabled/php*_module.load; do

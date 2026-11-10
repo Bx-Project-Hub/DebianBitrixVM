@@ -23,6 +23,7 @@
 |-----------|--------|------------|
 | Debian | 13 (trixie) | поддерживается также 12 (bookworm) |
 | PHP | 8.3 | смена на 8.2 / 8.4 из меню (deb.sury.org) |
+| Расширения PHP | intl, soap, bcmath, imap, ssh2, redis, igbinary, apcu, imagick, maxminddb, http | ставятся и включаются установщиком (`phpenmod`) |
 | MySQL | 8.4 LTS | на Debian 12 — 8.0 (APT-репозиторий Oracle) |
 | Percona Server | 8.4 LTS | альтернатива MySQL |
 | Nginx | 1.26 | Debian + модули Brotli, zip, zstd |

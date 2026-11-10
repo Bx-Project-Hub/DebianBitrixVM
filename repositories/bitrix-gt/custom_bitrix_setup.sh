@@ -668,6 +668,8 @@ installPkg(){
         "php${PHP_VERSION}-dev" "php${PHP_VERSION}-maxminddb" "php${PHP_VERSION}-imagick" \
         "php${PHP_VERSION}-http" \
         "php${PHP_VERSION}-redis" "php${PHP_VERSION}-igbinary" \
+        "php${PHP_VERSION}-intl" "php${PHP_VERSION}-soap" "php${PHP_VERSION}-bcmath" \
+        "php${PHP_VERSION}-imap" "php${PHP_VERSION}-ssh2" \
         apache2 nginx nodejs npm redis exim4 exim4-config \
         libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static \
         sudo
@@ -698,6 +700,11 @@ EOF
     a2enmod rewrite
     a2enmod "php${PHP_VERSION}"
     phpenmod xml
+
+    # intl / soap / bcmath / imap / ssh2 — нужны Bitrix и типовым интеграциям.
+    # Пакеты обычно включают модули сами, но после смены версии PHP или ручной
+    # правки conf.d символические ссылки могут отсутствовать — включаем явно.
+    phpenmod -v "${PHP_VERSION}" intl soap bcmath imap ssh2 2>/dev/null || true
 
     systemctl stop apache2
     systemctl enable --now apache2

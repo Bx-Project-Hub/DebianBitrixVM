@@ -73,6 +73,10 @@ DB_ENGINE=mysql bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub
 
 **Verified on a clean Debian 13 (trixie), amd64:** PHP 8.3.36 (the only PHP branch in the system), MySQL/Percona 8.4.11, Nginx 1.26.3, Apache 2.4.69, Node.js 20.19.2, push-server 0.4.0; all services are active; site creation in `full` and `link` modes works.
 
+PHP extensions installed and enabled by default: `intl`, `soap`, `bcmath`, `imap`, `ssh2`
+(plus `redis`, `igbinary`, `apcu`, `imagick`, `maxminddb`, `http`); `phpenmod` is applied to both CLI
+and Apache SAPI, and switching the PHP version re-installs and re-enables them.
+
 ## MySQL/Percona presets by the amount of RAM
 
 During installation, database parameters are selected automatically by the amount of RAM (`MemTotal` from `/proc/meminfo`).
