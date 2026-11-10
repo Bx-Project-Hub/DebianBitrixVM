@@ -7,13 +7,17 @@ CONFIG_FILE="{{ smtp_file_sites_config }}"
 ACCOUNT="$1"
 
 if command -v msmtp >/dev/null 2>&1; then
-    if [ -n "$ACCOUNT" ] && grep -q "^[^#]*account\s\+$ACCOUNT" "$CONFIG_FILE"; then
-        # If the account found, use it
-        /usr/bin/msmtp -C "$CONFIG_FILE" -a "$ACCOUNT" -t
+    # msmtp 1.8 requires an explicit account: without -a it looks for "default".
+    # If the requested account is missing (or not passed by CLI), take the first
+    # account declared in the config file.
+    account="$ACCOUNT"
+    if [ -z "$account" ] || ! grep -q "^[[:space:]]*account[[:space:]]\+$account\([[:space:]]\|$\)" "$CONFIG_FILE" 2>/dev/null; then
+        account="$(awk '/^[[:space:]]*account[[:space:]]+/{print $2; exit}' "$CONFIG_FILE" 2>/dev/null)"
+    fi
+    if [ -n "$account" ]; then
+        /usr/bin/msmtp -C "$CONFIG_FILE" -a "$account" -t
     else
-        # Account not found or not passed (CLI): msmtp uses the first account
-        # declared in the config file — this is the default account by msmtp rules
-        /usr/bin/msmtp -C "$CONFIG_FILE" -t
+        /usr/bin/msmtp -C "$CONFIG_FILE" -a default -t
     fi
 else
     # If msmtp is not installed, use standard sendmail
