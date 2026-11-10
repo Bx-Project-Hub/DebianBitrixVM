@@ -185,6 +185,11 @@ update_menu
 The menu can also be updated manually via `CURL` or `WGET`.  
 When updating, the current version **is automatically backed up** in `/root/backup_vm_menu/DD.MM.YYYY HH:MM:SS`.
 
+The "new version available" banner is shown only when the repository version is **strictly
+newer** than the installed one (`sort -V` comparison; `2.9.10` > `2.9.9` and suffixes such as
+`-rc1` are handled). Downgrades are never offered: with `2.9.2` installed and `2.9.0` in the
+repository there is no banner, and a stale `/tmp/new_version_menu.tmp` is removed.
+
 #### **Update via `CURL`**
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh)
