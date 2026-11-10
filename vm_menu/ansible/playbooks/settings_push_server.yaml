@@ -1,0 +1,19 @@
+---
+- name: "Push&Pull publication settings"
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: no
+  vars:
+    push_domain: ""
+    push_cert_path: ""
+    push_key_path: ""
+    push_pub_port: 9010
+    push_sub_port: 8010
+    service_nginx_name: nginx
+    path_nginx: /etc/nginx
+    path_nginx_sites_conf: /etc/nginx/sites-available
+    path_nginx_sites_enabled: /etc/nginx/sites-enabled
+    menu_lang: ru
+  roles:
+    - role: settings_push_server

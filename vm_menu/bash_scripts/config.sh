@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.11.3"
+BS_VERSION_MENU="2.12.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -226,6 +226,18 @@ BS_MYSQL_CMD="mysql"
 BS_PUSH_SERVER_VERSION="0.4.0"
 BS_PUSH_SERVER_CONFIG="/etc/sysconfig/push-server-multi"
 BS_PUSH_SERVER_SERVICE_NAME="push-server"
+# Публикация push&pull через nginx: локальные порты push-server
+BS_PUSH_SERVER_PUB_PORT="9010"
+BS_PUSH_SERVER_SUB_PORT="8010"
+BS_PUSH_SERVER_PUB_PATH="/bitrix/pub/"
+BS_PUSH_SERVER_SUB_PATH="/bitrix/sub/"
+BS_PUSH_SERVER_SUBWS_PATH="/bitrix/subws/"
+BS_PUSH_SERVER_REST_PATH="/bitrix/rest/"
+BS_PUSH_SERVER_NGINX_PREFIX="push-"
+BS_ANSIBLE_PB_SETTINGS_PUSH_SERVER="settings_push_server.yaml"
+
+# Первый запуск меню (создание пула): маркер, что мастер уже пройден
+BS_FIRST_RUN_MARKER="/root/.vm_menu_first_run"
 
 # PostgreSQL settings (дополнение «PostgreSQL» в меню)
 # Пресет конфигурации: auto — по объёму RAM, либо 2g|4g|8g|16g|32g|64g.

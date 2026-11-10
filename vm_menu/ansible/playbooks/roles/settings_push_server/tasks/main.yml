@@ -1,0 +1,57 @@
+---
+# tasks file for settings_push_server
+
+- name: Verifying that the domain is set
+  fail:
+    msg: "{{ push_messages[menu_lang | default('ru')].no_domain }}"
+  when: push_domain | length == 0
+
+# Сертификат: заданный явно или найденный в ssl_conf для этого домена
+- name: Looking for an existing certificate of the domain
+  find:
+    paths: "{{ path_nginx }}/ssl_conf"
+    patterns: "*{{ push_domain }}*"
+    file_type: file
+  register: push_cert_files
+  when: push_cert_path | length == 0
+
+- name: Setting resolved certificate paths
+  set_fact:
+    push_cert_resolved: "{{ push_cert_path if push_cert_path | length > 0 else (push_cert_files.files | map(attribute='path') | select('search', '\\.crt$|\\.pem$') | list | first | default('')) }}"
+    push_key_resolved: "{{ push_key_path if push_key_path | length > 0 else (push_cert_files.files | map(attribute='path') | select('search', '\\.key$') | list | first | default('')) }}"
+
+- name: Failing when no certificate is found
+  fail:
+    msg: "{{ push_messages[menu_lang | default('ru')].no_cert | format(push_domain) }}"
+  when: push_cert_resolved | length == 0 or push_key_resolved | length == 0
+
+- name: Creating the nginx config for the publication domain
+  template:
+    src: push_site.conf.j2
+    dest: "{{ path_nginx_sites_conf }}/{{ push_config_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enabling the publication domain
+  file:
+    src: "{{ path_nginx_sites_conf }}/{{ push_config_name }}"
+    dest: "{{ path_nginx_sites_enabled }}/{{ push_config_name }}"
+    state: link
+    force: yes
+
+- name: Checking nginx configuration
+  command: nginx -t
+  register: push_nginx_test
+  changed_when: false
+
+- name: Restarting nginx
+  systemd:
+    name: "{{ service_nginx_name }}"
+    state: restarted
+
+- name: Reporting the result
+  debug:
+    msg:
+      - "{{ push_messages[menu_lang | default('ru')].created | format(path_nginx_sites_conf ~ '/' ~ push_config_name, push_domain, push_cert_resolved) }}"
+      - "{{ push_messages[menu_lang | default('ru')].nginx_ok }}"

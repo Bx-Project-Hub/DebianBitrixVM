@@ -1,0 +1,16 @@
+galaxy_info:
+  author: Bx-Project-Hub
+  description: Publish Bitrix push&pull on a separate domain via nginx
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - bitrix
+    - push
+    - nginx
+
+dependencies: []

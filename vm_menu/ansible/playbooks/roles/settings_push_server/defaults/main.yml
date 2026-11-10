@@ -1,0 +1,41 @@
+---
+# defaults file for settings_push_server
+#
+# Отдельный домен публикации push&pull.
+# Публикация push&pull по умолчанию идёт на домене сайта (nginx проксирует
+# /bitrix/pub/, /bitrix/sub/, /bitrix/subws/, /bitrix/rest/ на локальный
+# push-server). Если нужен отдельный домен (например push.example.ru), роль
+# создаёт для него отдельный server-блок с тем же проксированием.
+
+push_domain: ""
+push_config_name: "{{ 'push-' ~ push_domain ~ '.conf' }}"
+# Пути к сертификату и ключу. Если пусто — используются сертификаты сайта
+# по умолчанию, найденные в /etc/nginx/ssl_conf/.
+push_cert_path: ""
+push_key_path: ""
+
+push_pub_port: 9010
+push_sub_port: 8010
+push_pub_path: /bitrix/pub/
+push_sub_path: /bitrix/sub/
+push_subws_path: /bitrix/subws/
+push_rest_path: /bitrix/rest/
+
+service_nginx_name: nginx
+path_nginx: /etc/nginx
+path_nginx_sites_conf: /etc/nginx/sites-available
+path_nginx_sites_enabled: /etc/nginx/sites-enabled
+
+menu_lang: ru
+
+push_messages:
+  ru:
+    no_domain: "Домен публикации не задан."
+    no_cert: "Не найден сертификат для домена %s в /etc/nginx/ssl_conf. Выпустите сертификат (меню → 4) и повторите."
+    created: "Создан конфиг nginx: %s (домен %s), сертификат %s"
+    nginx_ok: "nginx -t: конфигурация корректна, nginx перезапущен."
+  en:
+    no_domain: "Publication domain is not set."
+    no_cert: "No certificate for %s found in /etc/nginx/ssl_conf. Issue a certificate (menu → 4) and retry."
+    created: "nginx config created: %s (domain %s), certificate %s"
+    nginx_ok: "nginx -t: configuration is valid, nginx restarted."

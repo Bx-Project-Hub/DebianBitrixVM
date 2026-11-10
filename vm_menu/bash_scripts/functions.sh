@@ -18,6 +18,7 @@ function do_load_menu() {
   fi
   collect_status_panel
   collect_environment_panel
+  SERVER_HOSTNAME="$(hostname -f 2>/dev/null || cat /etc/hostname 2>/dev/null)"
 }
 
 main_menu(){
@@ -83,6 +84,7 @@ main_menu(){
     echo -e "     ${C_YELLOW}7)${C_RESET} $(t menu.item_smtp)"
     echo -e "     ${C_YELLOW}8)${C_RESET} $(t menu.item_addons) ${C_GREY}$(t menu.item_addons_hint)${C_RESET}"
     echo -e "     ${C_YELLOW}9)${C_RESET} ${msg_menu_emulate_bitrix_vm}"
+    echo -e "     ${C_YELLOW}10)${C_RESET} $(t menu.item_push)"
     echo ""
     echo -e "   ${C_BOLD}${C_BLUE}$(t menu.section_server)${C_RESET}"
     echo -e "     ${C_YELLOW}A)${C_RESET} $(t menu.item_update_pkgs) ${C_GREY}$(t menu.item_update_pkgs_hint)${C_RESET}"
@@ -98,6 +100,8 @@ main_menu(){
     else
       echo -e "     ${C_YELLOW}C)${C_RESET} $(t menu.item_autoupd_on)"
     fi
+    echo -e "     ${C_YELLOW}N)${C_RESET} $(t menu.item_hostname "${SERVER_HOSTNAME:-?}")"
+
     echo ""
     echo -e "     ${C_YELLOW}H)${C_RESET} $(t menu.item_help)"
     echo -e "     ${C_YELLOW}0)${C_RESET} $(t menu.item_exit)"
@@ -118,11 +122,13 @@ main_menu(){
      "7") settings_smtp_sites ;;
      "8") menu_install_extensions ;;
      "9") action_emulate_bitrix_vm ;;
+     "10") push_menu ;;
      "A"|"a") update_server ;;
      "R"|"r") reboot_server ;;
      "P"|"p") power_off_server ;;
      "U"|"u"|"update_menu") update_menu ;;
      "C"|"c"|"autoupdate") action_toggle_menu_autoupdate ;;
+     "N"|"n"|"hostname") server_hostname ;;
      "H"|"h"|"?") show_help ;;
      "DELETE_SITE") delete_site ;;
      0|z|q) exit ;;
@@ -822,6 +828,216 @@ function manage_restore_script() {
     fi
 
     action_manage_restore_script "$action"
+}
+
+# Push&Pull: статус, проверка публикации, сертификат, отдельный домен
+function push_menu() {
+    clear
+    echo -e "\n   $(t push.title)\n"
+
+    local svc_state
+    svc_state="$(systemctl is-active "${BS_PUSH_SERVER_SERVICE_NAME}" 2>/dev/null || true)"
+    if [ -z "$svc_state" ]; then
+        echo "   $(t push.not_installed "${BS_PUSH_SERVER_SERVICE_NAME}")"
+        press_any_key_to_return_menu
+        return
+    fi
+
+    echo "   $(t push.status "${BS_PUSH_SERVER_SERVICE_NAME}" "${svc_state}" \
+        "${BS_PUSH_SERVER_PUB_PORT}" "${BS_PUSH_SERVER_SUB_PORT}" "${BS_PUSH_SERVER_CONFIG}")"
+    echo "   $(t push.domain_note "${BS_PUSH_SERVER_PUB_PATH}" "${BS_PUSH_SERVER_PUB_PORT}" \
+        "${BS_PUSH_SERVER_SUBWS_PATH}" "${BS_PUSH_SERVER_SUB_PORT}")"
+    echo ""
+    echo "     1) $(t push.check)"
+    echo "     2) $(t push.cert)"
+    echo "     3) $(t push.domain)"
+    echo "     0) $(t common.back)"
+    echo -n "   $(t common.enter_command) "
+    local command
+    read -r command
+
+    case "$command" in
+        1) push_check_publication ;;
+        2) push_check_certificate ;;
+        3) push_set_domain ;;
+        *) return ;;
+    esac
+}
+
+# Проверка публикации /bitrix/pub/ и /bitrix/subws/ на домене выбранного сайта
+function push_check_publication() {
+    if ! choose_site "$(t push.choose_site)"; then
+        press_any_key_to_return_menu
+        return
+    fi
+
+    local domain="$SELECTED_SITE" path code
+    for path in "$BS_PUSH_SERVER_PUB_PATH" "$BS_PUSH_SERVER_SUBWS_PATH"; do
+        echo ""
+        echo "   $(t push.checking "$domain" "$path")"
+        code="$(curl -sk -o /dev/null -m 10 -w '%{http_code}' "https://${domain}${path}" 2>/dev/null)"
+        echo "   $(t push.result "$domain" "$path" "${code:-?}")"
+    done
+
+    press_any_key_to_return_menu
+}
+
+# Срок и издатель сертификата домена публикации
+function push_check_certificate() {
+    if ! choose_site "$(t push.choose_site)"; then
+        press_any_key_to_return_menu
+        return
+    fi
+
+    local domain="$SELECTED_SITE" info issuer end_date days_left end_ts now_ts
+    info="$(echo | timeout 10 openssl s_client -servername "$domain" -connect "${domain}:443" 2>/dev/null \
+        | openssl x509 -noout -issuer -enddate 2>/dev/null)"
+
+    if [ -z "$info" ]; then
+        echo -e "\n   $(t push.cert_none "$domain")"
+    else
+        issuer="$(printf '%s\n' "$info" | sed -n 's/^issuer=//p' | head -1)"
+        end_date="$(printf '%s\n' "$info" | sed -n 's/^notAfter=//p' | head -1)"
+        end_ts="$(date -d "$end_date" +%s 2>/dev/null || echo 0)"
+        now_ts="$(date +%s)"
+        days_left="$(( (end_ts - now_ts) / 86400 ))"
+        echo -e "\n   $(t push.cert_info "$domain" "$issuer" "$end_date" "$days_left")"
+    fi
+
+    if confirm_action "$(t push.cert_offer "$domain")"; then
+        ssl_lets_encrypt="Y"
+        ssl_lets_encrypt_www="N"
+        read -r -p "   $(t le.email_prompt): " ssl_lets_encrypt_email
+        domain="$domain"
+        if is_valid_email "$ssl_lets_encrypt_email"; then
+            action_get_lets_encrypt_certificate
+            return
+        fi
+        echo "   $(t common.invalid_email)"
+    fi
+
+    press_any_key_to_return_menu
+}
+
+# Отдельный домен публикации push&pull
+function push_set_domain() {
+    local push_domain
+    read -r -p "   $(t push.domain_prompt "$(t common.cancel_hint)"): " push_domain
+    [[ -z "$push_domain" || "$push_domain" == "0" ]] && return
+
+    if ! is_valid_domain "$push_domain"; then
+        echo -e "\n   $(t add.invalid_domain)"
+        press_any_key_to_return_menu
+        return
+    fi
+
+    if ! confirm_action "$(t push.domain_confirm "$push_domain")"; then
+        echo "   $(t common.cancelled)"
+        press_any_key_to_return_menu
+        return
+    fi
+
+    push_cert_path=""
+    push_key_path=""
+    action_settings_push_server
+}
+
+# Применение имени хоста: hostnamectl + строка 127.0.1.1 в /etc/hosts
+function apply_hostname() {
+    local new_name="$1"
+    [ -n "$new_name" ] || return 1
+
+    hostnamectl set-hostname "${new_name}" 2>/dev/null || return 1
+
+    local short_name="${new_name%%.*}"
+    if grep -qE "^127\.0\.1\.1[[:space:]]" /etc/hosts; then
+        sed -i -E "s|^127\.0\.1\.1[[:space:]]+.*|127.0.1.1\t${new_name} ${short_name}|" /etc/hosts
+    else
+        printf '127.0.1.1\t%s %s\n' "${new_name}" "${short_name}" >> /etc/hosts
+    fi
+    SERVER_HOSTNAME="${new_name}"
+    return 0
+}
+
+# Имя хоста сервера (hostnamectl + /etc/hosts)
+function server_hostname() {
+    clear
+    echo -e "\n   $(t hostname.title)\n"
+    local current
+    current="$(hostname -f 2>/dev/null || cat /etc/hostname 2>/dev/null)"
+    echo "   $(t hostname.current "${current}")"
+    echo ""
+
+    local new_name
+    read -r -p "   $(t hostname.prompt "$(t common.cancel_hint)"): " new_name
+    [[ -z "$new_name" || "$new_name" == "0" ]] && return
+
+    if ! [[ "$new_name" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$ ]]; then
+        echo -e "\n   $(t hostname.invalid)"
+        press_any_key_to_return_menu
+        return
+    fi
+
+    if ! confirm_action "$(t hostname.confirm "${new_name}")"; then
+        echo "   $(t common.cancelled)"
+        press_any_key_to_return_menu
+        return
+    fi
+
+    if apply_hostname "${new_name}"; then
+        echo -e "\n   $(t hostname.done "${new_name}")"
+    else
+        echo -e "\n   $(t hostname.failed)" >&2
+    fi
+
+    press_any_key_to_return_menu
+}
+
+# Первый запуск окружения: имя хоста и создание первого сайта (пула).
+# Показывается только один раз — маркер /root/.vm_menu_first_run.
+function first_run_setup() {
+    [ -f "${BS_FIRST_RUN_MARKER}" ] && return 0
+
+    get_sites_array
+    if (( ${#SITES_LIST[@]} > 0 )); then
+        touch "${BS_FIRST_RUN_MARKER}" 2>/dev/null || true
+        return 0
+    fi
+
+    clear
+    echo -e "\n   ${C_BOLD}${C_CYAN}$(t boot.first_run_title)${C_RESET}\n"
+    echo "   $(t boot.first_run_intro)"
+    echo ""
+
+    # Шаг 1 — имя хоста сервера
+    echo "   ${C_BOLD}$(t boot.first_run_hostname)${C_RESET}"
+    local current_host new_host
+    current_host="$(hostname -f 2>/dev/null || cat /etc/hostname 2>/dev/null)"
+    echo "   $(t hostname.current "${current_host}")"
+    read -r -p "   $(t hostname.prompt "$(t boot.first_run_skip)"): " new_host
+
+    if [ -n "${new_host}" ] && [ "${new_host}" != "0" ]; then
+        if [[ "${new_host}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$ ]]; then
+            apply_hostname "${new_host}" && echo "   $(t hostname.done "${new_host}")"
+        else
+            echo "   $(t hostname.invalid)"
+        fi
+    fi
+
+    echo ""
+    echo "   ${C_BOLD}$(t boot.first_run_site)${C_RESET}"
+    echo ""
+
+    # Шаг 2 — существующий мастер создания сайта (домен, режим, БД, SSL)
+    add_site
+
+    get_sites_array
+    if (( ${#SITES_LIST[@]} > 0 )); then
+        touch "${BS_FIRST_RUN_MARKER}" 2>/dev/null || true
+        echo ""
+        echo "   $(t boot.first_run_done "${#SITES_LIST[@]}")"
+        press_any_key_to_return_menu
+    fi
 }
 
 function show_help() {

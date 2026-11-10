@@ -34,6 +34,7 @@ if ! check_supported_os; then
   sleep 5
 fi
 
+first_run_setup
 main_menu;
 
 

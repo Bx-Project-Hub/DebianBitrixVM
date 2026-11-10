@@ -1,0 +1,58 @@
+# Публикация push&pull на отдельном домене {{ push_domain }}
+# Сгенерировано меню Debian BitrixVM (settings_push_server)
+server {
+    listen 80;
+    server_name {{ push_domain }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name {{ push_domain }};
+
+    ssl_certificate     {{ push_cert_resolved }};
+    ssl_certificate_key {{ push_key_resolved }};
+
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+
+    # Bitrix real-time: публикация событий
+    location {{ push_pub_path }} {
+        proxy_ignore_client_abort on;
+        proxy_pass http://127.0.0.1:{{ push_pub_port }};
+    }
+
+    # WebSocket-подписка
+    location {{ push_subws_path }} {
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_pass http://127.0.0.1:{{ push_sub_port }};
+    }
+
+    # Long-polling подписка
+    location {{ push_sub_path }} {
+        proxy_pass http://127.0.0.1:{{ push_sub_port }};
+    }
+
+    # REST-канал push-server
+    location {{ push_rest_path }} {
+        proxy_pass http://127.0.0.1:{{ push_sub_port }};
+    }
+
+    location / {
+        return 404;
+    }
+}

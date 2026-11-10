@@ -521,6 +521,27 @@ action_toggle_menu_autoupdate(){
   press_any_key_to_return_menu;
 }
 
+# Публикация push&pull на отдельном домене (nginx + сертификат)
+# Переменные: push_domain, push_cert_path, push_key_path
+action_settings_push_server(){
+  local pb
+  pb=$(realpath "$dir/${BS_PATH_ANSIBLE_PLAYBOOKS}/${BS_ANSIBLE_PB_SETTINGS_PUSH_SERVER}")
+
+  ansible-playbook "${pb}" $BS_ANSIBLE_RUN_PLAYBOOKS_PARAMS \
+  -e "push_domain=${push_domain} \
+  push_cert_path=${push_cert_path:-} \
+  push_key_path=${push_key_path:-} \
+  push_pub_port=${BS_PUSH_SERVER_PUB_PORT} \
+  push_sub_port=${BS_PUSH_SERVER_SUB_PORT} \
+  service_nginx_name=${BS_SERVICE_NGINX_NAME} \
+  path_nginx=${BS_PATH_NGINX} \
+  path_nginx_sites_conf=${BS_PATH_NGINX_SITES_CONF} \
+  path_nginx_sites_enabled=${BS_PATH_NGINX_SITES_ENABLED} \
+  menu_lang=${BS_MENU_LANG_CURRENT:-ru}"
+
+  press_any_key_to_return_menu;
+}
+
 # Настройка SMTP-аккаунта в общем /var/www/html/.msmtprc
 # Переменные: account_name, smtp_host, smtp_port, email_from, is_auth,
 # authentication_method, login, password, enable_TLS
