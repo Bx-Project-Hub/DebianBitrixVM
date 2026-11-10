@@ -230,7 +230,7 @@ cd $DEST_DIR_MENU
 chmod -R +x $DEST_DIR_MENU/$DIR_NAME_MENU
 
 # Команда update_menu (лаунчер всегда берёт актуальный update_menu.sh с master)
-if [ ! -x /usr/local/bin/update_menu ]; then
+# Лаунчер перезаписывается при каждом обновлении, чтобы не устаревать
 cat > /usr/local/bin/update_menu <<'LAUNCHER'
 #!/bin/bash
 # Обновление меню Debian BitrixVM.
@@ -243,7 +243,6 @@ curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" 
 exec bash "$tmp" "$@"
 LAUNCHER
 chmod 0755 /usr/local/bin/update_menu
-fi
 
 # Добавляем запуск меню в .profile, если работаем по SSH
 if ! grep -qF "$FULL_PATH_MENU_FILE" /root/.profile; then

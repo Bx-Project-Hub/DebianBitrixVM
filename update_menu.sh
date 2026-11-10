@@ -166,7 +166,7 @@ END
 
 # Лаунчер для команды update_menu и для cron-задачи автообновления:
 # всегда скачивает актуальный скрипт с master, поэтому не устаревает.
-if [ ! -x /usr/local/bin/update_menu ]; then
+# Лаунчер перезаписывается при каждом обновлении, чтобы не устаревать
   cat > /usr/local/bin/update_menu <<'LAUNCHER'
 #!/bin/bash
 # Обновление меню Debian BitrixVM.
@@ -179,7 +179,6 @@ curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" 
 exec bash "$tmp" "$@"
 LAUNCHER
   chmod 0755 /usr/local/bin/update_menu
-fi
 
 AUTO_MODE="${AUTO_MODE}" bash /root/temp_update_menu.sh
 update_status=$?
