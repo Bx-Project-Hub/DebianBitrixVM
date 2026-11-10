@@ -545,7 +545,9 @@ function get_installed_addons() {
 function netdata_stats_hint() {
     systemctl is-active --quiet netdata 2>/dev/null || return 0
 
-    local host="${CURRENT_SERVER_IP:-}"
+    # CURRENT_SERVER_IP может содержать многострочный блок «Сетевые интерфейсы и IP»
+    local host
+    host="$(printf '%s\n' "${CURRENT_SERVER_IP:-}" | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)"
     if [ -z "$host" ]; then
         host="$(hostname -I 2>/dev/null | awk '{print $1}')"
     fi
