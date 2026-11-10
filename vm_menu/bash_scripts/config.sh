@@ -6,7 +6,7 @@
 # При необходимости любую настройку можно изменить в этом файле.
 
 # General settings
-BS_VERSION_MENU="2.10.10"
+BS_VERSION_MENU="2.11.0"
 BS_PATH_SITES="/var/www/html"
 # Путь к установленному меню (используется для перезапуска после обновления)
 BS_PATH_MENU_FILE="/root/vm_menu/menu.sh"
@@ -195,6 +195,12 @@ BS_PATH_APACHE_SITES_ENABLED="$BS_PATH_APACHE/sites-enabled"
 BS_VAR_NAME_BVM="BITRIX_VA_VER"
 BS_VAR_VALUE_BVM="99.99.99"
 BS_VAR_PATH_FILE_BVM="/etc/apache2/envvars"
+
+# Автообновление меню по crontab (раз в сутки)
+BS_MENU_AUTOUPDATE_MARKER="vm-menu-autoupdate"
+BS_MENU_AUTOUPDATE_SCHEDULE="17 4 * * *"
+BS_MENU_AUTOUPDATE_COMMAND="/usr/local/bin/update_menu --auto"
+BS_MENU_AUTOUPDATE_LOG="/var/log/vm_menu_autoupdate.log"
 
 # SMTP settings
 BS_SMTP_FILE_SITES_CONFIG="${BS_PATH_SITES}/.msmtprc"

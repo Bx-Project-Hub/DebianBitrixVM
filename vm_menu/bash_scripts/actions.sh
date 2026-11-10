@@ -489,6 +489,38 @@ action_manage_restore_script(){
   press_any_key_to_return_menu;
 }
 
+# Автообновление меню: включить (crontab, раз в сутки) или выключить
+action_toggle_menu_autoupdate(){
+  local current_crontab new_crontab rc=0
+
+  if menu_autoupdate_enabled; then
+    current_crontab="$(crontab -l 2>/dev/null)"
+    new_crontab="$(printf '%s\n' "$current_crontab" | grep -v "${BS_MENU_AUTOUPDATE_MARKER}")"
+    printf '%s\n' "$new_crontab" | crontab - || rc=1
+    if (( rc == 0 )); then
+      echo "   $(t autoupd.disabled)"
+    else
+      echo "   $(t autoupd.failed_off)" >&2
+    fi
+  else
+    # лаунчер update_menu создаётся установщиком; на всякий случай проверим
+    if [ ! -x /usr/local/bin/update_menu ]; then
+      echo "   $(t autoupd.no_launcher)" >&2
+    fi
+    current_crontab="$(crontab -l 2>/dev/null)"
+    new_crontab="$(printf '%s\n%s\n' "$current_crontab" \
+      "${BS_MENU_AUTOUPDATE_SCHEDULE} ${BS_MENU_AUTOUPDATE_COMMAND} >> ${BS_MENU_AUTOUPDATE_LOG} 2>&1 # ${BS_MENU_AUTOUPDATE_MARKER}")"
+    printf '%s\n' "$new_crontab" | sed '/^$/d' | crontab - || rc=1
+    if (( rc == 0 )); then
+      echo "   $(t autoupd.enabled "${BS_MENU_AUTOUPDATE_SCHEDULE}" "${BS_MENU_AUTOUPDATE_LOG}")"
+    else
+      echo "   $(t autoupd.failed_on)" >&2
+    fi
+  fi
+
+  press_any_key_to_return_menu;
+}
+
 # Настройка SMTP-аккаунта в общем /var/www/html/.msmtprc
 # Переменные: account_name, smtp_host, smtp_port, email_from, is_auth,
 # authentication_method, login, password, enable_TLS

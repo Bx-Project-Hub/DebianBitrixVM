@@ -93,6 +93,11 @@ main_menu(){
     else
       echo -e "     ${C_YELLOW}U)${C_RESET} $(t menu.item_menu_current) ${C_GREY}$(t menu.item_menu_current_hint)${C_RESET}"
     fi
+    if menu_autoupdate_enabled; then
+      echo -e "     ${C_YELLOW}C)${C_RESET} $(t menu.item_autoupd_off "$(menu_autoupdate_schedule)")"
+    else
+      echo -e "     ${C_YELLOW}C)${C_RESET} $(t menu.item_autoupd_on)"
+    fi
     echo ""
     echo -e "     ${C_YELLOW}H)${C_RESET} $(t menu.item_help)"
     echo -e "     ${C_YELLOW}0)${C_RESET} $(t menu.item_exit)"
@@ -117,6 +122,7 @@ main_menu(){
      "R"|"r") reboot_server ;;
      "P"|"p") power_off_server ;;
      "U"|"u"|"update_menu") update_menu ;;
+     "C"|"c"|"autoupdate") action_toggle_menu_autoupdate ;;
      "H"|"h"|"?") show_help ;;
      "DELETE_SITE") delete_site ;;
      0|z|q) exit ;;

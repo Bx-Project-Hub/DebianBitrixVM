@@ -757,6 +757,17 @@ EOF
     a2enmod "php${PHP_VERSION}"
     phpenmod xml
 
+    # Эмуляция BitrixVM включена по умолчанию: некоторые решения маркетплейса
+    # проверяют переменную BITRIX_VA_VER. Значение берём из config.sh меню,
+    # если он уже доставлен, иначе используем то же значение по умолчанию.
+    local bvm_ver="99.99.99"
+    if [ -f /root/vm_menu/bash_scripts/config.sh ]; then
+        bvm_ver="$(bash -c '. /root/vm_menu/bash_scripts/config.sh >/dev/null 2>&1; echo "${BS_VAR_VALUE_BVM:-99.99.99}"')"
+    fi
+    if ! grep -qE '^[[:space:]]*export BITRIX_VA_VER=' /etc/apache2/envvars 2>/dev/null; then
+        printf 'export BITRIX_VA_VER="%s"\n' "$bvm_ver" >> /etc/apache2/envvars
+    fi
+
     # intl / soap / bcmath / imap / ssh2 — нужны Bitrix и типовым интеграциям.
     # Пакеты обычно включают модули сами, но после смены версии PHP или ручной
     # правки conf.d символические ссылки могут отсутствовать — включаем явно.

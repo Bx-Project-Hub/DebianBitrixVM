@@ -229,6 +229,21 @@ cd $DEST_DIR_MENU
 
 chmod -R +x $DEST_DIR_MENU/$DIR_NAME_MENU
 
+# Команда update_menu (лаунчер всегда берёт актуальный update_menu.sh с master)
+if [ ! -x /usr/local/bin/update_menu ]; then
+cat > /usr/local/bin/update_menu <<'LAUNCHER'
+#!/bin/bash
+# Обновление меню Debian BitrixVM.
+# Запускает актуальный update_menu.sh с GitHub: update_menu [--auto]
+URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh"
+tmp="$(mktemp)" || exit 1
+trap 'rm -f "$tmp"' EXIT
+curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" >&2; exit 1; }
+exec bash "$tmp" "$@"
+LAUNCHER
+chmod 0755 /usr/local/bin/update_menu
+fi
+
 # Добавляем запуск меню в .profile, если работаем по SSH
 if ! grep -qF "$FULL_PATH_MENU_FILE" /root/.profile; then
   cat << INSTALL_MENU >> /root/.profile

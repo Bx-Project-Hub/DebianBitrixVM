@@ -540,6 +540,19 @@ function get_installed_addons() {
     fi
 }
 
+# Автообновление меню по crontab: включено / выключено
+function menu_autoupdate_enabled() {
+    crontab -l 2>/dev/null | grep -q "${BS_MENU_AUTOUPDATE_MARKER}"
+}
+
+# Расписание из crontab (первые 5 полей) — для строки меню
+function menu_autoupdate_schedule() {
+    crontab -l 2>/dev/null \
+        | grep "${BS_MENU_AUTOUPDATE_MARKER}" \
+        | head -1 \
+        | awk '{print $1" "$2" "$3" "$4" "$5}'
+}
+
 # Подсказка-ссылка на панель Netdata. Пустая строка, если Netdata не установлен
 # или не запущен — тогда строка в меню не выводится.
 function netdata_stats_hint() {

@@ -17,6 +17,12 @@
 #
 set -o pipefail
 
+# Режим без интерактивных сообщений — используется cron-задачей автообновления
+AUTO_MODE=0
+case "${1:-}" in
+  --auto|-y) AUTO_MODE=1 ;;
+esac
+
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
   echo "Ошибка: обновление меню нужно запускать от root." >&2
   exit 1
@@ -151,12 +157,30 @@ echo "Меню обновлено до версии ${new_version:-?}"
 if [ -n "$full_path_backup_menu" ]; then
     echo "Резервная копия предыдущего меню: $full_path_backup_menu/$DIR_NAME_MENU"
 fi
-echo "Запуск: /root/menu.sh"
+if [ "${AUTO_MODE:-0}" != "1" ]; then
+    echo "Запуск: /root/menu.sh"
+fi
 echo ""
 
 END
 
-bash /root/temp_update_menu.sh
+# Лаунчер для команды update_menu и для cron-задачи автообновления:
+# всегда скачивает актуальный скрипт с master, поэтому не устаревает.
+if [ ! -x /usr/local/bin/update_menu ]; then
+  cat > /usr/local/bin/update_menu <<'LAUNCHER'
+#!/bin/bash
+# Обновление меню Debian BitrixVM.
+# Запускает актуальный update_menu.sh с GitHub: bash update_menu [--auto]
+URL="https://raw.githubusercontent.com/Bx-Project-Hub/DebianBitrixVM/master/update_menu.sh"
+tmp="$(mktemp)" || exit 1
+trap 'rm -f "$tmp"' EXIT
+curl -fsSL "$URL" -o "$tmp" || { echo "Не удалось скачать $URL" >&2; exit 1; }
+exec bash "$tmp" "$@"
+LAUNCHER
+  chmod 0755 /usr/local/bin/update_menu
+fi
+
+AUTO_MODE="${AUTO_MODE}" bash /root/temp_update_menu.sh
 update_status=$?
 rm -f /root/temp_update_menu.sh
 exit $update_status

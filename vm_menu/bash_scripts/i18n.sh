@@ -301,6 +301,13 @@ declare -A MSG_RU=(
     [memcached.confirm_delete]="Удалить memcached и расширение PHP memcached?"
 
     # Сервер, обновления
+    [menu.item_autoupd_on]="Включить автообновление меню (по crontab раз в сутки)"
+    [menu.item_autoupd_off]="Выключить автообновление меню (включено: %s)"
+    [autoupd.enabled]="Автообновление меню включено: crontab «%s», лог %s"
+    [autoupd.disabled]="Автообновление меню выключено (запись удалена из crontab)."
+    [autoupd.failed_on]="Не удалось включить автообновление: crontab вернул ошибку."
+    [autoupd.failed_off]="Не удалось выключить автообновление: crontab вернул ошибку."
+    [autoupd.no_launcher]="Внимание: /usr/local/bin/update_menu не найден — автообновление не сработает (переустановите меню)."
     [upd.confirm_pkgs]="Обновить пакеты системы (apt update && apt upgrade)?"
     [upd.confirm_menu]="Обновить меню (текущая версия сохранится в /root/backup_vm_menu)?"
     [upd.failed]="Обновление не выполнено (код %s). Текущее меню продолжает работать."
@@ -585,6 +592,13 @@ declare -A MSG_EN=(
     [memcached.confirm_install]="Install memcached and enable the PHP memcached extension?"
     [memcached.confirm_delete]="Remove memcached and the PHP memcached extension?"
 
+    [menu.item_autoupd_on]="Enable menu auto-update (daily via crontab)"
+    [menu.item_autoupd_off]="Disable menu auto-update (enabled: %s)"
+    [autoupd.enabled]="Menu auto-update enabled: crontab «%s», log %s"
+    [autoupd.disabled]="Menu auto-update disabled (crontab entry removed)."
+    [autoupd.failed_on]="Failed to enable auto-update: crontab returned an error."
+    [autoupd.failed_off]="Failed to disable auto-update: crontab returned an error."
+    [autoupd.no_launcher]="Warning: /usr/local/bin/update_menu not found — auto-update will not run (reinstall the menu)."
     [upd.confirm_pkgs]="Update system packages (apt update && apt upgrade)?"
     [upd.confirm_menu]="Update the menu (the current version will be backed up to /root/backup_vm_menu)?"
     [upd.failed]="Update failed (code %s). The current menu keeps working."
@@ -669,6 +683,7 @@ function i18n_help_text() {
    СЕРВЕР
    A) Обновление пакетов — apt update && apt upgrade.
    R) Перезагрузка. P) Выключение. U) Обновление меню.
+   C) Автообновление меню по crontab (раз в сутки): включить или выключить.
 
    ЯЗЫК ИНТЕРФЕЙСА
    Язык выбирается по локали системы: русская локаль (ru_RU.UTF-8) — русский
