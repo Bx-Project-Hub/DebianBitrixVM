@@ -1,5 +1,5 @@
 ---
-- name: "Creating of the site {{ domain }}, mode: {{ mode }}"
+- name: Creating a Bitrix site (full or link mode)
   hosts: localhost
   connection: local
   become: yes

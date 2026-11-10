@@ -1,5 +1,5 @@
 ---
-- name: Creating of redirection HTTP to HTTPS {{ action }} for the site {{ domain }}
+- name: Enabling or disabling the HTTP to HTTPS redirect
   hosts: localhost
   connection: local
   become: yes

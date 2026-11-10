@@ -1,5 +1,5 @@
 ---
-- name: "{{ file_conversion_server_action }} File Conversion Server (transformer)"
+- name: File conversion server (transformer) install or delete
   hosts: localhost
   connection: local
   become: yes

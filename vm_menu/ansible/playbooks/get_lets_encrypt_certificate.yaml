@@ -1,5 +1,5 @@
 ---
-- name: Geting SSL Certificate Let`s Encrypt for the site {{ domain }}
+- name: Getting a Let's Encrypt certificate
   hosts: localhost
   connection: local
   become: yes

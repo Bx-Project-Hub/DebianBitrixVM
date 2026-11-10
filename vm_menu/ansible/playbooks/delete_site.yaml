@@ -1,5 +1,5 @@
 ---
-- name: Delete the site {{ site }}
+- name: Deleting a Bitrix site
   hosts: localhost
   connection: local
   become: yes

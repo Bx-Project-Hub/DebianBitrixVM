@@ -1,5 +1,5 @@
 ---
-- name: "{{ sphinx_action }} Sphinx"
+- name: Sphinx install or delete
   hosts: localhost
   connection: local
   become: yes

@@ -1,5 +1,5 @@
 ---
-- name: "{{ netdata_action }} Netdata"
+- name: Netdata install or delete
   hosts: localhost
   connection: local
   become: yes
